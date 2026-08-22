@@ -271,8 +271,8 @@ The report covers:
 - ☑ PyInstaller executable build support.
 - ☑ Mouse activation and Pygame event filtering. 
 - ☑ Image caching, fallback graphics, and silent audio handling.
-- ☐ Theme selection and theme-specific asset routing. 
-- ☐ Generatee themed content and asset tooling.
+- ☑ Theme selection and theme-specific asset routing. 
+- ☑ Generatee themed content and asset tooling.
 - ⦸ Damage-based NPC scaling and themed enemy behavior.
 - ⦸ Documentation, planned web/multiplayer work, and production limitations.
 - ⦸ PowerShell/.NET `System.Drawing` tooling and Python standard-library usage.
