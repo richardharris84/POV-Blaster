@@ -124,6 +124,8 @@ pathfinding.py       Grid graph and breadth-first navigation
 weapon.py            Shotgun animation and damage
 sound.py             Music and sound effects
 resources/           Runtime textures, sprites, and audio
+theme.py             Theme definitions and startup selection
+generate_themes.ps1  Procedural theme and animation asset generator
 screenshots/         Project screenshots
 ```
 
@@ -144,6 +146,23 @@ Scenery, enemies, and the weapon use transparent 2D images projected into the fi
 ### Enemies and pathfinding
 
 Soldier, Cacodemon, and Cyberdemon enemies have different health, speed, attack range, damage, and accuracy settings. Enemies use line-of-sight checks to detect the player and breadth-first search to navigate around walls.
+
+### Themes
+
+The startup menu provides four content choices:
+
+- Default: Soldier, Caco Demon, Cyber Demon
+- Candy Kingdom: Marshmallow Man, Springfield Doughnut, Gingerbread Golem
+- Space: Alien Drone, Alien Warrior, Alien Overlord
+- Graveyard: Ghost, Vampire, Werewolf
+
+Theme assets live under `resources/<theme>/`. To regenerate the themed textures and NPC animation frames on Windows, run:
+
+```powershell
+.\generate_themes.ps1
+```
+
+Each generated NPC includes unique idle, walk, attack, pain, and death sequences. Candy Kingdom uses the imported CandyKingdom asset set, including the pastry-bag weapon and thick slime firing sound; its deaths melt the Marshmallow Man and crumble the Springfield Doughnut and Gingerbread Golem.
 
 ### Combat and game states
 

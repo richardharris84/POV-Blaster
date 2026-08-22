@@ -189,13 +189,15 @@ class NPC(AnimatedSprite):
 
 
 class SoldierNPC(NPC):
-    def __init__(self, game, path='sprites/npc/soldier/0.png', pos=(10.5, 5.5),
+    def __init__(self, game, path=None, pos=(10.5, 5.5),
                  scale=0.6, shift=0.38, animation_time=180):
+        path = path or f'sprites/npc/{game.theme.npc_assets[0]}/0.png'
         super().__init__(game, path, pos, scale, shift, animation_time)
 
 class CacoDemonNPC(NPC):
-    def __init__(self, game, path='sprites/npc/caco_demon/0.png', pos=(10.5, 6.5),
+    def __init__(self, game, path=None, pos=(10.5, 6.5),
                  scale=0.7, shift=0.27, animation_time=250):
+        path = path or f'sprites/npc/{game.theme.npc_assets[1]}/0.png'
         super().__init__(game, path, pos, scale, shift, animation_time)
         self.attack_dist = 1.0
         self.health = 150
@@ -204,8 +206,9 @@ class CacoDemonNPC(NPC):
         self.accuracy = 0.35
 
 class CyberDemonNPC(NPC):
-    def __init__(self, game, path='sprites/npc/cyber_demon/0.png', pos=(11.5, 6.0),
+    def __init__(self, game, path=None, pos=(11.5, 6.0),
                  scale=1.0, shift=0.04, animation_time=210):
+        path = path or f'sprites/npc/{game.theme.npc_assets[2]}/0.png'
         super().__init__(game, path, pos, scale, shift, animation_time)
         self.attack_dist = 6
         self.health = 350

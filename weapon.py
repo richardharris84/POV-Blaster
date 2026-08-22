@@ -2,7 +2,8 @@ from sprite_object import *
 
 
 class Weapon(AnimatedSprite):
-    def __init__(self, game, path='sprites/weapon/shotgun/0.png', scale=0.4, animation_time=90):
+    def __init__(self, game, path=None, scale=0.4, animation_time=90):
+        path = path or game.theme.weapon_asset
         super().__init__(game=game, path=path, scale=scale, animation_time=animation_time)
         self.images = deque(
             [pg.transform.smoothscale(img, (self.image.get_width() * scale, self.image.get_height() * scale))

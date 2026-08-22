@@ -8,7 +8,10 @@ from settings import RESOURCE_DIR
 class Theme:
     key: str
     label: str
-    enemies: str
+    enemies: tuple
+    npc_assets: tuple
+    weapon_asset: str = 'sprites/weapon/shotgun/0.png'
+    fire_sound: str = 'shotgun.wav'
 
     @property
     def resource_dir(self):
@@ -19,14 +22,41 @@ class Theme:
 
 
 THEMES = (
-    Theme('default', 'Default', 'Soldier, Caco Demon, Cyber Demon'),
+    Theme(
+        'default',
+        'Default',
+        ('Soldier', 'Caco Demon', 'Cyber Demon'),
+        ('soldier', 'caco_demon', 'cyber_demon'),
+        'sprites/weapon/shotgun/0.png',
+        'shotgun.wav',
+    ),
+    Theme(
+        'candy_kingdom',
+        'Candy Kingdom',
+        ('Marshmallow Man', 'Springfield Doughnut', 'Gingerbread Golem'),
+        ('marshmallow_man', 'springfield_doughnut', 'gingerbread_golem'),
+        'sprites/weapon/pastry_bag/0.png',
+        'floraphonic-thick-slime-18-229584.mp3',
+    ),
+    Theme(
+        'space',
+        'Space',
+        ('Alien Drone', 'Alien Warrior', 'Alien Overlord'),
+        ('alien_drone', 'alien_warrior', 'alien_overlord'),
+    ),
+    Theme(
+        'graveyard',
+        'Graveyard',
+        ('Ghost', 'Vampire', 'Werewolf'),
+        ('ghost', 'vampire', 'werewolf'),
+    ),
 )
 
 
 def choose_theme(input_func=input, output_func=print):
     output_func('Choose a theme:')
     for index, theme in enumerate(THEMES, start=1):
-        output_func(f'{index}) {theme.label} [{theme.enemies}]')
+        output_func(f'{index}) {theme.label} [{", ".join(theme.enemies)}]')
     output_func('0) Exit')
 
     while True:

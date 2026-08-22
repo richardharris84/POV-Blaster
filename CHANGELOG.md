@@ -477,3 +477,60 @@ Validation completed:
 - Default theme asset path resolution passed.
 - Startup menu selection and Exit behavior passed.
 - Headless startup smoke test passed.
+
+## Step 15. Themed Content and Asset Tooling
+
+### Prompt
+
+> Create the ability to generate themed content and asset tooling.
+>
+> Create Candy Kingdom, Space, and Graveyard themes with their requested enemies and suitable death animations.
+
+### Output
+
+Added three generated themes:
+
+- Candy Kingdom: Marshmallow Man, Springfield Doughnut, Gingerbread Golem.
+- Space: Alien Drone, Alien Warrior, Alien Overlord.
+- Graveyard: Ghost, Vampire, Werewolf.
+
+Added `generate_themes.ps1` to generate theme textures and unique numbered NPC animation frames. Every generated NPC includes idle, walk, attack, pain, and death animations. Candy Kingdom death sequences depict melting for the Marshmallow Man and crumbling for the Springfield Doughnut and Gingerbread Golem.
+
+Validation completed:
+
+- All nine new NPCs have complete animation folder structures.
+- Every generated NPC has six distinct death frames and unique regular animation frames.
+- Default, Candy Kingdom, Space, and Graveyard headless startup and rendering passed.
+
+## Step 16. Candy Kingdom Asset Refresh
+
+### Prompt
+
+> Modify Candy Kingdom using the assets already created in `DOOM-3D-FPS-Shooting-Game_KidCopy/resources/themes/CandyKingdom`.
+
+### Output
+
+Replaced the generated Candy Kingdom assets with the existing 119-file CandyKingdom asset set. The imported content includes the Marshmallow Man, Springfield Doughnut, and Gingerbread Golem animation frames, Candy Kingdom scenery, pastry-bag weapon, and frosting squeeze sound. Theme metadata now routes Candy Kingdom to its pastry-bag weapon and themed firing sound.
+
+Validation completed:
+
+- Candy Kingdom compiled and started through the full headless game path.
+- A Candy Kingdom frame rendered successfully.
+- All three Candy Kingdom NPCs contain six-frame death animations.
+- Candy-specific weapon and audio assets resolved successfully.
+- Duplicate nested asset directories were removed.
+
+## Step 17. Candy Kingdom Weapon Sound
+
+### Prompt
+
+> Set the Candy Kingdom weapon sound to `floraphonic-thick-slime-18-229584.mp3`.
+
+### Output
+
+Updated Candy Kingdom theme routing so the pastry-bag weapon uses the Floraphonic thick slime MP3 sound.
+
+Validation completed:
+
+- The configured MP3 exists in the Candy Kingdom sound assets.
+- Candy Kingdom headless startup and audio loading passed.

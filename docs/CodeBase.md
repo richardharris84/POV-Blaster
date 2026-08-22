@@ -399,6 +399,8 @@ resources/default/sprites/animated_sprites/<object>/*.png
 resources/default/sprites/static_sprites/candlebra.png
 ```
 
+Additional themes use the same contract under `resources/<theme>/`. The current generated themes are `candy_kingdom`, `space`, and `graveyard`. Run `generate_themes.ps1` on Windows to regenerate their themed textures and NPC animation frames. Each NPC must provide `idle`, `walk`, `attack`, `pain`, and `death` frame directories; death sequences contain six distinct frames.
+
 The asset loader calls `convert_alpha()`, so display mode must be initialized before images are loaded. This is why image loading occurs after `pg.display.set_mode` in `Game.__init__`.
 
 When adding art:
