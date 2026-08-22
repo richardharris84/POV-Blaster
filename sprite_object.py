@@ -1,17 +1,21 @@
 import pygame as pg
-from settings import *
 import os
 import re
+import math
 from collections import deque
+from settings import (DELTA_ANGLE, HALF_HEIGHT, HALF_NUM_RAYS, HALF_WIDTH,
+                      NUM_RAYS, RAY_EPSILON, SCALE, SCREEN_DIST, WIDTH)
+from infrastructure.assets import create_fallback_surface, resolve_resource_path
+from application.ports import GameContext
 
 
 class SpriteObject:
-    def __init__(self, game, path='sprites/static_sprites/candlebra.png',
+    def __init__(self, game: GameContext, path='sprites/static_sprites/candlebra.png',
                  pos=(10.5, 3.5), scale=0.7, shift=0.27):
         self.game = game
         self.player = game.player
         self.x, self.y = pos
-        self.image = load_image(game.theme.path(path), fallback_label='S')
+        self.image = game.asset_loader.load_image(game.theme.path(path), fallback_label='S')
         self.IMAGE_WIDTH = self.image.get_width()
         self.IMAGE_HALF_WIDTH = self.image.get_width() // 2
         self.IMAGE_RATIO = self.IMAGE_WIDTH / self.image.get_height()
@@ -29,6 +33,14 @@ class SpriteObject:
         self.sprite_half_width = proj_width // 2
         height_shift = proj_height * self.SPRITE_HEIGHT_SHIFT
         pos = self.screen_x - self.sprite_half_width, HALF_HEIGHT - proj_height // 2 + height_shift
+
+        depth_buffer = self.game.raycasting.depth_buffer
+        if depth_buffer:
+            image = image.copy()
+            for image_x in range(image.get_width()):
+                ray = int((pos[0] + image_x) / SCALE)
+                if 0 <= ray < len(depth_buffer) and depth_buffer[ray] < self.norm_dist:
+                    image.fill((0, 0, 0, 0), (image_x, 0, 1, image.get_height()))
 
         self.game.raycasting.objects_to_render.append((self.norm_dist, image, pos))
 
@@ -101,5 +113,6 @@ class AnimatedSprite(SpriteObject):
             return deque([create_fallback_surface((64, 64), 'A')])
 
         for file_name in sorted(image_files, key=frame_sort_key):
-            images.append(load_image(resource_path / file_name, fallback_label=file_name[0].upper()))
+            images.append(self.game.asset_loader.load_image(resource_path / file_name,
+                                                            fallback_label=file_name[0].upper()))
         return images

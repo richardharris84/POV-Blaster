@@ -1,11 +1,13 @@
-from sprite_object import *
-from npc import *
-from random import choices, sample
+import random
+from application.ports import GameContext
+from npc import CacoDemonNPC, CyberDemonNPC, SoldierNPC
+from sprite_object import AnimatedSprite
 
 
 class ObjectHandler:
-    def __init__(self, game):
+    def __init__(self, game: GameContext, rng=None):
         self.game = game
+        self.rng = rng or random.Random()
         self.sprite_list = []
         self.npc_list = []
         self.npc_sprite_path = 'sprites/npc/'
@@ -66,8 +68,8 @@ class ObjectHandler:
         if self.enemies > len(valid_positions):
             raise ValueError('Not enough valid map cells to spawn all NPCs')
 
-        for x, y in sample(valid_positions, self.enemies):
-            npc_type = choices(self.npc_types, self.weights)[0]
+        for x, y in self.rng.sample(valid_positions, self.enemies):
+            npc_type = self.rng.choices(self.npc_types, self.weights)[0]
             self.add_npc(npc_type(self.game, pos=(x + 0.5, y + 0.5)))
 
     def check_win(self):

@@ -1,17 +1,22 @@
 import pygame as pg
 import math
-from settings import *
+from settings import (DELTA_ANGLE, FOV, HALF_FOV, HALF_HEIGHT, HALF_TEXTURE_SIZE,
+                      MAX_DEPTH, NUM_RAYS, RAY_EPSILON, SCALE, SCREEN_DIST,
+                      TEXTURE_SIZE, HEIGHT)
+from application.ports import GameContext
 
 
 class RayCasting:
-    def __init__(self, game):
+    def __init__(self, game: GameContext):
         self.game = game
         self.ray_casting_result = []
+        self.depth_buffer = []
         self.objects_to_render = []
         self.textures = self.game.object_renderer.wall_textures
 
     def get_objects_to_render(self):
         self.objects_to_render = []
+        self.depth_buffer = [result[0] for result in self.ray_casting_result]
         for ray, values in enumerate(self.ray_casting_result):
             depth, proj_height, texture, offset = values
 

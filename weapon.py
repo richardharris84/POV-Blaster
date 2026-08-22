@@ -1,8 +1,12 @@
-from sprite_object import *
+import pygame as pg
+from collections import deque
+from settings import HALF_WIDTH, HEIGHT, WIDTH
+from sprite_object import AnimatedSprite
+from application.ports import GameContext
 
 
 class Weapon(AnimatedSprite):
-    def __init__(self, game, path=None, scale=0.4, animation_time=90):
+    def __init__(self, game: GameContext, path=None, scale=0.4, animation_time=90):
         path = path or game.theme.weapon_asset
         super().__init__(game=game, path=path, scale=scale, animation_time=animation_time)
         self.images = deque(

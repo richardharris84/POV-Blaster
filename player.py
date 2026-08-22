@@ -1,17 +1,24 @@
-from settings import *
 import pygame as pg
 import math
 import os
 import sys
+from settings import (HALF_HEIGHT, HALF_WIDTH, HEIGHT, LINUX_MOUSE_SENSITIVITY,
+                      MOUSE_BORDER_LEFT, MOUSE_BORDER_RIGHT, MOUSE_MAX_REL,
+                      MOUSE_SENSITIVITY, PLAYER_ANGLE, PLAYER_MAX_HEALTH,
+                      PLAYER_POS, PLAYER_ROT_SPEED, PLAYER_SIZE_SCALE,
+                      PLAYER_SPEED, WIDTH)
+from domain.health import Health
+from domain.movement import movement_delta
+from application.ports import GameContext
 
 
 class Player:
-    def __init__(self, game):
+    def __init__(self, game: GameContext):
         self.game = game
         self.x, self.y = PLAYER_POS
         self.angle = PLAYER_ANGLE
         self.shot = False
-        self.health = PLAYER_MAX_HEALTH
+        self.health_state = Health.full(PLAYER_MAX_HEALTH)
         self.rel = 0
         self.health_recovery_delay = 700
         self.time_prev = pg.time.get_ticks()
@@ -24,7 +31,7 @@ class Player:
 
     def recover_health(self):
         if self.check_health_recovery_delay() and self.health < PLAYER_MAX_HEALTH:
-            self.health = min(PLAYER_MAX_HEALTH, self.health + 1)
+            self.health_state.recover()
 
     def check_health_recovery_delay(self):
         time_now = pg.time.get_ticks()
@@ -38,10 +45,18 @@ class Player:
             self.game.set_state('game_over')
 
     def get_damage(self, damage):
-        self.health = max(0, self.health - max(0, damage))
+        self.health_state.damage(damage)
         self.game.object_renderer.player_damage()
         self.game.sound.player_pain.play()
         self.check_game_over()
+
+    @property
+    def health(self):
+        return self.health_state.current
+
+    @health.setter
+    def health(self, value):
+        self.health_state.current = max(0, min(self.health_state.maximum, value))
 
     def single_fire_event(self, event):
         if event.type == pg.MOUSEBUTTONDOWN:
@@ -51,36 +66,16 @@ class Player:
                 self.game.weapon.reloading = True
 
     def movement(self):
-        sin_a = math.sin(self.angle)
-        cos_a = math.cos(self.angle)
-        dx, dy = 0, 0
         speed = PLAYER_SPEED * self.game.delta_time
-        speed_sin = speed * sin_a
-        speed_cos = speed * cos_a
-
         keys = pg.key.get_pressed()
-        num_key_pressed = -1
-        if keys[pg.K_w]:
-            num_key_pressed += 1
-            dx += speed_cos
-            dy += speed_sin
-        if keys[pg.K_s]:
-            num_key_pressed += 1
-            dx += -speed_cos
-            dy += -speed_sin
-        if keys[pg.K_a]:
-            num_key_pressed += 1
-            dx += speed_sin
-            dy += -speed_cos
-        if keys[pg.K_d]:
-            num_key_pressed += 1
-            dx += -speed_sin
-            dy += speed_cos
-
-        # diag move correction
-        if num_key_pressed:
-            dx *= self.diag_move_corr
-            dy *= self.diag_move_corr
+        dx, dy = movement_delta(
+            self.angle,
+            speed,
+            keys[pg.K_w],
+            keys[pg.K_s],
+            keys[pg.K_a],
+            keys[pg.K_d],
+        )
 
         self.check_wall_collision(dx, dy)
 

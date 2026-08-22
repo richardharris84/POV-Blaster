@@ -254,7 +254,7 @@ Validation completed:
 - Editor diagnostics passed.
 - Fresh runtime output reported no `libpng` warnings.
 
-## Step 9. POC Features
+## Recommended architecture and migration steps for POV-Blaster.
 
 ### Prompt
 
@@ -598,3 +598,32 @@ Validation completed:
 - Candy Kingdom, Space, and Graveyard percent textures have distinct content from the DOOM/default texture.
 - Menu option 4 selects the `DOOM` theme successfully.
 - `git diff --check` passed.
+
+## Step 21. Architecture
+
+### Prompt
+
+> Recommended architecture and migration steps for POV-Blaster.
+>
+> Iteratively work on each item in `Recommendations.md`. You can choose the order of priority, but provide frequent progress updates about the current work.
+
+### Output
+
+Implemented and validated the local modular-monolith architecture migration:
+
+- Separated pure health, movement, combat, and game-state rules into `domain/` modules.
+- Added explicit typed ports for game context, rendering, assets, audio, and input.
+- Organized runtime ownership across `domain/`, `application/`, `infrastructure/`, `presentation/`, and `tools/`.
+- Moved image caching into per-game `AssetLoader` instances and removed the global image cache.
+- Added immutable render snapshots and deterministic seeded NPC layouts.
+- Added depth-buffer-backed sprite occlusion.
+- Added headless smoke tests, domain-boundary tests, CI configuration, and profiling support.
+- Replaced wildcard imports with explicit dependencies.
+- Checked off the completed architecture and migration items in `docs/Recommendations.md`.
+
+Validation completed:
+
+- Nine architecture, domain, cache, theme, and headless rendering tests passed.
+- Full Python compilation passed.
+- `git diff --check` passed.
+- Multiplayer services remain intentionally deferred until the local single-player engine is stable.

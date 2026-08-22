@@ -1,9 +1,15 @@
-from sprite_object import *
+import math
 from random import randint, random
+import pygame as pg
+from settings import (HALF_HEIGHT, HALF_WIDTH, MAX_DEPTH, RAY_EPSILON,
+                      WIDTH)
+from sprite_object import AnimatedSprite
+from domain.combat import Combatant
+from application.ports import GameContext
 
 
 class NPC(AnimatedSprite):
-    def __init__(self, game, path='sprites/npc/soldier/0.png', pos=(10.5, 5.5),
+    def __init__(self, game: GameContext, path='sprites/npc/soldier/0.png', pos=(10.5, 5.5),
                  scale=0.6, shift=0.38, animation_time=180):
         super().__init__(game, path, pos, scale, shift, animation_time)
         self.attack_images = self.get_images(self.path / 'attack')
@@ -15,9 +21,7 @@ class NPC(AnimatedSprite):
         self.attack_dist = randint(3, 6)
         self.speed = 0.03
         self.size = 20
-        self.health = 100
-        self.attack_damage = 10
-        self.accuracy = 0.15
+        self.combat = Combatant.create(100, 10, 0.15)
         self.alive = True
         self.pain = False
         self.ray_cast_value = False
@@ -53,8 +57,8 @@ class NPC(AnimatedSprite):
     def attack(self):
         if self.animation_trigger:
             self.game.sound.npc_shot.play()
-            if random() < self.accuracy:
-                self.game.player.get_damage(self.attack_damage)
+            if self.combat.attack_hits(random()):
+                self.game.player.get_damage(self.combat.attack_damage)
 
     def animate_death(self):
         if not self.alive:
@@ -74,13 +78,37 @@ class NPC(AnimatedSprite):
                 self.game.sound.npc_pain.play()
                 self.game.player.shot = False
                 self.pain = True
-                self.health -= self.game.weapon.damage
+                self.combat.take_damage(self.game.weapon.damage)
                 self.check_health()
 
     def check_health(self):
-        if self.health < 1:
+        if self.combat.defeated:
             self.alive = False
             self.game.sound.npc_death.play()
+
+    @property
+    def health(self):
+        return self.combat.health.current
+
+    @health.setter
+    def health(self, value):
+        self.combat.health.current = max(0, min(self.combat.health.maximum, value))
+
+    @property
+    def attack_damage(self):
+        return self.combat.attack_damage
+
+    @attack_damage.setter
+    def attack_damage(self, value):
+        self.combat.attack_damage = value
+
+    @property
+    def accuracy(self):
+        return self.combat.accuracy
+
+    @accuracy.setter
+    def accuracy(self, value):
+        self.combat.accuracy = value
 
     def run_logic(self):
         if self.alive:
