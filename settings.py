@@ -8,7 +8,8 @@ IMAGE_CACHE = {}
 
 
 def resolve_resource_path(path):
-	return BASE_DIR / path
+	path = Path(path)
+	return path if path.is_absolute() else BASE_DIR / path
 
 
 def create_fallback_surface(size=(64, 64), label='?', bg=(44, 44, 44), accent=(220, 220, 220)):

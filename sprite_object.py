@@ -6,12 +6,12 @@ from collections import deque
 
 
 class SpriteObject:
-    def __init__(self, game, path='resources/sprites/static_sprites/candlebra.png',
+    def __init__(self, game, path='sprites/static_sprites/candlebra.png',
                  pos=(10.5, 3.5), scale=0.7, shift=0.27):
         self.game = game
         self.player = game.player
         self.x, self.y = pos
-        self.image = load_image(path, fallback_label='S')
+        self.image = load_image(game.theme.path(path), fallback_label='S')
         self.IMAGE_WIDTH = self.image.get_width()
         self.IMAGE_HALF_WIDTH = self.image.get_width() // 2
         self.IMAGE_RATIO = self.IMAGE_WIDTH / self.image.get_height()
@@ -55,11 +55,11 @@ class SpriteObject:
 
 
 class AnimatedSprite(SpriteObject):
-    def __init__(self, game, path='resources/sprites/animated_sprites/green_light/0.png',
+    def __init__(self, game, path='sprites/animated_sprites/green_light/0.png',
                  pos=(11.5, 3.5), scale=0.8, shift=0.16, animation_time=120):
         super().__init__(game, path, pos, scale, shift)
         self.animation_time = animation_time
-        self.path = path.rsplit('/', 1)[0]
+        self.path = game.theme.path(path).parent
         self.images = self.get_images(self.path)
         self.animation_time_prev = pg.time.get_ticks()
         self.animation_trigger = False
@@ -101,5 +101,5 @@ class AnimatedSprite(SpriteObject):
             return deque([create_fallback_surface((64, 64), 'A')])
 
         for file_name in sorted(image_files, key=frame_sort_key):
-            images.append(load_image((resource_path / file_name).relative_to(BASE_DIR).as_posix(), fallback_label=file_name[0].upper()))
+            images.append(load_image(resource_path / file_name, fallback_label=file_name[0].upper()))
         return images

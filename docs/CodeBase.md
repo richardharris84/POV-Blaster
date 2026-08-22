@@ -53,7 +53,7 @@ Start the game with:
 py main.py
 ```
 
-Run this command from the repository root. Asset paths are relative paths such as `resources/textures/sky.png`, so launching from another working directory can cause file-not-found errors.
+Run this command from the repository root. Runtime assets are selected from a theme directory such as `resources/default/textures/sky.png`; the application resolves paths from the project or executable location.
 
 ## 3. Repository Layout
 
@@ -381,22 +381,22 @@ At every stage, keep the game launchable. A useful milestone is a static first-p
 The code expects these groups of files:
 
 ```text
-resources/textures/1.png ... 5.png
-resources/textures/sky.png
-resources/textures/blood_screen.png
-resources/textures/game_over.png
-resources/textures/win.png
-resources/textures/digits/0.png ... 10.png
-resources/sound/shotgun.wav
-resources/sound/npc_pain.wav
-resources/sound/npc_death.wav
-resources/sound/npc_attack.wav
-resources/sound/player_pain.wav
-resources/sound/theme.mp3
-resources/sprites/weapon/shotgun/0.png ...
-resources/sprites/npc/<type>/<animation>/*.png
-resources/sprites/animated_sprites/<object>/*.png
-resources/sprites/static_sprites/candlebra.png
+resources/default/textures/1.png ... 5.png
+resources/default/textures/sky.png
+resources/default/textures/blood_screen.png
+resources/default/textures/game_over.png
+resources/default/textures/win.png
+resources/default/textures/digits/0.png ... 10.png
+resources/default/sound/shotgun.wav
+resources/default/sound/npc_pain.wav
+resources/default/sound/npc_death.wav
+resources/default/sound/npc_attack.wav
+resources/default/sound/player_pain.wav
+resources/default/sound/theme.mp3
+resources/default/sprites/weapon/shotgun/0.png ...
+resources/default/sprites/npc/<type>/<animation>/*.png
+resources/default/sprites/animated_sprites/<object>/*.png
+resources/default/sprites/static_sprites/candlebra.png
 ```
 
 The asset loader calls `convert_alpha()`, so display mode must be initialized before images are loaded. This is why image loading occurs after `pg.display.set_mode` in `Game.__init__`.

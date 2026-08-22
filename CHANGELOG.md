@@ -436,3 +436,44 @@ Validation completed:
 - Fresh Python compilation passed for `main.py`, `player.py`, and `settings.py`.
 - The input changes were kept compatible with the existing display backend logic.
 - The game continued to run cleanly after the focus-handling update.
+
+## Step 13. Asset Caching and Fallback Graphics
+
+### Prompt
+
+> Implement image caching and fast loading fallback graphics.
+
+### Output
+
+Implemented image caching and fast-loading fallback graphics for missing or unavailable assets.
+
+Validation completed:
+
+- Cached images load without repeated disk reads.
+- Fallback graphics allow the game to continue when an image asset is unavailable.
+- Headless startup and rendering smoke tests passed.
+
+## Step 14. Theme Selection and Theme-Specific Asset Routing
+
+### Prompt
+
+> Implement Theme selection and theme-specific asset routing.
+>
+> - Move all current resources into a `resources/default` theme folder.
+> - Add a startup choice for Default or Exit.
+
+### Output
+
+Implemented the initial theme system:
+
+- Moved all existing assets under `resources/default`.
+- Added a startup menu with `Default [Soldier, Caco Demon, Cyber Demon]` and `Exit` choices.
+- Routed textures, sprites, weapon assets, NPC assets, and audio through the selected theme.
+- Added a theme abstraction so additional resource folders can be added later.
+
+Validation completed:
+
+- Python compilation passed for all theme-aware modules.
+- Default theme asset path resolution passed.
+- Startup menu selection and Exit behavior passed.
+- Headless startup smoke test passed.

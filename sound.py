@@ -1,12 +1,9 @@
 import pygame as pg
-from settings import RESOURCE_DIR
-
-
 class Sound:
     def __init__(self, game):
         self.game = game
         pg.mixer.init()
-        self.path = RESOURCE_DIR / 'sound'
+        self.path = game.theme.resource_dir / 'sound'
         self.shotgun = pg.mixer.Sound(self.path / 'shotgun.wav')
         self.npc_pain = pg.mixer.Sound(self.path / 'npc_pain.wav')
         self.npc_death = pg.mixer.Sound(self.path / 'npc_death.wav')

@@ -12,10 +12,12 @@ from object_handler import *
 from weapon import *
 from sound import *
 from pathfinding import *
+from theme import choose_theme
 
 
 class Game:
-    def __init__(self):
+    def __init__(self, theme):
+        self.theme = theme
         self.configure_display_backend()
         if os.environ.get('SDL_VIDEODRIVER') == 'x11':
             os.environ.setdefault('SDL_VIDEO_WINDOW_POS', '0,0')
@@ -159,5 +161,7 @@ class Game:
 
 
 if __name__ == '__main__':
-    game = Game()
-    game.run()
+    selected_theme = choose_theme()
+    if selected_theme is None:
+        sys.exit(0)
+    Game(selected_theme).run()
