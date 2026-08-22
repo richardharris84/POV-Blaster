@@ -376,6 +376,12 @@ Known platform limitation: PyInstaller produces native binaries for the host ope
 
 > Linux mouse is getting better, but still not correct. It still only goes right.
 
+#### Prompt 6: Increase Linux mouse sensitivity
+
+> Excellent. Increase the Linux mouse movement sensitivity just slightly.
+>
+> Set `LINUX_MOUSE_SENSITIVITY = 0.003`.
+
 ### Optimized Output Summary
 
 Diagnosed and fixed the Linux/WSL display and mouse-input issues:
@@ -394,6 +400,7 @@ Diagnosed and fixed the Linux/WSL display and mouse-input issues:
 - Replaced unreliable X11/VcXsrv `pygame.mouse.get_rel()` handling with signed `pygame.MOUSEMOTION` event deltas.
 - Added mouse-motion accumulation and forwarded signed motion events from `main.py` to `player.py`.
 - Disabled cursor warping on the X11/VcXsrv path while preserving mouse capture.
+- Set `LINUX_MOUSE_SENSITIVITY` to `0.003` while leaving other platform sensitivity unchanged.
 
 Validation completed:
 
@@ -403,6 +410,7 @@ Validation completed:
 - Rebuilt game window mapped at `1600x900+0+0` under VcXsrv.
 - Left and right mouse movement boundary tests passed.
 - Signed left/right mouse-motion event test passed.
+- Linux sensitivity value test passed.
 - Rebuilt Linux executable smoke tests passed with no stderr.
 - Full Python compilation and source diagnostics passed.
 
