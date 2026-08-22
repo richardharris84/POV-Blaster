@@ -721,3 +721,27 @@ Validation completed:
 - `build.py --help` exposes the macOS target.
 - The macOS host guard rejects `-m` on Windows.
 - `build.py` compilation and `git diff --check` passed.
+
+## Step 26. Map File
+
+### Prompt
+
+> Move `mini_map` out from `map.py` into a plain-text file type for storing predefined maps. Name the current `mini_map` example `mini_map_default`. The game should use this map by default at startup and whenever no other map is defined.
+>
+> Rename `mini_map_default.txt` to `1_mini_map_default.txt`.
+
+### Output
+
+- Moved the embedded map grid into `maps/1_mini_map_default.txt`.
+- Added plain-text map loading with `.` for empty cells and digits for wall texture IDs.
+- Set `1_mini_map_default` as the default map name.
+- Added fallback to the default map when a requested map is unavailable.
+- Added rectangular-grid and valid-cell validation.
+- Included predefined maps in PyInstaller builds and documented the map directory.
+
+Validation completed:
+
+- Default map loads as a 32x16 grid.
+- Missing-map fallback returns the default map.
+- Focused map tests and full regression tests passed.
+- Python compilation and `git diff --check` passed.

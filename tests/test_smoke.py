@@ -45,7 +45,7 @@ class MapAssetTests(unittest.TestCase):
     def test_default_map_is_loaded_from_plain_text(self):
         default_map = load_map()
 
-        self.assertEqual(DEFAULT_MAP_NAME, 'mini_map_default')
+        self.assertEqual(DEFAULT_MAP_NAME, '1_mini_map_default')
         self.assertEqual((len(default_map), len(default_map[0])), (32, 16))
         self.assertEqual(load_map('missing_map'), default_map)
 

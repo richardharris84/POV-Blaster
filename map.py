@@ -3,7 +3,7 @@ from pathlib import Path
 import pygame as pg
 
 MAPS_DIR = Path(__file__).resolve().parent / 'maps'
-DEFAULT_MAP_NAME = 'mini_map_default'
+DEFAULT_MAP_NAME = '1_mini_map_default'
 
 
 def load_map(map_name=DEFAULT_MAP_NAME):

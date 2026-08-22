@@ -134,7 +134,7 @@ The `build.py` script rejects builds requested from the wrong operating system, 
 main.py              Game startup, event loop, update, and draw lifecycle
 settings.py          Display, player, raycasting, and gameplay constants
 map.py               Grid map and wall texture IDs
-maps/                Predefined plain-text maps, including mini_map_default.txt
+maps/                Predefined plain-text maps, including 1_mini_map_default.txt
 player.py            Player movement, collision, health, and firing
 raycasting.py        Wall ray traversal and wall-column projection
 object_renderer.py   Background, walls, sprites, HUD, and end screens
