@@ -107,6 +107,11 @@ class Player:
         pg.draw.circle(self.game.screen, 'green', (self.x * 100, self.y * 100), 15)
 
     def mouse_control(self):
+        if not self.game.mouse_active:
+            self.rel = 0
+            self.mouse_motion = 0
+            return
+
         if os.environ.get('SDL_VIDEODRIVER') == 'x11':
             self.rel = self.mouse_motion
             self.mouse_motion = 0

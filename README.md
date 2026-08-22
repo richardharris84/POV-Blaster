@@ -94,6 +94,12 @@ Run on Linux or inside WSL:
 ./build.py -l
 ```
 
+Or from PowerShell, invoking WSL with the Windows project path explicitly mounted:
+
+```powershell
+wsl bash -lc 'cd /mnt/c/Users/Richard/Dropbox/Workspace/Code/Python/POV-Blaster && ./build.py -l'
+```
+
 This creates:
 
 ```text

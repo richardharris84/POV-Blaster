@@ -23,10 +23,12 @@ class Game:
         pg.mouse.set_visible(False)
         self.screen = pg.display.set_mode(RES)
         pg.display.set_caption('POV-Blaster')
+        self.mouse_active = False
+        self.mouse_center = (HALF_WIDTH, HALF_HEIGHT)
         if os.environ.get('SDL_VIDEODRIVER') != 'x11':
             pg.event.set_grab(True)
         if os.environ.get('SDL_VIDEODRIVER') != 'x11':
-            pg.mouse.set_pos((HALF_WIDTH, HALF_HEIGHT))
+            pg.mouse.set_pos(self.mouse_center)
         pg.event.pump()
         pg.mouse.get_rel()
         self.clock = pg.time.Clock()
@@ -36,7 +38,29 @@ class Game:
         self.global_trigger = False
         self.global_event = pg.USEREVENT + 0
         pg.time.set_timer(self.global_event, 40)
+        pg.event.set_allowed([
+            pg.QUIT,
+            pg.KEYDOWN,
+            pg.KEYUP,
+            pg.MOUSEMOTION,
+            pg.MOUSEBUTTONDOWN,
+            pg.MOUSEBUTTONUP,
+            pg.WINDOWFOCUSGAINED,
+            pg.WINDOWFOCUSLOST,
+            self.global_event,
+        ])
         self.new_game()
+
+    def activate_mouse(self):
+        if self.mouse_active:
+            return
+        self.mouse_active = True
+        if os.environ.get('SDL_VIDEODRIVER') != 'x11':
+            pg.event.set_grab(True)
+            pg.mouse.set_pos(self.mouse_center)
+        pg.mouse.set_visible(False)
+        pg.event.pump()
+        pg.mouse.get_rel()
 
     @staticmethod
     def configure_display_backend():
@@ -110,8 +134,17 @@ class Game:
                 sys.exit()
             elif event.type == self.global_event:
                 self.global_trigger = True
+            elif event.type == pg.WINDOWFOCUSLOST:
+                self.mouse_active = False
+                if os.environ.get('SDL_VIDEODRIVER') != 'x11':
+                    pg.event.set_grab(False)
+            elif event.type == pg.WINDOWFOCUSGAINED:
+                self.activate_mouse()
+            elif event.type in (pg.MOUSEBUTTONDOWN, pg.MOUSEBUTTONUP, pg.KEYDOWN):
+                self.activate_mouse()
             elif event.type == pg.MOUSEMOTION and self.state == 'playing':
-                self.player.add_mouse_motion(event.rel[0])
+                if self.mouse_active:
+                    self.player.add_mouse_motion(event.rel[0])
             if self.state == 'playing':
                 self.player.single_fire_event(event)
 
