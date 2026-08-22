@@ -267,17 +267,17 @@ Created the detailed POC comparison report in [POCFeatures.md](docs/POCFeatures.
 
 The report covers:
 
-- Theme selection and theme-specific asset routing.
-- Image caching, fallback graphics, and silent audio handling.
-- Mouse activation and Pygame event filtering.
-- Damage-based NPC scaling and themed enemy behavior.
-- Generated themed content and PowerShell asset tooling.
-- PyInstaller executable build support.
-- Documentation, planned web/multiplayer work, and production limitations.
-- Confirmed runtime/build packages: `pygame` and `PyInstaller`.
-- PowerShell/.NET `System.Drawing` tooling and Python standard-library usage.
-- Packages not confirmed as KidCopy dependencies, including Pillow, Flask, FastAPI, Requests, NumPy, and OpenGL.
-- Recommended architecture and migration steps for POV-Blaster.
+- ☐ Theme selection and theme-specific asset routing. ~~
+- ☐ Image caching, fallback graphics, and silent audio handling.
+- ☐ Mouse activation and Pygame event filtering. ~~
+- ⦸ Damage-based NPC scaling and themed enemy behavior.
+- ☐ Generated themed content and PowerShell asset tooling.
+- ☑ PyInstaller executable build support.
+- ⦸ Documentation, planned web/multiplayer work, and production limitations.
+- ☐ Confirmed runtime/build packages: `pygame` and `PyInstaller`.
+- ⦸ PowerShell/.NET `System.Drawing` tooling and Python standard-library usage.
+- ⦸ Packages not confirmed as KidCopy dependencies, including Pillow, Flask, FastAPI, Requests, NumPy, and OpenGL.
+- ☐ Recommended architecture and migration steps for POV-Blaster.
 
 Validation completed:
 
