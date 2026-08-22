@@ -23,8 +23,10 @@ class Game:
         pg.mouse.set_visible(False)
         self.screen = pg.display.set_mode(RES)
         pg.display.set_caption('POV-Blaster')
-        pg.event.set_grab(True)
-        pg.mouse.set_pos((HALF_WIDTH, HALF_HEIGHT))
+        if os.environ.get('SDL_VIDEODRIVER') != 'x11':
+            pg.event.set_grab(True)
+        if os.environ.get('SDL_VIDEODRIVER') != 'x11':
+            pg.mouse.set_pos((HALF_WIDTH, HALF_HEIGHT))
         pg.event.pump()
         pg.mouse.get_rel()
         self.clock = pg.time.Clock()
@@ -108,6 +110,8 @@ class Game:
                 sys.exit()
             elif event.type == self.global_event:
                 self.global_trigger = True
+            elif event.type == pg.MOUSEMOTION and self.state == 'playing':
+                self.player.add_mouse_motion(event.rel[0])
             if self.state == 'playing':
                 self.player.single_fire_event(event)
 

@@ -351,3 +351,59 @@ Validation completed:
 - README, build script, and requirements diagnostics passed.
 
 Known platform limitation: PyInstaller produces native binaries for the host operating system. A Linux build must be created on Linux or WSL, and a Windows build must be created on Windows. WSLg or VcXsrv must be running for a Linux graphical window to appear.
+
+## Step 11. Linux Mouse Fix
+
+### Prompt History
+
+#### Prompt 1: Linux game window not visible
+
+> The Linux build and executable are working, but the game can be heard while the gameplay window is not visible. Validate `POV-Blaster_lin` and investigate the WSL environment or window focus.
+
+#### Prompt 2: Check and repair WSL GUI support
+
+> The game is still not visible. Fix the WSL environment if necessary.
+
+#### Prompt 3: Use the installed VcXsrv server
+
+> VcXsrv is installed in Windows. Use it to resolve the WSL game-window visibility and focus issue.
+
+#### Prompt 4: Mouse sensitivity
+
+> The speed of mouse turning is better now, but the mouse is not reacting correctly and is stuck turning right. Fix it.
+
+#### Prompt 5: Final VcXsrv mouse-direction fix
+
+> Linux mouse is getting better, but still not correct. It still only goes right.
+
+### Optimized Output Summary
+
+Diagnosed and fixed the Linux/WSL display and mouse-input issues:
+
+- Confirmed WSL2 Ubuntu 22.04 and WSLg were installed and exposing Wayland, X11, and PulseAudio.
+- Confirmed VcXsrv was running and listening on Windows port `6000`.
+- Verified a minimal Pygame window through VcXsrv using SDL X11.
+- Found the game window was being mapped off-screen at approximately `1600x900+1928+91`.
+- Updated `main.py` to position X11/VcXsrv windows at `0,0`.
+- Added WSL default-gateway detection so the game can automatically select the reachable VcXsrv display instead of inheriting WSLg `DISPLAY=:0`.
+- Added native Wayland fallback when VcXsrv is unavailable.
+- Rebuilt `build/POV-Blaster_lin` through WSL after each display fix.
+- Found the mouse right-turn bug was caused by cursor recentering before reading relative motion; VcXsrv reported the synthetic cursor warp as rightward movement.
+- Updated `player.py` to read real relative motion before recentering and discard synthetic warp motion.
+- Reduced mouse sensitivity and removed the incorrect frame-time multiplier so turning is frame-rate independent.
+- Replaced unreliable X11/VcXsrv `pygame.mouse.get_rel()` handling with signed `pygame.MOUSEMOTION` event deltas.
+- Added mouse-motion accumulation and forwarded signed motion events from `main.py` to `player.py`.
+- Disabled cursor warping on the X11/VcXsrv path while preserving mouse capture.
+
+Validation completed:
+
+- Automatic WSL display selection reported `DISPLAY=172.19.64.1:0` and SDL `x11`.
+- Native Wayland source rendering passed under WSLg.
+- VcXsrv X11 connectivity passed with a minimal Pygame window.
+- Rebuilt game window mapped at `1600x900+0+0` under VcXsrv.
+- Left and right mouse movement boundary tests passed.
+- Signed left/right mouse-motion event test passed.
+- Rebuilt Linux executable smoke tests passed with no stderr.
+- Full Python compilation and source diagnostics passed.
+
+Known environment requirement: when using VcXsrv, it must be running with X11 access enabled. WSLg and VcXsrv are alternative display providers; the game now prefers reachable VcXsrv under WSL and falls back to Wayland when appropriate.

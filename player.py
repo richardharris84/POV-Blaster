@@ -1,6 +1,8 @@
 from settings import *
 import pygame as pg
 import math
+import os
+import sys
 
 
 class Player:
@@ -13,8 +15,12 @@ class Player:
         self.rel = 0
         self.health_recovery_delay = 700
         self.time_prev = pg.time.get_ticks()
-        # diagonal movement correction
+        self.mouse_motion = 0
         self.diag_move_corr = 1 / math.sqrt(2)
+
+    def add_mouse_motion(self, relative_x):
+        if abs(relative_x) <= 1000:
+            self.mouse_motion += relative_x
 
     def recover_health(self):
         if self.check_health_recovery_delay() and self.health < PLAYER_MAX_HEALTH:
@@ -101,12 +107,23 @@ class Player:
         pg.draw.circle(self.game.screen, 'green', (self.x * 100, self.y * 100), 15)
 
     def mouse_control(self):
+        if os.environ.get('SDL_VIDEODRIVER') == 'x11':
+            self.rel = self.mouse_motion
+            self.mouse_motion = 0
+        else:
+            self.rel = pg.mouse.get_rel()[0]
         mx, my = pg.mouse.get_pos()
-        if mx < MOUSE_BORDER_LEFT or mx > MOUSE_BORDER_RIGHT:
+        if os.environ.get('SDL_VIDEODRIVER') == 'x11':
+            self.rel = max(-MOUSE_MAX_REL, min(MOUSE_MAX_REL, self.rel))
+            sensitivity = LINUX_MOUSE_SENSITIVITY if sys.platform.startswith('linux') else MOUSE_SENSITIVITY
+            self.angle += self.rel * sensitivity
+            return
+        if mx <= MOUSE_BORDER_LEFT or mx >= MOUSE_BORDER_RIGHT:
             pg.mouse.set_pos([HALF_WIDTH, HALF_HEIGHT])
-        self.rel = pg.mouse.get_rel()[0]
+            pg.event.pump()
+            pg.mouse.get_rel()
         self.rel = max(-MOUSE_MAX_REL, min(MOUSE_MAX_REL, self.rel))
-        self.angle += self.rel * MOUSE_SENSITIVITY * self.game.delta_time
+        self.angle += self.rel * MOUSE_SENSITIVITY
 
     def update(self):
         self.movement()
