@@ -1,5 +1,7 @@
 import pygame as pg
 import sys
+import os
+import socket
 from settings import *
 from map import *
 from player import *
@@ -14,10 +16,17 @@ from pathfinding import *
 
 class Game:
     def __init__(self):
+        self.configure_display_backend()
+        if os.environ.get('SDL_VIDEODRIVER') == 'x11':
+            os.environ.setdefault('SDL_VIDEO_WINDOW_POS', '0,0')
         pg.init()
         pg.mouse.set_visible(False)
         self.screen = pg.display.set_mode(RES)
+        pg.display.set_caption('POV-Blaster')
         pg.event.set_grab(True)
+        pg.mouse.set_pos((HALF_WIDTH, HALF_HEIGHT))
+        pg.event.pump()
+        pg.mouse.get_rel()
         self.clock = pg.time.Clock()
         self.delta_time = 1
         self.state = 'playing'
@@ -26,6 +35,30 @@ class Game:
         self.global_event = pg.USEREVENT + 0
         pg.time.set_timer(self.global_event, 40)
         self.new_game()
+
+    @staticmethod
+    def configure_display_backend():
+        if not sys.platform.startswith('linux'):
+            return
+        if os.environ.get('SDL_VIDEODRIVER'):
+            return
+
+        if os.path.isfile('/proc/version') and 'microsoft' in open('/proc/version').read().lower():
+            try:
+                with open('/proc/net/route') as route_file:
+                    route = next(line for line in route_file if line.split()[1] == '00000000')
+                gateway = route.split()[2]
+                host = socket.inet_ntoa(bytes.fromhex(gateway)[::-1])
+                with socket.create_connection((host, 6000), timeout=0.2):
+                    os.environ['DISPLAY'] = f'{host}:0'
+                    os.environ['SDL_VIDEODRIVER'] = 'x11'
+                    os.environ.pop('WAYLAND_DISPLAY', None)
+                    return
+            except (OSError, StopIteration):
+                pass
+
+        if os.environ.get('WAYLAND_DISPLAY'):
+            os.environ['SDL_VIDEODRIVER'] = 'wayland'
 
     def new_game(self):
         self.state = 'playing'

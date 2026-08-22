@@ -10,6 +10,7 @@ The game uses a 2D grid map to produce a pseudo-3D view. It supports textured wa
 
 - [Controls](#controls)
 - [Requirements](#requirements)
+- [Running the Script](#running-the-script)
 - [Project Structure](#project-structure)
 - [How the Game Works](#how-the-game-works)
 - [Development Walkthrough](#development-walkthrough)
@@ -31,20 +32,75 @@ The game uses a 2D grid map to produce a pseudo-3D view. It supports textured wa
 - Pygame
 - A desktop environment with graphics and audio support
 
-Install the dependency from the project root:
+## Running the Script
+
+Run these commands from the project root so the runtime resource paths resolve correctly.
+
+### Windows
+
+Create and activate a virtual environment, install the dependencies, and run the script:
 
 ```powershell
 py -m venv .venv
 .\.venv\Scripts\Activate.ps1
 py -m pip install --upgrade pip
 py -m pip install -r requirements.txt
-```
-
-Run the game from the project root so the runtime resource paths resolve correctly:
-
-```powershell
 py main.py
 ```
+
+The game opens as a Windows desktop window. Press `Esc` to quit.
+
+### Linux
+
+Create and activate a virtual environment, install the dependencies, and run the script:
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+python3 -m pip install --upgrade pip
+python3 -m pip install -r requirements.txt
+python3 main.py
+```
+
+On WSL, the game needs a GUI provider. WSLg is supported automatically. If using VcXsrv, start VcXsrv with X11 access enabled, then run:
+
+```bash
+./build/POV-Blaster_lin
+```
+
+The Linux executable automatically detects a reachable VcXsrv display when running under WSL. If necessary, set `DISPLAY` manually to the Windows host display, for example `DISPLAY=172.19.64.1:0`.
+
+## Build Executables
+
+PyInstaller creates a native executable for the operating system where the build runs. Build Windows on Windows and Linux on Linux or WSL. Install the dependencies first using the instructions in [Running the Script](#running-the-script).
+
+### Windows build
+
+```powershell
+py build.py -w
+```
+
+This creates:
+
+```text
+build/POV-Blaster_win.exe
+```
+
+### Linux build
+
+Run on Linux or inside WSL:
+
+```bash
+./build.py -l
+```
+
+This creates:
+
+```text
+build/POV-Blaster_lin
+```
+
+The `build.py` script rejects a Linux build requested from Windows and rejects a Windows build requested from Linux, preventing incorrectly named non-native executables.
 
 ## Project Structure
 

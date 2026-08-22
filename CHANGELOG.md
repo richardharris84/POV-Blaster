@@ -232,7 +232,7 @@ The interactive game loop was not left running during validation because it is i
 
 ### Prompt
 
-> Perform a full review of our patch. Upon QA, the change seems to have broken solider death. Also, fix all the libpng warning messages in the Terminal.
+> Perform a full review of our patch.  Upon QA, the change seems to have broken solider death. Also, fix all the libpng warning messages in the Terminal.
 
 ### Output
 
@@ -253,3 +253,101 @@ Validation completed:
 - Full Python compilation passed.
 - Editor diagnostics passed.
 - Fresh runtime output reported no `libpng` warnings.
+
+## Step 9. POC Features
+
+### Prompt
+
+> Task:
+> - Compare my earlier Proof-of-Concept (`C:\Users\Richard\Dropbox\Workspace\Code\Python\DOOM-3D-FPS-Shooting-Game_KidCopy`) to `C:\Users\Richard\Dropbox\Workspace\Code\Python\DOOM-3D-FPS-Shooting-Game`. Create a report in docs called POCFeatures.md. Outline what the main changes I did to _KidCopy and what packages I installed to implement them.
+
+### Output
+
+Created the detailed POC comparison report in [POCFeatures.md](docs/POCFeatures.md).
+
+The report covers:
+
+- Theme selection and theme-specific asset routing.
+- Image caching, fallback graphics, and silent audio handling.
+- Mouse activation and Pygame event filtering.
+- Damage-based NPC scaling and themed enemy behavior.
+- Generated themed content and PowerShell asset tooling.
+- PyInstaller executable build support.
+- Documentation, planned web/multiplayer work, and production limitations.
+- Confirmed runtime/build packages: `pygame` and `PyInstaller`.
+- PowerShell/.NET `System.Drawing` tooling and Python standard-library usage.
+- Packages not confirmed as KidCopy dependencies, including Pillow, Flask, FastAPI, Requests, NumPy, and OpenGL.
+- Recommended architecture and migration steps for POV-Blaster.
+
+Validation completed:
+
+- Markdown diagnostics reported no errors.
+- Report references were checked and misleading workspace-relative links were removed.
+- No source code was changed in POV-Blaster for this documentation task.
+
+## Step 10. Executable
+
+### Prompt History
+
+#### Prompt 1: Add PyInstaller support
+
+> Objective: Implement PyInstaller executable build support.
+>
+> Task:
+> - Install PyInstaller.
+> - Create `build.py`.
+> - Create a `build` folder.
+> - Make `build.py -w` create a Windows executable ending in `_win`.
+> - Make `build.py -l` create a Linux executable ending in `_lin`.
+
+#### Prompt 2: Build the Linux executable through WSL
+
+> Use WSL in Terminal to run `build.py -l` and generate the Linux build into the `build` folder.
+
+#### Prompt 3: Validate the Linux executable
+
+> Validate `POV-Blaster_lin`. Audio works when running it in WSL, but the gameplay window does not become focused.
+
+#### Prompt 4: Diagnose the WSL display environment
+
+> The game is still not visible; fix the WSL environment if necessary.
+
+#### Prompt 5: Use VcXsrv
+
+> VcXsrv is installed in Windows. Use it to resolve the WSL game-window visibility and focus problem.
+
+#### Prompt 6: Document Windows and Linux workflows
+
+> Accurately document in `README.md` how to build and run POV-Blaster on Windows and how to do the same within Linux.
+
+### Optimized Output Summary
+
+Implemented and documented cross-platform executable support:
+
+- Added [build.py](build.py) using PyInstaller.
+- Added `pygame` and `pyinstaller` to [requirements.txt](requirements.txt).
+- Bundled the complete `resources/` directory into each executable.
+- Added `-w`/`--windows` and `-l`/`--linux` command-line targets.
+- Generated `build/POV-Blaster_win.exe` on Windows.
+- Generated a native Linux ELF executable at `build/POV-Blaster_lin` through WSL Ubuntu 22.04.
+- Added native-platform guards so Windows builds run on Windows and Linux builds run on Linux/WSL.
+- Added a Python shebang, Unix line endings, and executable permissions so WSL can run `./build.py -l` directly.
+- Added WSL display detection that discovers the default gateway, tests VcXsrv on port `6000`, selects SDL X11, and clears inherited Wayland settings when VcXsrv is available.
+- Added window positioning at `0,0` for X11/VcXsrv so the game is not created off-screen.
+- Confirmed the previous VcXsrv issue: the game window was mapped at approximately `1600x900+1928+91`; the corrected window maps at `1600x900+0+0`.
+- Updated `README.md` with separate Windows and Linux run/build instructions, expected artifact names, WSLg/VcXsrv guidance, and the native-build limitation.
+
+Validation completed:
+
+- PyInstaller 6.22.2 installed and verified on Windows and WSL.
+- Windows build completed successfully.
+- Linux build completed successfully through WSL.
+- Linux artifact verified as an executable x86-64 ELF binary.
+- Headless Pygame startup and frame rendering passed.
+- Native WSLg Wayland source rendering passed.
+- VcXsrv X11 connectivity passed with a minimal Pygame window.
+- POV-Blaster source selected `DISPLAY=172.19.64.1:0` and SDL `x11` automatically under WSL.
+- Rebuilt Linux executable mapped as a visible X11 window at `0,0` under VcXsrv.
+- README, build script, and requirements diagnostics passed.
+
+Known platform limitation: PyInstaller produces native binaries for the host operating system. A Linux build must be created on Linux or WSL, and a Windows build must be created on Windows. WSLg or VcXsrv must be running for a Linux graphical window to appear.
