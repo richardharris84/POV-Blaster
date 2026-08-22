@@ -4,6 +4,20 @@ POV-Blaster is a Python and Pygame first-person shooter built with a classic ray
 
 The game uses a 2D grid map to produce a pseudo-3D view. It supports textured walls, animated scenery, mouse-look, WASD movement, a shotgun, enemy line of sight, BFS pathfinding, health, damage, victory, and game-over states.
 
+![POV-Blaster gameplay](screenshots/gameplay_1.gif)
+
+## Table of Contents
+
+- [Controls](#controls)
+- [Requirements](#requirements)
+- [Project Structure](#project-structure)
+- [How the Game Works](#how-the-game-works)
+- [Development Walkthrough](#development-walkthrough)
+- [Assets](#assets)
+- [Development Notes](#development-notes)
+- [See Also](#see-also)
+- [Project Lineage](#project-lineage)
+
 ## Controls
 
 - `W`, `A`, `S`, `D`: move and strafe
@@ -72,6 +86,94 @@ Soldier, Cacodemon, and Cyberdemon enemies have different health, speed, attack 
 ### Combat and game states
 
 The shotgun fires from the center of the screen and applies damage to a visible enemy in the shot path. Player health recovers over time. Defeating all living enemies produces a victory state; health reaching zero produces a game-over state.
+
+## Development Walkthrough
+
+The following stages describe how POV-Blaster grows from a 2D map into a playable raycast shooter. The demonstrations are included for visual reference and represent the current project style and feature set.
+
+### Player Movement
+
+The player moves forward, backward, and sideways relative to the current viewing angle. Wall collision checks keep the player inside walkable cells, while diagonal movement correction keeps combined WASD input from increasing movement speed. Mouse-look changes the viewing angle and recenters the cursor when it approaches the configured screen border.
+
+![Player movement demonstration](screenshots/player_1.gif)
+
+### Raycasting Algorithm
+
+The camera field of view is the interval from the player angle minus half the FOV to the player angle plus half the FOV. POV-Blaster casts one ray for each configured screen column across that interval. Each ray stops at the first wall cell, providing the depth used to calculate the height of its projected vertical wall strip.
+
+![Raycasting grid traversal](screenshots/raycast_1.gif)
+
+![Raycast projection](screenshots/raycast_2.gif)
+
+Distance correction removes the fishbowl effect that would otherwise make walls at the sides of the view appear distorted. Distance-based shading is a future rendering opportunity; the current renderer uses textured walls, a sky background, and a floor color.
+
+![Raycast scene shading reference](screenshots/raycast_3.gif)
+
+![Textured raycast environment](screenshots/raycast_4.gif)
+
+### Static and Animated Sprites
+
+Scenery is added as transparent 2D billboard images positioned in the map. Animated sprites are sequences of images displayed over time. This supports environmental details such as lights and decorations without requiring a full polygonal 3D engine.
+
+<img src="screenshots/assets_1.png" alt="Static sprite reference" width="126">
+
+<img src="screenshots/assets_2.gif" alt="Animated sprite reference" width="126">
+
+<img src="screenshots/assets_3.gif" alt="Additional animated sprite reference" width="126">
+
+![Decorated game environment](screenshots/gameplay_2.gif)
+
+### Weapon and Shooting Animation
+
+The shotgun is a foreground sprite animated from a sequence of recoil frames. Left-click starts the firing sound and animation, and the reload lockout prevents another shot until the animation completes. The current weapon uses a center-screen hitscan interaction with visible enemies.
+
+![Shotgun firing animation](screenshots/weapon_1.gif)
+
+### Player-Enemy Interaction and Pathfinding
+
+Enemies first use line of sight to detect the player. A direct movement approach would fail when a wall blocks the straight-line route, so POV-Blaster uses breadth-first search over walkable map cells to find a route around obstacles. NPC occupancy is considered when enemies select their next cell.
+
+![Direct enemy pursuit reference](screenshots/player_enemy_1.gif)
+
+![BFS pathfinding reference](screenshots/player_enemy_2.gif)
+
+![Multiple-enemy pursuit reference](screenshots/player_enemy_3.gif)
+
+The current implementation is intentionally simple. Future improvements should schedule pathfinding work, avoid stale cache results, prevent diagonal corner cutting, and separate navigation rules from NPC rendering and combat.
+
+### Enemies
+
+POV-Blaster includes three enemy profiles. Each profile uses idle, walk, attack, pain, and death animations and has its own health, speed, attack range, damage, and accuracy values.
+
+#### Soldier
+
+![Soldier idle and combat reference](screenshots/soldier_1.gif)
+
+![Soldier movement reference](screenshots/soldier_2.gif)
+
+![Soldier attack reference](screenshots/soldier_3.gif)
+
+#### Cacodemon
+
+![Cacodemon idle and combat reference](screenshots/cacodemon_1.gif)
+
+![Cacodemon movement reference](screenshots/cacodemon_2.gif)
+
+![Cacodemon attack reference](screenshots/cacodemon_3.gif)
+
+#### Cyberdemon
+
+![Cyberdemon idle and combat reference](screenshots/cyberdemon_1.gif)
+
+![Cyberdemon movement reference](screenshots/cyberdemon_2.gif)
+
+![Cyberdemon attack reference](screenshots/cyberdemon_3.gif)
+
+### Final Gameplay
+
+The complete gameplay loop combines movement, mouse-look, raycast rendering, textured walls, animated scenery, enemy detection and navigation, shotgun combat, health and damage feedback, sound effects, and victory/game-over transitions.
+
+![POV-Blaster final gameplay](screenshots/gameplay_1.gif)
 
 ## Assets
 
