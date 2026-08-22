@@ -447,6 +447,12 @@ Validation completed:
 
 Implemented image caching and fast-loading fallback graphics for missing or unavailable assets.
 
+Current branch state (post-branch correction):
+
+- `main` is the active integration branch and includes the recent Step 13 onward work through commit `99cc77a` (`Minor content change`).
+- `develop` is intentionally pinned to the graphics rollback baseline at commit `fe2f064` (`Graphics Upgrade Rollback`).
+- The former `develop` tip was preserved as safety branch `backup/develop-2026-08-22` before branch pointers were adjusted.
+
 Validation completed:
 
 - Cached images load without repeated disk reads.
@@ -561,8 +567,34 @@ Validation completed:
 
 Re-applied the original KidCopy CandyKingdom asset set to `resources/candy_kingdom`, removing the procedurally generated replacement artwork. Updated the asset validator so imported artwork is not modified during read-only validation; frame repairs now require the explicit `-RepairFrames` option.
 
+- Repair mode now also preserves the restored Candy Kingdom artwork; it reports its imported frame issues without replacing those assets. Procedural repairs remain available for the generated themes.
+
 Validation completed:
 
 - Candy Kingdom assets match the specified source files byte-for-byte.
 - Candy Kingdom startup and rendering passed.
 - Read-only animation validation completed without modifying artwork.
+
+## Step 20. Health Percent
+
+### Prompt
+
+> Fix `10.png` within `textures/digits` of the new themes. That is meant to be a `%`.
+>
+> In the startup menu, rename `Default` to `DOOM` and put it in the fourth position.
+>
+> The `10.png` texture should match its theme, not be a copy from Default.
+
+### Output
+
+- Fixed the health suffix texture so `10.png` renders as `%` in Candy Kingdom, Space, and Graveyard.
+- Generated theme-specific percent textures using each theme's accent color instead of copying the DOOM/default texture.
+- Improved the percent texture proportions and vertical alignment so the health indicator reads as a cohesive `100%` display.
+- Renamed the startup menu's `Default` theme to `DOOM` and moved it to menu position 4.
+
+Validation completed:
+
+- All theme percent textures are 64x64.
+- Candy Kingdom, Space, and Graveyard percent textures have distinct content from the DOOM/default texture.
+- Menu option 4 selects the `DOOM` theme successfully.
+- `git diff --check` passed.

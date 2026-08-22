@@ -23,14 +23,6 @@ class Theme:
 
 THEMES = (
     Theme(
-        'default',
-        'Default',
-        ('Soldier', 'Caco Demon', 'Cyber Demon'),
-        ('soldier', 'caco_demon', 'cyber_demon'),
-        'sprites/weapon/shotgun/0.png',
-        'shotgun.wav',
-    ),
-    Theme(
         'candy_kingdom',
         'Candy Kingdom',
         ('Marshmallow Man', 'Springfield Doughnut', 'Gingerbread Golem'),
@@ -49,6 +41,14 @@ THEMES = (
         'Graveyard',
         ('Ghost', 'Vampire', 'Werewolf'),
         ('ghost', 'vampire', 'werewolf'),
+    ),
+    Theme(
+        'default',
+        'DOOM',
+        ('Soldier', 'Caco Demon', 'Cyber Demon'),
+        ('soldier', 'caco_demon', 'cyber_demon'),
+        'sprites/weapon/shotgun/0.png',
+        'shotgun.wav',
     ),
 )
 

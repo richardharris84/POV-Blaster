@@ -1,7 +1,8 @@
 param(
     [string]$ProjectRoot = $PSScriptRoot,
     [switch]$ValidateOnly,
-    [switch]$RepairFrames
+    [switch]$RepairFrames,
+    [switch]$RegenerateThemeDigits
 )
 
 Add-Type -AssemblyName System.Drawing
@@ -72,15 +73,34 @@ function New-EnemyFrame($Enemy, [string]$Animation, [int]$Frame, [string]$Path) 
     Save-Frame $canvas $Path
 }
 
-$animationMinimums = @{ idle = 1; attack = 2; pain = 1; walk = 4; death = 6 }
+function New-PercentTexture($Theme, [string]$Path) {
+    $canvas = New-Canvas 64
+    $g = $canvas.Graphics
+    $font = [Drawing.Font]::new('Arial', 54, [Drawing.FontStyle]::Bold)
+    $shadow = New-Object Drawing.SolidBrush([Drawing.Color]::FromArgb(120, 20, 20, 20))
+    $accent = New-Object Drawing.SolidBrush($Theme.Accent)
+    $glyphSize = $g.MeasureString('%', $font)
+    $glyphX = [int]((64 - $glyphSize.Width) / 2)
+    $glyphY = [int]((64 - $glyphSize.Height) / 2 - 3)
+    $g.DrawString('%', $font, $shadow, $glyphX + 2, $glyphY + 2)
+    $g.DrawString('%', $font, $accent, $glyphX, $glyphY)
+    $font.Dispose()
+    $shadow.Dispose()
+    $accent.Dispose()
+    Save-Frame $canvas $Path
+}
 
-function Repair-AnimationFrames($Enemy, [string]$Animation, [string]$AnimationRoot, [int]$MinimumFrames) {
+$animationMinimums = @{ idle = 1; attack = 2; pain = 2; walk = 4; death = 6 }
+
+function Repair-AnimationFrames($Enemy, [string]$Animation, [string]$AnimationRoot, [int]$MinimumFrames, [bool]$AllowRepair) {
     New-Item $AnimationRoot -ItemType Directory -Force | Out-Null
     for ($frame = 0; $frame -lt $MinimumFrames; $frame++) {
         $framePath = Join-Path $AnimationRoot "$frame.png"
-        if (-not (Test-Path $framePath) -and $RepairFrames) {
+        if (-not (Test-Path $framePath) -and $AllowRepair) {
             New-EnemyFrame $Enemy $Animation $frame $framePath
             Write-Host "Generated missing $Animation frame: $framePath"
+        } elseif (-not (Test-Path $framePath)) {
+            Write-Host "Missing $Animation frame detected: $framePath"
         }
     }
 
@@ -89,7 +109,7 @@ function Repair-AnimationFrames($Enemy, [string]$Animation, [string]$AnimationRo
         $hash = (Get-FileHash $frameFile.FullName -Algorithm SHA256).Hash
         if ($hashes.ContainsKey($hash)) {
             $match = [regex]::Match($frameFile.BaseName, '\d+$')
-            if ($match.Success -and $RepairFrames) {
+            if ($match.Success -and $AllowRepair) {
                 $frameNumber = [int]$match.Value
                 New-EnemyFrame $Enemy $Animation $frameNumber $frameFile.FullName
                 Write-Host "Regenerated duplicate $Animation frame: $($frameFile.FullName)"
@@ -102,7 +122,16 @@ function Repair-AnimationFrames($Enemy, [string]$Animation, [string]$AnimationRo
     }
 }
 
-if (-not $ValidateOnly) {
+if ($RegenerateThemeDigits) {
+    foreach ($theme in $themeSpecs) {
+        $themeRoot = Join-Path $themesRoot $theme.Key
+        New-Item (Join-Path $themeRoot 'textures/digits') -ItemType Directory -Force | Out-Null
+        New-PercentTexture $theme (Join-Path $themeRoot 'textures/digits/10.png')
+        Write-Host "Generated themed percent texture: $themeRoot/textures/digits/10.png"
+    }
+}
+
+if (-not $ValidateOnly -and -not $RegenerateThemeDigits) {
 foreach ($theme in $themeSpecs) {
     $themeRoot = Join-Path $themesRoot $theme.Key
     Copy-Item (Join-Path $defaultRoot 'sound') (Join-Path $themeRoot 'sound') -Recurse -Force
@@ -111,6 +140,7 @@ foreach ($theme in $themeSpecs) {
     Copy-Item (Join-Path $defaultRoot 'sprites/weapon') (Join-Path $themeRoot 'sprites/weapon') -Recurse -Force
     New-Item (Join-Path $themeRoot 'textures/digits') -ItemType Directory -Force | Out-Null
     foreach ($file in Get-ChildItem (Join-Path $defaultRoot 'textures/digits')) { Copy-Item $file.FullName (Join-Path $themeRoot 'textures/digits') -Force }
+    New-PercentTexture $theme (Join-Path $themeRoot 'textures/digits/10.png')
     New-Item (Join-Path $themeRoot 'textures') -ItemType Directory -Force | Out-Null
     foreach ($name in @('blood_screen.png', 'game_over.png', 'win.png')) { Copy-Item (Join-Path $defaultRoot "textures/$name") (Join-Path $themeRoot 'textures') -Force }
 
@@ -137,7 +167,8 @@ foreach ($theme in $themeSpecs) {
     foreach ($enemy in $theme.Enemies) {
         foreach ($animation in $animationMinimums.Keys) {
             $animationRoot = Join-Path $themesRoot "$($theme.Key)/sprites/npc/$($enemy.Name)/$animation"
-            Repair-AnimationFrames $enemy $animation $animationRoot $animationMinimums[$animation]
+                $allowRepair = $RepairFrames -and $theme.Key -ne 'candy_kingdom'
+                Repair-AnimationFrames $enemy $animation $animationRoot $animationMinimums[$animation] $allowRepair
         }
     }
 }
