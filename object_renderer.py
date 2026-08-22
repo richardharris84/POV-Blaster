@@ -51,8 +51,7 @@ class ObjectRenderer:
 
     @staticmethod
     def get_texture(path, res=(TEXTURE_SIZE, TEXTURE_SIZE)):
-        texture = pg.image.load(resolve_resource_path(path)).convert_alpha()
-        return pg.transform.scale(texture, res)
+        return load_image(path, size=res, alpha=True, fallback_label=Path(path).stem[:1].upper())
 
     def load_wall_textures(self):
         return {

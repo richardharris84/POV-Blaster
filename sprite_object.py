@@ -11,7 +11,7 @@ class SpriteObject:
         self.game = game
         self.player = game.player
         self.x, self.y = pos
-        self.image = pg.image.load(resolve_resource_path(path)).convert_alpha()
+        self.image = load_image(path, fallback_label='S')
         self.IMAGE_WIDTH = self.image.get_width()
         self.IMAGE_HALF_WIDTH = self.image.get_width() // 2
         self.IMAGE_RATIO = self.IMAGE_WIDTH / self.image.get_height()
@@ -84,6 +84,9 @@ class AnimatedSprite(SpriteObject):
     def get_images(self, path):
         images = deque()
         resource_path = resolve_resource_path(path)
+        if not resource_path.exists():
+            return deque([create_fallback_surface((64, 64), 'A')])
+
         image_files = [
             file_name for file_name in os.listdir(resource_path)
             if os.path.isfile(os.path.join(resource_path, file_name))
@@ -94,6 +97,9 @@ class AnimatedSprite(SpriteObject):
             match = re.search(r'(\d+)$', stem)
             return int(match.group(1)) if match else 0, stem
 
+        if not image_files:
+            return deque([create_fallback_surface((64, 64), 'A')])
+
         for file_name in sorted(image_files, key=frame_sort_key):
-            images.append(pg.image.load(resource_path / file_name).convert_alpha())
+            images.append(load_image((resource_path / file_name).relative_to(BASE_DIR).as_posix(), fallback_label=file_name[0].upper()))
         return images

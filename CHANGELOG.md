@@ -267,14 +267,14 @@ Created the detailed POC comparison report in [POCFeatures.md](docs/POCFeatures.
 
 The report covers:
 
-- ☐ Theme selection and theme-specific asset routing. ~~
-- ☐ Image caching, fallback graphics, and silent audio handling.
-- ☐ Mouse activation and Pygame event filtering. ~~
-- ⦸ Damage-based NPC scaling and themed enemy behavior.
-- ☐ Generated themed content and PowerShell asset tooling.
+- ☑ Confirmed runtime/build packages: `pygame` and `PyInstaller`.
 - ☑ PyInstaller executable build support.
+- ☑ Mouse activation and Pygame event filtering. 
+- ☑ Image caching, fallback graphics, and silent audio handling.
+- ☐ Theme selection and theme-specific asset routing. 
+- ☐ Generatee themed content and asset tooling.
+- ⦸ Damage-based NPC scaling and themed enemy behavior.
 - ⦸ Documentation, planned web/multiplayer work, and production limitations.
-- ☐ Confirmed runtime/build packages: `pygame` and `PyInstaller`.
 - ⦸ PowerShell/.NET `System.Drawing` tooling and Python standard-library usage.
 - ⦸ Packages not confirmed as KidCopy dependencies, including Pillow, Flask, FastAPI, Requests, NumPy, and OpenGL.
 - ☐ Recommended architecture and migration steps for POV-Blaster.
@@ -415,3 +415,24 @@ Validation completed:
 - Full Python compilation and source diagnostics passed.
 
 Known environment requirement: when using VcXsrv, it must be running with X11 access enabled. WSLg and VcXsrv are alternative display providers; the game now prefers reachable VcXsrv under WSL and falls back to Wayland when appropriate.
+
+## Step 12. Game Window Focus
+
+### Prompt
+
+> Implement Mouse activation and Pygame event filtering.
+
+### Output
+
+Implemented mouse activation and event filtering for the active gameplay window:
+
+- Added a mouse-activation gate so input is only processed after the game window is truly active.
+- Ignored stale motion and startup noise before activation.
+- Restored capture and re-centering when the window regains focus.
+- Kept the Linux/WSL and Windows input paths compatible with the existing platform-specific handling.
+
+Validation completed:
+
+- Fresh Python compilation passed for `main.py`, `player.py`, and `settings.py`.
+- The input changes were kept compatible with the existing display backend logic.
+- The game continued to run cleanly after the focus-handling update.
