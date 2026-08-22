@@ -97,7 +97,7 @@ Run on Linux or inside WSL:
 Or from PowerShell, invoking WSL with the Windows project path explicitly mounted:
 
 ```powershell
-wsl bash -lc 'cd /mnt/c/Users/Richard/Dropbox/Workspace/Code/Python/POV-Blaster && ./build.py -l'
+wsl bash -lc "cd /mnt/c/Users/Richard/Dropbox/Workspace/Code/Python/POV-Blaster && ./build.py -l"
 ```
 
 This creates:
