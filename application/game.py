@@ -22,8 +22,9 @@ from weapon import Weapon
 
 
 class Game:
-    def __init__(self, theme, seed=None):
+    def __init__(self, theme, player_name='Player', seed=None):
         self.theme = theme
+        self.player_name = player_name
         self.random = random.Random(seed)
         self.configure_display_backend()
         if os.environ.get('SDL_VIDEODRIVER') == 'x11':
@@ -128,9 +129,11 @@ class Game:
     def check_events(self):
         self.global_trigger = False
         for event in self.input.poll():
-            if event.type == pg.QUIT or (event.type == pg.KEYDOWN and event.key == pg.K_ESCAPE):
+            if event.type == pg.QUIT:
                 pg.quit()
                 sys.exit()
+            elif event.type == pg.KEYDOWN and event.key == pg.K_ESCAPE:
+                return True
             elif event.type == self.global_event:
                 self.global_trigger = True
             elif event.type == pg.WINDOWFOCUSLOST:
@@ -146,10 +149,19 @@ class Game:
                     self.player.add_mouse_motion(event.rel[0])
             if self.game_state.name == 'playing':
                 self.player.single_fire_event(event)
+        return False
+
+    def close(self):
+        pg.event.set_grab(False)
+        pg.mouse.set_visible(True)
+        pg.mixer.music.stop()
+        pg.quit()
 
     def run(self):
         while True:
-            self.check_events()
+            if self.check_events():
+                self.close()
+                return
             self.delta_time = min(self.clock.tick(FPS), MAX_DELTA_TIME)
             self.update()
             self.draw()

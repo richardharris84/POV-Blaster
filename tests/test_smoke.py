@@ -8,7 +8,7 @@ os.environ.setdefault('SDL_AUDIODRIVER', 'dummy')
 
 import pygame as pg
 
-from main import Game
+from main import Game, choose_player_name
 from theme import THEMES, choose_theme
 from domain.health import Health
 from domain.game_state import GameState
@@ -90,6 +90,11 @@ class AssetCacheTests(unittest.TestCase):
 
 
 class ThemeSelectionTests(unittest.TestCase):
+    def test_player_name_is_requested_before_theme_selection(self):
+        choices = iter(['', 'Alice'])
+
+        self.assertEqual(choose_player_name(lambda prompt: next(choices)), 'Alice')
+
     def test_doom_is_menu_option_four(self):
         choices = iter(['4'])
         selected = choose_theme(lambda prompt: next(choices), lambda message: None)
@@ -99,9 +104,19 @@ class ThemeSelectionTests(unittest.TestCase):
 
 
 class HeadlessSmokeTests(unittest.TestCase):
-    def test_game_initializes_and_renders_one_frame(self):
+    def test_escape_requests_startup_menu(self):
         game = Game(THEMES[3])
         try:
+            pg.event.post(pg.event.Event(pg.KEYDOWN, key=pg.K_ESCAPE))
+
+            self.assertTrue(game.check_events())
+        finally:
+            game.close()
+
+    def test_game_initializes_and_renders_one_frame(self):
+        game = Game(THEMES[3], player_name='Alice')
+        try:
+            self.assertEqual(game.player_name, 'Alice')
             game.check_events()
             game.update()
             game.draw()

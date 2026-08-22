@@ -47,6 +47,7 @@ class Renderer(Protocol):
 
 
 class GameContext(Protocol):
+    player_name: str
     theme: Any
     screen: pg.Surface
     map: Any

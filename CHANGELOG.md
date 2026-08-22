@@ -627,3 +627,23 @@ Validation completed:
 - Full Python compilation passed.
 - `git diff --check` passed.
 - Multiplayer services remain intentionally deferred until the local single-player engine is stable.
+
+## Step 22. Exit
+
+### Prompt
+
+> When the user presses the `Esc` key, bring them back to the startup menu.
+
+### Output
+
+- Changed the in-game `Esc` behavior from process exit to a clean return to the startup menu.
+- Added a repeatable launcher flow so the user can select another theme after leaving a game.
+- Preserved the window-close behavior for exiting the application.
+- Added cleanup for mouse capture, cursor visibility, music playback, and Pygame state when returning to the menu.
+
+Validation completed:
+
+- Escape menu-return regression test passed.
+- Full test suite passed with 10 tests.
+- Python compilation passed.
+- `git diff --check` passed.
