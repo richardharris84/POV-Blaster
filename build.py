@@ -57,6 +57,9 @@ def build(target):
     resources = PROJECT_ROOT / 'resources'
     if not resources.is_dir():
         raise FileNotFoundError(f'Resource directory not found: {resources}')
+    maps = PROJECT_ROOT / 'maps'
+    if not maps.is_dir():
+        raise FileNotFoundError(f'Map directory not found: {maps}')
 
     BUILD_DIR.mkdir(exist_ok=True)
     target_names = {
@@ -82,6 +85,7 @@ def build(target):
         '--workpath', str(WORK_DIR),
         '--specpath', str(SPEC_DIR),
         '--add-data', f'{resources}{separator}resources',
+        '--add-data', f'{maps}{separator}maps',
     ])
 
     if target == 'windows':

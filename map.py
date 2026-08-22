@@ -1,46 +1,36 @@
+from pathlib import Path
+
 import pygame as pg
 
-_ = False
-mini_map = [
-    [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
-    [1, _, _, _, _, _, _, _, _, _, _, _, _, _, _, 1],
-    [1, _, _, 3, 3, 3, 3, _, _, _, 2, 2, 2, _, _, 1],
-    [1, _, _, _, _, _, 4, _, _, _, _, _, 2, _, _, 1],
-    [1, _, _, _, _, _, 4, _, _, _, _, _, 2, _, _, 1],
-    [1, _, _, 3, 3, 3, 3, _, _, _, _, _, _, _, _, 1],
-    [1, _, _, _, _, _, _, _, _, _, _, _, _, _, _, 1],
-    [1, _, _, _, 4, _, _, _, 4, _, _, _, _, _, _, 1],
-    [1, 1, 1, 3, 1, 3, 1, 1, 1, 3, _, _, 3, 1, 1, 1],
-    [1, 1, 1, 1, 1, 1, 1, 1, 1, 3, _, _, 3, 1, 1, 1],
-    [1, 1, 1, 1, 1, 1, 1, 1, 1, 3, _, _, 3, 1, 1, 1],
-    [1, 1, 3, 1, 1, 1, 1, 1, 1, 3, _, _, 3, 1, 1, 1],
-    [1, 4, _, _, _, _, _, _, _, _, _, _, _, _, _, 1],
-    [3, _, _, _, _, _, _, _, _, _, _, _, _, _, _, 1],
-    [1, _, _, _, _, _, _, _, _, _, _, _, _, _, _, 1],
-    [1, _, _, 2, _, _, _, _, _, 3, 4, _, 4, 3, _, 1],
-    [1, _, _, 5, _, _, _, _, _, _, 3, _, 3, _, _, 1],
-    [1, _, _, 2, _, _, _, _, _, _, _, _, _, _, _, 1],
-    [1, _, _, _, _, _, _, _, _, _, _, _, _, _, _, 1],
-    [3, _, _, _, _, _, _, _, _, _, _, _, _, _, _, 1],
-    [1, 4, _, _, _, _, _, _, 4, _, _, 4, _, _, _, 1],
-    [1, 1, 3, 3, _, _, 3, 3, 1, 3, 3, 1, 3, 1, 1, 1],
-    [1, 1, 1, 3, _, _, 3, 1, 1, 1, 1, 1, 1, 1, 1, 1],
-    [1, 3, 3, 4, _, _, 4, 3, 3, 3, 3, 3, 3, 3, 3, 1],
-    [3, _, _, _, _, _, _, _, _, _, _, _, _, _, _, 3],
-    [3, _, _, _, _, _, _, _, _, _, _, _, _, _, _, 3],
-    [3, _, _, _, _, _, _, _, _, _, _, _, _, _, _, 3],
-    [3, _, _, 5, _, _, _, 5, _, _, _, 5, _, _, _, 3],
-    [3, _, _, _, _, _, _, _, _, _, _, _, _, _, _, 3],
-    [3, _, _, _, _, _, _, _, _, _, _, _, _, _, _, 3],
-    [3, _, _, _, _, _, _, _, _, _, _, _, _, _, _, 3],
-    [3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3],
-]
+MAPS_DIR = Path(__file__).resolve().parent / 'maps'
+DEFAULT_MAP_NAME = 'mini_map_default'
+
+
+def load_map(map_name=DEFAULT_MAP_NAME):
+    map_path = MAPS_DIR / f'{map_name}.txt'
+    try:
+        rows = [line.strip() for line in map_path.read_text(encoding='ascii').splitlines() if line.strip()]
+    except FileNotFoundError:
+        if map_name != DEFAULT_MAP_NAME:
+            return load_map(DEFAULT_MAP_NAME)
+        raise
+
+    if not rows or len({len(row) for row in rows}) != 1:
+        raise ValueError(f'Map must contain equally sized rows: {map_path}')
+
+    result = []
+    for row in rows:
+        if any(cell != '.' and not cell.isdigit() for cell in row):
+            raise ValueError(f'Map contains an invalid cell: {map_path}')
+        result.append([0 if cell == '.' else int(cell) for cell in row])
+    return result
 
 
 class Map:
-    def __init__(self, game):
+    def __init__(self, game, map_name=None):
         self.game = game
-        self.mini_map = mini_map
+        self.map_name = map_name or DEFAULT_MAP_NAME
+        self.mini_map = load_map(self.map_name)
         self.world_map = {}
         self.rows = len(self.mini_map)
         self.cols = len(self.mini_map[0])

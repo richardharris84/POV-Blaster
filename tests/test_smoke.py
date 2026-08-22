@@ -10,6 +10,7 @@ os.environ.setdefault('SDL_AUDIODRIVER', 'dummy')
 import pygame as pg
 
 from main import Game, choose_player_name
+from map import DEFAULT_MAP_NAME, load_map
 from theme import THEMES, choose_theme
 from domain.health import Health
 from domain.game_state import GameState
@@ -38,6 +39,15 @@ class GameStateTests(unittest.TestCase):
 
         self.assertFalse(state.advance(40))
         self.assertTrue(state.advance(60))
+
+
+class MapAssetTests(unittest.TestCase):
+    def test_default_map_is_loaded_from_plain_text(self):
+        default_map = load_map()
+
+        self.assertEqual(DEFAULT_MAP_NAME, 'mini_map_default')
+        self.assertEqual((len(default_map), len(default_map[0])), (32, 16))
+        self.assertEqual(load_map('missing_map'), default_map)
 
 
 class CombatTests(unittest.TestCase):
