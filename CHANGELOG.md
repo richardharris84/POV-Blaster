@@ -534,3 +534,35 @@ Validation completed:
 
 - The configured MP3 exists in the Candy Kingdom sound assets.
 - Candy Kingdom headless startup and audio loading passed.
+
+## Step 18. Animation Validation and Repair
+
+### Prompt
+
+> In addition to death frame validation, validate attack, pain, and walk frames and generate a new image when required.
+
+### Output
+
+Extended `generate_themes.ps1` with animation validation for idle, attack, pain, walk, and death sequences. The validator checks minimum frame counts and detects missing numbered frames and duplicate image content using SHA-256 hashes. Existing assets can be checked without modification with `-ValidateOnly`; generated replacements require the explicit `-RepairFrames` option.
+
+Validation completed:
+
+- Duplicate Candy Kingdom idle and walk frames were detected; repairs are now opt-in so imported artwork is not silently replaced.
+- Attack, pain, walk, and death validation passed for all generated themes.
+- Candy Kingdom headless startup and rendering remained successful after repairs.
+
+## Step 19. Candy Kingdom Asset Restoration
+
+### Prompt
+
+> Right now our `candy_kingdom` theme is broken. It is a weird blend of the provided theme and an egg-like character. Re-apply the assets from `C:\Users\Richard\Dropbox\Workspace\Code\Python\DOOM-3D-FPS-Shooting-Game_KidCopy\resources\themes\CandyKingdom` to this project's `candy_kingdom` theme.
+
+### Output
+
+Re-applied the original KidCopy CandyKingdom asset set to `resources/candy_kingdom`, removing the procedurally generated replacement artwork. Updated the asset validator so imported artwork is not modified during read-only validation; frame repairs now require the explicit `-RepairFrames` option.
+
+Validation completed:
+
+- Candy Kingdom assets match the specified source files byte-for-byte.
+- Candy Kingdom startup and rendering passed.
+- Read-only animation validation completed without modifying artwork.

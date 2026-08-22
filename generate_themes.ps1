@@ -1,5 +1,7 @@
 param(
-    [string]$ProjectRoot = $PSScriptRoot
+    [string]$ProjectRoot = $PSScriptRoot,
+    [switch]$ValidateOnly,
+    [switch]$RepairFrames
 )
 
 Add-Type -AssemblyName System.Drawing
@@ -70,6 +72,37 @@ function New-EnemyFrame($Enemy, [string]$Animation, [int]$Frame, [string]$Path) 
     Save-Frame $canvas $Path
 }
 
+$animationMinimums = @{ idle = 1; attack = 2; pain = 1; walk = 4; death = 6 }
+
+function Repair-AnimationFrames($Enemy, [string]$Animation, [string]$AnimationRoot, [int]$MinimumFrames) {
+    New-Item $AnimationRoot -ItemType Directory -Force | Out-Null
+    for ($frame = 0; $frame -lt $MinimumFrames; $frame++) {
+        $framePath = Join-Path $AnimationRoot "$frame.png"
+        if (-not (Test-Path $framePath) -and $RepairFrames) {
+            New-EnemyFrame $Enemy $Animation $frame $framePath
+            Write-Host "Generated missing $Animation frame: $framePath"
+        }
+    }
+
+    $hashes = @{}
+    foreach ($frameFile in Get-ChildItem $AnimationRoot -Filter '*.png' | Sort-Object Name) {
+        $hash = (Get-FileHash $frameFile.FullName -Algorithm SHA256).Hash
+        if ($hashes.ContainsKey($hash)) {
+            $match = [regex]::Match($frameFile.BaseName, '\d+$')
+            if ($match.Success -and $RepairFrames) {
+                $frameNumber = [int]$match.Value
+                New-EnemyFrame $Enemy $Animation $frameNumber $frameFile.FullName
+                Write-Host "Regenerated duplicate $Animation frame: $($frameFile.FullName)"
+            } elseif ($match.Success) {
+                Write-Host "Duplicate $Animation frame detected: $($frameFile.FullName)"
+            }
+        } else {
+            $hashes[$hash] = $frameFile.FullName
+        }
+    }
+}
+
+if (-not $ValidateOnly) {
 foreach ($theme in $themeSpecs) {
     $themeRoot = Join-Path $themesRoot $theme.Key
     Copy-Item (Join-Path $defaultRoot 'sound') (Join-Path $themeRoot 'sound') -Recurse -Force
@@ -98,5 +131,21 @@ foreach ($theme in $themeSpecs) {
         New-EnemyFrame $enemy 'idle' 0 (Join-Path $themeRoot "sprites/npc/$($enemy.Name)/0.png")
     }
 }
+}
 
-Write-Host 'Generated Candy Kingdom, Space, and Graveyard theme assets.'
+foreach ($theme in $themeSpecs) {
+    foreach ($enemy in $theme.Enemies) {
+        foreach ($animation in $animationMinimums.Keys) {
+            $animationRoot = Join-Path $themesRoot "$($theme.Key)/sprites/npc/$($enemy.Name)/$animation"
+            Repair-AnimationFrames $enemy $animation $animationRoot $animationMinimums[$animation]
+        }
+    }
+}
+
+if ($RepairFrames) {
+    Write-Host 'Validated and repaired theme animation assets.'
+} elseif ($ValidateOnly) {
+    Write-Host 'Validated theme animation assets without modifying artwork.'
+} else {
+    Write-Host 'Generated and validated Candy Kingdom, Space, and Graveyard theme assets.'
+}

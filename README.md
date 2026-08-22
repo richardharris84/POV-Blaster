@@ -162,6 +162,14 @@ Theme assets live under `resources/<theme>/`. To regenerate the themed textures 
 .\generate_themes.ps1
 ```
 
+To validate existing animation folders without changing artwork, run:
+
+```powershell
+.\generate_themes.ps1 -ValidateOnly
+```
+
+To explicitly generate replacements for missing or duplicate numbered frames, add `-RepairFrames`.
+
 Each generated NPC includes unique idle, walk, attack, pain, and death sequences. Candy Kingdom uses the imported CandyKingdom asset set, including the pastry-bag weapon and thick slime firing sound; its deaths melt the Marshmallow Man and crumble the Springfield Doughnut and Gingerbread Golem.
 
 ### Combat and game states
