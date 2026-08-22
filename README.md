@@ -24,7 +24,7 @@ The game uses a 2D grid map to produce a pseudo-3D view. It supports textured wa
 - `W`, `A`, `S`, `D`: move and strafe
 - Mouse: look around
 - Left mouse button: fire
-- `Esc`: quit
+- `Esc`: return to the startup menu
 
 ## Requirements
 
@@ -106,7 +106,27 @@ This creates:
 build/POV-Blaster_lin
 ```
 
-The `build.py` script rejects a Linux build requested from Windows and rejects a Windows build requested from Linux, preventing incorrectly named non-native executables.
+### macOS build
+
+Run on macOS with Python, Pygame, and PyInstaller installed:
+
+```bash
+python3 build.py -m
+```
+
+This creates:
+
+```text
+build/POV-Blaster_mac.app
+```
+
+Open the application bundle from Finder or run it with:
+
+```bash
+open build/POV-Blaster_mac.app
+```
+
+The `build.py` script rejects builds requested from the wrong operating system, preventing incorrectly named non-native executables. macOS builds must run on macOS because PyInstaller creates native artifacts for the host platform.
 
 ## Project Structure
 

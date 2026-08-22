@@ -34,6 +34,12 @@ def parse_args():
         action='store_true',
         help='create a Linux-named executable: POV-Blaster_lin',
     )
+    target.add_argument(
+        '-m',
+        '--macos',
+        action='store_true',
+        help='create a macOS application bundle: POV-Blaster_mac.app',
+    )
     return parser.parse_args()
 
 
@@ -42,6 +48,8 @@ def build(target):
         raise RuntimeError('The Windows build must run on Windows.')
     if target == 'linux' and sys.platform != 'linux':
         raise RuntimeError('The Linux build must run on Linux.')
+    if target == 'macos' and sys.platform != 'darwin':
+        raise RuntimeError('The macOS build must run on macOS.')
 
     if not ENTRY_POINT.is_file():
         raise FileNotFoundError(f'Entry point not found: {ENTRY_POINT}')
@@ -51,7 +59,12 @@ def build(target):
         raise FileNotFoundError(f'Resource directory not found: {resources}')
 
     BUILD_DIR.mkdir(exist_ok=True)
-    target_name = 'POV-Blaster_win' if target == 'windows' else 'POV-Blaster_lin'
+    target_names = {
+        'windows': 'POV-Blaster_win',
+        'linux': 'POV-Blaster_lin',
+        'macos': 'POV-Blaster_mac',
+    }
+    target_name = target_names[target]
     separator = ';' if sys.platform == 'win32' else ':'
 
     for directory in (WORK_DIR, SPEC_DIR):
@@ -71,7 +84,12 @@ def build(target):
         '--add-data', f'{resources}{separator}resources',
     ])
 
-    executable = BUILD_DIR / (f'{target_name}.exe' if sys.platform == 'win32' else target_name)
+    if target == 'windows':
+        executable = BUILD_DIR / f'{target_name}.exe'
+    elif target == 'macos':
+        executable = BUILD_DIR / f'{target_name}.app'
+    else:
+        executable = BUILD_DIR / target_name
     print(f'Created: {executable}')
     print(f'Requested target: {target}')
     print(f'Build host: {sys.platform}')
@@ -79,7 +97,7 @@ def build(target):
 
 def main():
     args = parse_args()
-    target = 'windows' if args.windows else 'linux'
+    target = 'windows' if args.windows else 'linux' if args.linux else 'macos'
     build(target)
 
 

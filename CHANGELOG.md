@@ -670,11 +670,17 @@ Validation completed:
 - Python compilation passed.
 - `git diff --check` passed.
 
-## Step 24. High Scores
+## Step 24. High Score
 
 ### Prompt
 
-> Create a `scores.xml` file to keep track of high scores. When a player reaches Game Over or exits the game, record their name and number of kills. Keep only the Top 10 scores, and display them on the startup menu before theme selection.
+> Create a `score.xml` file if it does not already exist. `scores.xml` will keep track of high scores. Whenever a player dies and reaches Game Over, record their name and number of kills. If there are fewer than 10 scores or the new score is higher than an existing score, move lower scores down and insert the new score. Display the Top 10 scores on the startup menu before theme selection.
+>
+> Add a newline before `Player Name:`, `Top 10 Scores:`, and `Choose a theme:`.
+>
+> Record high-score data when the player exits the game, not only on Game Over.
+>
+> Change `DOOM` in the startup menu to `Doom`.
 
 ### Output
 
@@ -685,6 +691,8 @@ Validation completed:
 - Displays the Top 10 scores before each theme-selection menu.
 - Preserves the leaderboard when returning to the startup menu with `Esc`.
 - Preserves the recorded score when the player selects `0) Exit` from the startup menu after returning from a game with `Esc`.
+- Adds blank lines before the player-name prompt, Top 10 Scores heading, and theme-selection heading.
+- Displays the startup menu theme as `Doom`.
 
 Validation completed:
 
@@ -693,3 +701,23 @@ Validation completed:
 - Game Over records a player's name and kills exactly once.
 - Full test suite passed with 13 tests.
 - Python compilation and `git diff --check` passed.
+
+## Step 25. Mac Build
+
+### Prompt
+
+> Add macOS build capabilities to `build.py` via `build.py -m`.
+
+### Output
+
+- Added `-m`/`--macos` support to `build.py`.
+- Restricted macOS builds to macOS hosts so PyInstaller produces a native artifact.
+- Configured the output as `build/POV-Blaster_mac.app`.
+- Documented macOS build and launch instructions in `README.md`.
+- Updated the Escape control documentation to reflect its return to the startup menu.
+
+Validation completed:
+
+- `build.py --help` exposes the macOS target.
+- The macOS host guard rejects `-m` on Windows.
+- `build.py` compilation and `git diff --check` passed.
