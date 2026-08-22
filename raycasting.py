@@ -42,6 +42,10 @@ class RayCasting:
         for ray in range(NUM_RAYS):
             sin_a = math.sin(ray_angle)
             cos_a = math.cos(ray_angle)
+            if abs(sin_a) < RAY_EPSILON:
+                sin_a = RAY_EPSILON if sin_a >= 0 else -RAY_EPSILON
+            if abs(cos_a) < RAY_EPSILON:
+                cos_a = RAY_EPSILON if cos_a >= 0 else -RAY_EPSILON
 
             # horizontals
             y_hor, dy = (y_map + 1, 1) if sin_a > 0 else (y_map - 1e-6, -1)

@@ -1,6 +1,7 @@
 import pygame as pg
 from settings import *
 import os
+import re
 from collections import deque
 
 
@@ -10,7 +11,7 @@ class SpriteObject:
         self.game = game
         self.player = game.player
         self.x, self.y = pos
-        self.image = pg.image.load(path).convert_alpha()
+        self.image = pg.image.load(resolve_resource_path(path)).convert_alpha()
         self.IMAGE_WIDTH = self.image.get_width()
         self.IMAGE_HALF_WIDTH = self.image.get_width() // 2
         self.IMAGE_RATIO = self.IMAGE_WIDTH / self.image.get_height()
@@ -82,8 +83,17 @@ class AnimatedSprite(SpriteObject):
 
     def get_images(self, path):
         images = deque()
-        for file_name in os.listdir(path):
-            if os.path.isfile(os.path.join(path, file_name)):
-                img = pg.image.load(path + '/' + file_name).convert_alpha()
-                images.append(img)
+        resource_path = resolve_resource_path(path)
+        image_files = [
+            file_name for file_name in os.listdir(resource_path)
+            if os.path.isfile(os.path.join(resource_path, file_name))
+            and os.path.splitext(file_name)[1].lower() in {'.png', '.jpg', '.jpeg'}
+        ]
+        def frame_sort_key(name):
+            stem = os.path.splitext(name)[0]
+            match = re.search(r'(\d+)$', stem)
+            return int(match.group(1)) if match else 0, stem
+
+        for file_name in sorted(image_files, key=frame_sort_key):
+            images.append(pg.image.load(resource_path / file_name).convert_alpha())
         return images

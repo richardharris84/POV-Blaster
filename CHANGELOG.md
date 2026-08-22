@@ -149,3 +149,107 @@ Validation completed:
 - All documentation diagnostics reported no errors.
 - All expected documentation and screenshot paths exist.
 - No stale active links or `sreenshots` references remain.
+
+## Step 6. Tweak README.md
+
+### Prompt
+
+> Add back in `gameplay_1.gif` to README.md above Controls.
+>
+> Using docs/CloneCompare.md for context, how similar are these aspects of our game compared to DOOM-3D-FPS-Shooting-Game?
+> - Player movement
+> - Raycasting algorithm
+> - Static and Animated Sprites (decorations)
+> - Weapon and shooting animation
+> - Player Enemy interaction (Pathfinding)
+> - Enemies
+> - Final Gameplay
+>
+> I like our README.md now. However, given the near-identical similarities between the two projects, add back in all of the images from https://github.com/Saurabh-66/DOOM-3D-FPS-Shooting-Game/blob/main/README.md and any applicable text that we did not add to our README.md.
+>
+> Make the images under Static and Animated Sprites a smaller, more similar size to what we see under Enemies images.
+
+### Output
+
+Updated the README and restored the related gameplay documentation:
+
+- Added `screenshots/gameplay_1.gif` above the Controls section.
+- Added the source project's unique gameplay, raycasting, sprite, weapon, pathfinding, and enemy demonstration images.
+- Added a table of contents and a development walkthrough with applicable explanations for each gameplay system.
+- Documented the source-code similarity findings from `docs/CloneCompare.md`.
+- Resized the three Static and Animated Sprites sample images to a consistent `126px` width, matching the approximate enemy-image scale while preserving aspect ratios.
+- Kept the larger decorated-environment gameplay image unchanged.
+
+Validation completed:
+
+- All README image references resolve to existing files.
+- Markdown diagnostics reported no errors.
+- `git diff --check` reported no formatting errors.
+
+## Step 7. Patch #1
+
+### Prompt
+
+> Role: Act as a Senior Software Engineer & Architect
+>
+> Background: The initial demo of POV-Blaster will be for desktop, but the final version will be web-based and multi-player with millions of users.
+>
+> Task:
+> - Review CodeBase.md, CodeAudit.md, and CloneCompare.md within docs.
+> - Create a patch to our source code to implement the suggestions contained within CodeAudit.md or CloneCompare.md.
+>
+> Validation
+> - Make sure our game runs after applying the patch.
+
+### Output
+
+Implemented the first production-hardening patch based on `docs/CodeAudit.md` and `docs/CloneCompare.md`:
+
+- Corrected frame timing and display presentation order.
+- Added non-blocking `playing`, `victory`, and `game_over` states.
+- Added bounded frame delta handling.
+- Added project-relative resource paths using `pathlib`.
+- Added deterministic animation frame ordering.
+- Added raycasting epsilon guards for near-axis rays.
+- Removed stale pathfinding caching.
+- Clamped player health and hardened HUD rendering.
+- Added unique NPC spawn locations and spawn-capacity validation.
+- Added reliable round reset behavior.
+- Added improved audio resource path handling.
+
+Validation completed:
+
+- Full Python `compileall` check passed.
+- Headless Pygame startup passed.
+- Headless update and draw cycle passed.
+- Victory-to-new-round transition passed.
+- Smoke test created 20 NPCs and 816 render entries successfully.
+- Source diagnostics and `git diff --check` passed.
+
+The interactive game loop was not left running during validation because it is intentionally an infinite desktop application loop. Non-fatal PNG color-profile warnings were observed while loading existing assets.
+
+## Step 8. Patch #1.1
+
+### Prompt
+
+> Perform a full review of our patch. Upon QA, the change seems to have broken solider death. Also, fix all the libpng warning messages in the Terminal.
+
+### Output
+
+Completed the patch QA review and fixes:
+
+- Identified the soldier death regression in `sprite_object.py`.
+- Corrected the animation loader so it accepts filenames such as `POSSM0.png` through `POSSU0.png`.
+- Added deterministic sorting using trailing frame numbers and stable filename ordering.
+- Verified Soldier, Cacodemon, and Cyberdemon death animations load correctly.
+- Re-encoded all 111 runtime PNG files with problematic color-profile metadata removed.
+- Preserved image dimensions, RGBA data, and gameplay visuals.
+
+Validation completed:
+
+- Soldier death regression test passed.
+- All enemy death frame sequences loaded and advanced correctly.
+- Headless Pygame startup and update/draw smoke test passed.
+- Full Python compilation passed.
+- Editor diagnostics passed.
+- Fresh runtime output reported no `libpng` warnings.

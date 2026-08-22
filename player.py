@@ -18,7 +18,7 @@ class Player:
 
     def recover_health(self):
         if self.check_health_recovery_delay() and self.health < PLAYER_MAX_HEALTH:
-            self.health += 1
+            self.health = min(PLAYER_MAX_HEALTH, self.health + 1)
 
     def check_health_recovery_delay(self):
         time_now = pg.time.get_ticks()
@@ -28,13 +28,11 @@ class Player:
 
     def check_game_over(self):
         if self.health < 1:
-            self.game.object_renderer.game_over()
-            pg.display.flip()
-            pg.time.delay(1500)
-            self.game.new_game()
+            self.health = 0
+            self.game.set_state('game_over')
 
     def get_damage(self, damage):
-        self.health -= damage
+        self.health = max(0, self.health - max(0, damage))
         self.game.object_renderer.player_damage()
         self.game.sound.player_pain.play()
         self.check_game_over()

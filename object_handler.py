@@ -1,6 +1,6 @@
 from sprite_object import *
 from npc import *
-from random import choices, randrange
+from random import choices, sample
 
 
 class ObjectHandler:
@@ -57,19 +57,22 @@ class ObjectHandler:
         # add_npc(CyberDemonNPC(game, pos=(14.5, 25.5)))
 
     def spawn_npc(self):
-        for i in range(self.enemies):
-                npc = choices(self.npc_types, self.weights)[0]
-                pos = x, y = randrange(self.game.map.cols), randrange(self.game.map.rows)
-                while (pos in self.game.map.world_map) or (pos in self.restricted_area):
-                    pos = x, y = randrange(self.game.map.cols), randrange(self.game.map.rows)
-                self.add_npc(npc(self.game, pos=(x + 0.5, y + 0.5)))
+        valid_positions = [
+            (x, y)
+            for y in range(self.game.map.rows)
+            for x in range(self.game.map.cols)
+            if (x, y) not in self.game.map.world_map and (x, y) not in self.restricted_area
+        ]
+        if self.enemies > len(valid_positions):
+            raise ValueError('Not enough valid map cells to spawn all NPCs')
+
+        for x, y in sample(valid_positions, self.enemies):
+            npc_type = choices(self.npc_types, self.weights)[0]
+            self.add_npc(npc_type(self.game, pos=(x + 0.5, y + 0.5)))
 
     def check_win(self):
         if not len(self.npc_positions):
-            self.game.object_renderer.win()
-            pg.display.flip()
-            pg.time.delay(1500)
-            self.game.new_game()
+            self.game.set_state('victory')
 
     def update(self):
         self.npc_positions = {npc.map_pos for npc in self.npc_list if npc.alive}
