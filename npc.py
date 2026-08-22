@@ -84,6 +84,7 @@ class NPC(AnimatedSprite):
     def check_health(self):
         if self.combat.defeated:
             self.alive = False
+            self.game.player.kills += 1
             self.game.sound.npc_death.play()
 
     @property

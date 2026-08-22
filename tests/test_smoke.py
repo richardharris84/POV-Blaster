@@ -1,5 +1,6 @@
 import os
 import ast
+import tempfile
 import unittest
 from pathlib import Path
 
@@ -15,6 +16,7 @@ from domain.game_state import GameState
 from domain.combat import Combatant
 from domain.movement import movement_delta
 from infrastructure.assets import AssetLoader
+from infrastructure.scores import HighScores
 from settings import NUM_RAYS
 
 
@@ -89,6 +91,24 @@ class AssetCacheTests(unittest.TestCase):
             pg.quit()
 
 
+class HighScoreTests(unittest.TestCase):
+    def test_score_file_is_created_and_keeps_top_ten(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / 'scores.xml'
+            scores = HighScores(path)
+
+            self.assertTrue(path.exists())
+            for kills in range(10):
+                scores.add(f'Player {kills}', kills)
+            scores.add('Winner', 100)
+
+            saved = scores.load()
+            self.assertEqual(len(saved), 10)
+            self.assertEqual(saved[0].player_name, 'Winner')
+            self.assertEqual(saved[0].kills, 100)
+            self.assertNotIn('Player 0', [score.player_name for score in saved])
+
+
 class ThemeSelectionTests(unittest.TestCase):
     def test_player_name_is_requested_before_theme_selection(self):
         choices = iter(['', 'Alice'])
@@ -100,18 +120,40 @@ class ThemeSelectionTests(unittest.TestCase):
         selected = choose_theme(lambda prompt: next(choices), lambda message: None)
 
         self.assertEqual(selected.key, 'default')
-        self.assertEqual(selected.label, 'DOOM')
+        self.assertEqual(selected.label, 'Doom')
 
 
 class HeadlessSmokeTests(unittest.TestCase):
-    def test_escape_requests_startup_menu(self):
-        game = Game(THEMES[3])
-        try:
-            pg.event.post(pg.event.Event(pg.KEYDOWN, key=pg.K_ESCAPE))
+    def test_game_over_records_player_score_once(self):
+        with tempfile.TemporaryDirectory() as directory:
+            scores = HighScores(Path(directory) / 'scores.xml')
+            game = Game(THEMES[3], player_name='Alice', high_scores=scores)
+            try:
+                game.player.kills = 7
+                game.set_state('game_over')
+                game.set_state('game_over')
 
-            self.assertTrue(game.check_events())
-        finally:
-            game.close()
+                saved = scores.load()
+                self.assertEqual(len(saved), 1)
+                self.assertEqual(saved[0].player_name, 'Alice')
+                self.assertEqual(saved[0].kills, 7)
+            finally:
+                game.close()
+
+    def test_escape_requests_startup_menu(self):
+        with tempfile.TemporaryDirectory() as directory:
+            scores = HighScores(Path(directory) / 'scores.xml')
+            game = Game(THEMES[3], player_name='Alice', high_scores=scores)
+            try:
+                pg.event.post(pg.event.Event(pg.KEYDOWN, key=pg.K_ESCAPE))
+
+                self.assertTrue(game.check_events())
+                game.close()
+                self.assertEqual(scores.load()[0].player_name, 'Alice')
+                self.assertIsNone(choose_theme(lambda prompt: '0', lambda message: None))
+                self.assertEqual(scores.load()[0].kills, 0)
+            finally:
+                pg.quit()
 
     def test_game_initializes_and_renders_one_frame(self):
         game = Game(THEMES[3], player_name='Alice')

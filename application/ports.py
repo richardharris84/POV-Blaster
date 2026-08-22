@@ -62,6 +62,7 @@ class GameContext(Protocol):
     delta_time: int
     mouse_active: bool
     global_trigger: bool
+    high_scores: Any
 
     def set_state(self, state: str) -> None:
         ...

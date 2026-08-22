@@ -10,6 +10,7 @@ from application.snapshot import RenderSnapshot
 from domain.game_state import GameState
 from infrastructure.audio import Sound
 from infrastructure.assets import AssetLoader
+from infrastructure.scores import HighScores
 from presentation.input import InputAdapter
 from presentation.renderer import ObjectRenderer
 from settings import FPS, HALF_HEIGHT, HALF_WIDTH, MAX_DELTA_TIME, RES
@@ -22,9 +23,11 @@ from weapon import Weapon
 
 
 class Game:
-    def __init__(self, theme, player_name='Player', seed=None):
+    def __init__(self, theme, player_name='Player', seed=None, high_scores=None):
         self.theme = theme
         self.player_name = player_name
+        self.high_scores = high_scores or HighScores()
+        self.score_recorded = False
         self.random = random.Random(seed)
         self.configure_display_backend()
         if os.environ.get('SDL_VIDEODRIVER') == 'x11':
@@ -88,6 +91,7 @@ class Game:
 
     def new_game(self):
         self.game_state.set('playing', 0)
+        self.score_recorded = False
         self.map = Map(self)
         self.player = Player(self)
         self.object_renderer: Renderer = ObjectRenderer(self)
@@ -100,7 +104,14 @@ class Game:
         pg.mixer.music.play(-1)
 
     def set_state(self, state):
+        if state == 'game_over':
+            self.record_score()
         self.game_state.set(state)
+
+    def record_score(self):
+        if not self.score_recorded:
+            self.high_scores.add(self.player_name, self.player.kills)
+            self.score_recorded = True
 
     def update(self):
         if self.game_state.name != 'playing':
@@ -130,6 +141,7 @@ class Game:
         self.global_trigger = False
         for event in self.input.poll():
             if event.type == pg.QUIT:
+                self.record_score()
                 pg.quit()
                 sys.exit()
             elif event.type == pg.KEYDOWN and event.key == pg.K_ESCAPE:
@@ -152,6 +164,7 @@ class Game:
         return False
 
     def close(self):
+        self.record_score()
         pg.event.set_grab(False)
         pg.mouse.set_visible(True)
         pg.mixer.music.stop()

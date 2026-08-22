@@ -44,7 +44,7 @@ THEMES = (
     ),
     Theme(
         'default',
-        'DOOM',
+        'Doom',
         ('Soldier', 'Caco Demon', 'Cyber Demon'),
         ('soldier', 'caco_demon', 'cyber_demon'),
         'sprites/weapon/shotgun/0.png',
@@ -54,6 +54,7 @@ THEMES = (
 
 
 def choose_theme(input_func=input, output_func=print):
+    output_func('')
     output_func('Choose a theme:')
     for index, theme in enumerate(THEMES, start=1):
         output_func(f'{index}) {theme.label} [{", ".join(theme.enemies)}]')

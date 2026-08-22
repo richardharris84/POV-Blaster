@@ -18,6 +18,7 @@ class Player:
         self.x, self.y = PLAYER_POS
         self.angle = PLAYER_ANGLE
         self.shot = False
+        self.kills = 0
         self.health_state = Health.full(PLAYER_MAX_HEALTH)
         self.rel = 0
         self.health_recovery_delay = 700

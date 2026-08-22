@@ -647,3 +647,49 @@ Validation completed:
 - Full test suite passed with 10 tests.
 - Python compilation passed.
 - `git diff --check` passed.
+
+## Step 23. Player Name
+
+### Prompt
+
+> Before asking for theme selection in the startup menu, ask for Player Name.
+>
+> If the user returns to the startup menu after pressing `Esc`, do not ask for their name a second time.
+
+### Output
+
+- Added a required player-name prompt before the theme-selection menu.
+- Stored the selected name on the active game session.
+- Kept the player name when `Esc` returns the user to the startup menu.
+- Added validation for blank-name rejection, prompt order, and player-name propagation.
+
+Validation completed:
+
+- Player-name startup and persistence tests passed.
+- Full test suite passed with 11 tests.
+- Python compilation passed.
+- `git diff --check` passed.
+
+## Step 24. High Scores
+
+### Prompt
+
+> Create a `scores.xml` file to keep track of high scores. When a player reaches Game Over or exits the game, record their name and number of kills. Keep only the Top 10 scores, and display them on the startup menu before theme selection.
+
+### Output
+
+- Added XML-backed high-score persistence in `infrastructure/scores.py`.
+- Creates `scores.xml` automatically when the game starts.
+- Records the player's name and kill count once when Game Over begins or the player exits the game.
+- Sorts scores by kills and retains the Top 10 entries.
+- Displays the Top 10 scores before each theme-selection menu.
+- Preserves the leaderboard when returning to the startup menu with `Esc`.
+- Preserves the recorded score when the player selects `0) Exit` from the startup menu after returning from a game with `Esc`.
+
+Validation completed:
+
+- Score XML creation and persistence passed.
+- Top 10 ordering and lowest-score eviction passed.
+- Game Over records a player's name and kills exactly once.
+- Full test suite passed with 13 tests.
+- Python compilation and `git diff --check` passed.
