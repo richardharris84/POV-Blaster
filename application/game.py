@@ -175,6 +175,9 @@ class Game:
                 self.activate_mouse()
             elif event.type in (pg.MOUSEBUTTONDOWN, pg.MOUSEBUTTONUP, pg.KEYDOWN):
                 self.activate_mouse()
+                ensure_theme = getattr(self.sound, 'ensure_theme_started', None)
+                if callable(ensure_theme):
+                    ensure_theme()
             elif event.type == pg.MOUSEMOTION and self.game_state.name == 'playing':
                 if self.mouse_active:
                     self.player.add_mouse_motion(event.rel[0])

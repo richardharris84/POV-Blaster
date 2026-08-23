@@ -188,8 +188,8 @@ def apply_web_html_patches(html):
     )
     if 'Built by: Richard Harris' not in html:
         footer = (
-            '\n<div style="position: fixed; bottom: 8px; left: 50%; transform: translateX(-50%); '
-            'z-index: 9999; font-family: Arial, sans-serif; font-size: 12px; '
+            '\n<div style="position: fixed; bottom: 8px; right: 8px; '
+            'z-index: 2147483647; font-family: Arial, sans-serif; font-size: 12px; '
             'background: rgba(0, 0, 0, 0.65); color: #fff; padding: 4px 8px; border-radius: 4px;">'
             'Built by: <a href="https://github.com/richardharris84/POV-Blaster" '
             'target="_blank" rel="noopener noreferrer" style="color: #fff; text-decoration: underline;">'

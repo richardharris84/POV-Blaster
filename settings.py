@@ -21,8 +21,8 @@ PLAYER_MAX_HEALTH = 100
 
 MOUSE_SENSITIVITY = 0.0024
 LINUX_MOUSE_SENSITIVITY = 0.003
-# Browser controls: keep prior web boosts and add requested +50% increase.
-WEB_MOUSE_SENSITIVITY = MOUSE_SENSITIVITY * 1.2 * 1.2 * 1.5
+# Browser controls: keep prior boosts, requested +50%, and additional +20%.
+WEB_MOUSE_SENSITIVITY = MOUSE_SENSITIVITY * 1.2 * 1.2 * 1.5 * 1.2
 MOUSE_MAX_REL = 40
 MOUSE_BORDER_LEFT = 100
 MOUSE_BORDER_RIGHT = WIDTH - MOUSE_BORDER_LEFT

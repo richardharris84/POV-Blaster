@@ -111,20 +111,35 @@ class BrowserSound:
         self.npc_shot.set_volume(0.2)
         self.player_pain = self._clip(document, 'player_pain.wav')
         self.theme = None
+        self._theme_requested = False
+        self._theme_started = False
         theme_path = self._resolve('theme.mp3')
         if theme_path.is_file():
             self.theme = document.createElement('audio')
             self.theme.src = _data_uri(theme_path)
             self.theme.loop = True
             self.theme.volume = 0.3
+            self.theme.load()
 
     def play_theme(self):
-        if self.theme is not None:
-            self.theme.play()
+        self._theme_requested = True
+        self.ensure_theme_started()
 
     def stop_theme(self):
         if self.theme is not None:
             self.theme.pause()
+            self.theme.currentTime = 0
+        self._theme_started = False
+
+    def ensure_theme_started(self):
+        if self.theme is None or not self._theme_requested or self._theme_started:
+            return
+        try:
+            self.theme.play()
+            self._theme_started = True
+        except Exception:
+            # Browsers may block autoplay before gesture; retry on next input event.
+            self._theme_started = False
 
     def _resolve(self, filename):
         ogg_path = self.path / (Path(filename).stem + '.ogg')
