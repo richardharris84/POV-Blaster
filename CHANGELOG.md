@@ -35,7 +35,7 @@ Repository: https://github.com/richardharris84/POV-Blaster
 
 ### Output
 
-Created the complete reconstruction guide in [CodeBase.md](docs/CodeBase.md).
+Created the complete reconstruction guide in [CodeBase.md](docs/archive/CodeBase.md).
 
 The guide covers:
 
@@ -103,7 +103,7 @@ Validation completed:
 
 ### Output
 
-Created the detailed comparison report in [CloneCompare.md](docs/CloneCompare.md).
+Created the detailed comparison report in [CloneCompare.md](docs/archive/CloneCompare.md).
 
 The report covers:
 
@@ -263,7 +263,7 @@ Validation completed:
 
 ### Output
 
-Created the detailed POC comparison report in [POCFeatures.md](docs/POCFeatures.md).
+Created the detailed POC comparison report in [POCFeatures.md](docs/archive/POCFeatures.md).
 
 The report covers:
 

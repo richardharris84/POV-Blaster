@@ -10,6 +10,7 @@ The game uses a 2D grid map to produce a pseudo-3D view. It supports textured wa
 
 - [Controls](#controls)
 - [Requirements](#requirements)
+- [What Copilot Wasn't Great At](#what-copilot-wasnt-great-at)
 - [Running the Script](#running-the-script)
 - [Project Structure](#project-structure)
 - [How the Game Works](#how-the-game-works)
@@ -29,8 +30,17 @@ The game uses a 2D grid map to produce a pseudo-3D view. It supports textured wa
 ## Requirements
 
 - Python 3.10 or newer
-- Pygame
-- A desktop environment with graphics and audio support
+- Pygame — required to run the game
+- PyInstaller — only needed to build the Windows/Linux/macOS executables
+- Pygbag — only needed to build/serve the browser version
+- imageio-ffmpeg — only needed by `build.py --web`; bundles a portable `ffmpeg` binary used to transcode sound assets to OGG for the browser build
+- A desktop environment with graphics and audio support (for the desktop build)
+
+## What Copilot Wasn't Great At
+
+1. Converting rendering to Binary Space Partitioning (BSP).
+2. Upgrading the graphics without completely changing the rendering.
+3. Doing QA (e.g. perform simulations of real game play, take screen captures, and make fixes).
 
 ## Running the Script
 
@@ -347,11 +357,11 @@ See the audit and comparison reports before making foundational changes.
 
 ## See Also
 
-- [CodeBase.md](docs/CodeBase.md): reconstruction guide and codebase walkthrough
+- [CodeBase.md](docs/archive/CodeBase.md): reconstruction guide and codebase walkthrough
 - [CodeAudit.md](docs/CodeAudit.md): architecture, quality, performance, and scalability audit
-- [CloneCompare.md](docs/CloneCompare.md): comparison of the related game projects and first-patch recommendations
+- [CloneCompare.md](docs/archive/CloneCompare.md): comparison of the related game projects and first-patch recommendations
 - [CHANGELOG.md](CHANGELOG.md): project history and prior development prompts
 
 ## Project Lineage
 
-POV-Blaster is a direct fork of [StanislavPetrovV/DOOM-style-Game](https://github.com/StanislavPetrovV/DOOM-style-Game). The related [Saurabh-66/DOOM-3D-FPS-Shooting-Game](https://github.com/Saurabh-66/DOOM-3D-FPS-Shooting-Game) project was also compared during planning; see [CloneCompare.md](docs/CloneCompare.md) for the source-similarity evidence and recommended improvements.
+POV-Blaster is a direct fork of [StanislavPetrovV/DOOM-style-Game](https://github.com/StanislavPetrovV/DOOM-style-Game). The related [Saurabh-66/DOOM-3D-FPS-Shooting-Game](https://github.com/Saurabh-66/DOOM-3D-FPS-Shooting-Game) project was also compared during planning; see [CloneCompare.md](docs/archive/CloneCompare.md) for the source-similarity evidence and recommended improvements.
