@@ -78,6 +78,11 @@ class Game:
         pg.event.pump()
         pg.mouse.get_rel()
 
+    def ensure_theme_started(self):
+        ensure_theme = getattr(getattr(self, 'sound', None), 'ensure_theme_started', None)
+        if callable(ensure_theme):
+            ensure_theme()
+
     @staticmethod
     def configure_display_backend():
         if not sys.platform.startswith('linux') or os.environ.get('SDL_VIDEODRIVER'):
@@ -175,9 +180,7 @@ class Game:
                 self.activate_mouse()
             elif event.type in (pg.MOUSEBUTTONDOWN, pg.MOUSEBUTTONUP, pg.KEYDOWN):
                 self.activate_mouse()
-                ensure_theme = getattr(self.sound, 'ensure_theme_started', None)
-                if callable(ensure_theme):
-                    ensure_theme()
+                self.ensure_theme_started()
             elif event.type == pg.MOUSEMOTION and self.game_state.name == 'playing':
                 if self.mouse_active:
                     self.player.add_mouse_motion(event.rel[0])
@@ -196,6 +199,7 @@ class Game:
 
     def run(self):
         while True:
+            self.ensure_theme_started()
             if self.check_events():
                 self.close()
                 return
@@ -209,6 +213,7 @@ class Game:
     async def run_async(self, return_on_exit=True):
         self.browser_mode = not return_on_exit
         while True:
+            self.ensure_theme_started()
             if self.check_events():
                 self.record_score()
                 if return_on_exit:

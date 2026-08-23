@@ -156,6 +156,18 @@ def _require_replace(html, old, new, description):
     return html.replace(old, new)
 
 
+def _set_html_title(html, title):
+    start = html.find('<title>')
+    end = html.find('</title>')
+    if start == -1 or end == -1 or end < start:
+        raise RuntimeError(
+            "Web HTML patch failed: set browser title -- <title> tag not found. "
+            "Pygbag's generated template may have changed; update apply_web_html_patches()."
+        )
+    start += len('<title>')
+    return html[:start] + title + html[end:]
+
+
 def apply_web_html_patches(html):
     """Pygbag's default template styling: recolor the loading box/background, and
     make the game canvas fill the whole browser window while preserving aspect ratio
@@ -186,6 +198,7 @@ def apply_web_html_patches(html):
         '            width: 100%;\n            height: 100%;\n            object-fit: contain;\n            z-index: 5;',
         'preserve canvas aspect ratio via object-fit',
     )
+    html = _set_html_title(html, 'POV Blaster')
     if 'Built by: Richard Harris' not in html:
         footer = (
             '\n<div style="position: fixed; bottom: 8px; right: 8px; '
