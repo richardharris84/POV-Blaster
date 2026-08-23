@@ -206,21 +206,34 @@ def apply_web_html_patches(html):
         'preserve canvas aspect ratio via object-fit',
     )
     html = _set_html_title(html, 'POV Blaster')
-    if 'Built by: Richard Harris' not in html and '</body>' in html:
-        footer = (
-            '\n<div style="position: fixed; bottom: 8px; right: 8px; '
-            'z-index: 2147483647; font-family: Arial, sans-serif; font-size: 12px; '
-            'background: rgba(0, 0, 0, 0.65); color: #fff; padding: 4px 8px; border-radius: 4px;">'
-            'Built by: <a href="https://github.com/richardharris84/POV-Blaster" '
-            'target="_blank" rel="noopener noreferrer" style="color: #fff; text-decoration: underline;">'
-            'Richard Harris</a></div>\n'
-        )
-        html = _require_replace(
-            html,
-            '</body>',
-            f'{footer}</body>',
-            'inject built-by footer',
-        )
+    if '</body>' in html:
+        if 'Built by: Richard Harris' not in html:
+            footer = (
+                '\n<div id="built-by-richard" style="position: fixed; bottom: 8px; right: 8px; '
+                'z-index: 2147483647; font-family: Arial, sans-serif; font-size: 12px; '
+                'background: rgba(0, 0, 0, 0.65); color: #fff; padding: 4px 8px; border-radius: 4px;">'
+                'Built by: <a href="https://github.com/richardharris84/POV-Blaster" '
+                'target="_blank" rel="noopener noreferrer" style="color: #fff; text-decoration: underline;">'
+                'Richard Harris</a></div>\n'
+            )
+            html = html.replace('</body>', f'{footer}</body>', 1)
+        if 'id="pov-blaster-brand"' not in html:
+            brand_label = (
+                '\n<div id="pov-blaster-brand" style="position: fixed; top: 8px; left: 50%; '
+                'transform: translateX(-50%); z-index: 2147483647; '
+                'font-family: Arial, sans-serif; font-size: 24px; font-weight: 700; '
+                'letter-spacing: 0.08em; text-transform: uppercase; '
+                'background: rgba(0, 0, 0, 0.65); color: #fff; padding: 6px 12px; border-radius: 6px;">'
+                'POV Blaster</div>\n'
+            )
+            html = html.replace('</body>', f'{brand_label}</body>', 1)
+        if 'document.title = "POV Blaster"' not in html:
+            title_script = (
+                '\n<script>\n'
+                '  document.title = "POV Blaster";\n'
+                '</script>\n'
+            )
+            html = html.replace('</body>', f'{title_script}</body>', 1)
     return html
 
 

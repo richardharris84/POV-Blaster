@@ -42,7 +42,7 @@ class Game:
         pg.init()
         pg.mouse.set_visible(False)
         self.screen = pg.display.set_mode(RES)
-        pg.display.set_caption('POV-Blaster')
+        pg.display.set_caption('POV Blaster')
         if not headless:
             focus_game_window()
         self.mouse_active = False
@@ -208,10 +208,13 @@ class Game:
             self.update()
             self.draw()
             pg.display.flip()
-            pg.display.set_caption(f'{self.clock.get_fps() :.1f}')
+            if not getattr(self, 'browser_mode', False):
+                pg.display.set_caption(f'{self.clock.get_fps() :.1f}')
 
     async def run_async(self, return_on_exit=True):
         self.browser_mode = not return_on_exit
+        if self.browser_mode:
+            pg.display.set_caption('POV Blaster')
         while True:
             self.ensure_theme_started()
             if self.check_events():
@@ -225,5 +228,6 @@ class Game:
             self.update()
             self.draw()
             pg.display.flip()
-            pg.display.set_caption(f'{self.clock.get_fps() :.1f}')
+            if not self.browser_mode:
+                pg.display.set_caption(f'{self.clock.get_fps() :.1f}')
             await asyncio.sleep(0)

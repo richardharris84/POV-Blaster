@@ -132,11 +132,15 @@ class BrowserSound:
         self._theme_started = False
 
     def ensure_theme_started(self):
-        if self.theme is None or not self._theme_requested or self._theme_started:
+        if self.theme is None or not self._theme_requested:
+            return
+        if self._theme_started and not self.theme.paused:
             return
         try:
             self.theme.play()
-            self._theme_started = True
+            # Some browsers reject play() asynchronously; only mark started when
+            # the element actually leaves paused state.
+            self._theme_started = not self.theme.paused
         except Exception:
             # Browsers may block autoplay before gesture; retry on next input event.
             self._theme_started = False
