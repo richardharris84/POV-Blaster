@@ -131,19 +131,19 @@ open build/POV-Blaster_mac.app
 Install the dependencies, then run the Pygbag target from the project root:
 
 ```bash
-python3 build.py -b
-# or: python3 build.py --web
+py build.py -b
+# or: py build.py --web
 ```
 
 This creates the browser build under `build/web`. To run it locally, start Pygbag's runtime-aware server against the staged web source:
 
 ```bash
-python3 -m pygbag build/web-source
+py -m pygbag build/web-source
 ```
 
-Then open `http://localhost:8000`. Pygbag's server provides the required `/cdn/` runtime route; a plain HTTP server is not sufficient. The web entry point uses an asynchronous game loop and browser-local storage for high scores. Desktop builds continue to use `scores.xml`. Pygbag's runtime may require a user click to unlock browser media before starting.
+Then open `http://localhost:8000`. Pygbag's server provides the required `/cdn/` runtime route; a plain HTTP server is not sufficient. The web entry point uses an asynchronous game loop and <u>browser-local storage for high scores</u>. Desktop builds continue to use `scores.xml`. Pygbag's runtime may require a user click to unlock browser media before starting.
 
-The Pygbag dev server re-packages the app fresh each time it starts, but not while running — so after any `python3 build.py --web` rebuild, you must stop and restart the dev server (Ctrl+C, then run `python3 -m pygbag build/web-source` again) for changes to actually take effect.
+The Pygbag dev server re-packages the app fresh each time it starts, but not while running — so after any `py build.py --web` rebuild, you must stop and restart the dev server (Ctrl+C, then run `py -m pygbag build/web-source` again) for changes to actually take effect.
 
 The `build.py` script rejects builds requested from the wrong operating system, preventing incorrectly named non-native executables. macOS builds must run on macOS because PyInstaller creates native artifacts for the host platform.
 
@@ -151,9 +151,9 @@ The `build.py` script rejects builds requested from the wrong operating system, 
 
 `.github/workflows/deploy-pages.yml` builds the web target and publishes `build/web` to GitHub Pages automatically on every push to `main`. To enable it:
 
-1. In the repository, go to **Settings → Pages** and set **Source** to **GitHub Actions**.
-2. Push to `main` (or run the workflow manually from the **Actions** tab).
-3. Once the workflow finishes, the game is served at `https://<username>.github.io/<repo>/`.
+1. Go to [Settings → Pages](https://github.com/richardharris84/POV-Blaster/settings/pages) and set **Source** to **GitHub Actions**.
+2. Push to `main` (or run the workflow manually from the [Actions](https://github.com/richardharris84/POV-Blaster/actions) tab).
+3. Once the workflow finishes, the game is served at **https://richardharris84.github.io/POV-Blaster/**.
 
 ## Project Structure
 

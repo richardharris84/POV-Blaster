@@ -770,3 +770,50 @@ Validation completed:
 - Missing-map fallback returns the default map.
 - Focused map tests and full regression tests passed.
 - Python compilation and `git diff --check` passed.
+
+## Step. 27 Pygbag
+
+### Prompt
+
+> Can I convert my project to use pyBag and make my game Web Based while still maintaining the ability to use build.py to create executables?
+>
+> Execute on all of that.
+>
+> For Web build, always default to Player Name as "Player 1" and theme as "4) Doom"
+>
+> Increase web build mouse sensitivity by 20%. Then increase by another 20%.
+
+### Output
+
+- Diagnosed and fixed a series of Pygbag/WASM issues that left the web build stuck on "Loading" or with broken audio/visuals:
+	- `pg.time.set_timer` is unsupported on WASM; replaced with a `delta_time`-based accumulator for the animation pulse.
+	- `map.py` failed to load on WASM due to `encoding='ascii'` not being registered; switched to `encoding='utf-8'`.
+	- `build.py`'s web packaging excluded the `sound` resource folder entirely, and Pygbag rejects raw WAV/MP3; added an `imageio-ffmpeg`-based conversion step to transcode all sound assets to OGG Vorbis.
+	- SDL's mixer plays back garbled/incorrect audio under Pygbag/WASM regardless of encoding; added a `BrowserSound`/`BrowserClip` backend in `infrastructure/audio.py` that plays sounds via native browser `<audio>` elements (pre-loaded and pooled to stay in sync under rapid fire) instead of `pg.mixer`, selected automatically for the web build via a new `sound_factory` hook on `Game`.
+	- Fixed duplicate/overlapping theme music by stopping the previous sound backend's theme before creating a new one on every `new_game()`.
+	- Patched the Pygbag-generated `index.html` (and its cached template, so the fix survives dev-server restarts) to recolor the loading box/background and make the canvas fill the browser window while preserving aspect ratio via `object-fit: contain`.
+- `web_main.py` always launches with `WEB_PLAYER_NAME = 'Player 1'` and `WEB_THEME = THEMES[3]` (the Doom theme).
+- Increased web-only mouse sensitivity via a new `WEB_MOUSE_SENSITIVITY` setting, applied in `player.py` only when `game.browser_mode` is set, leaving desktop/Linux sensitivity unchanged. Raised it twice at the user's request (20%, then another 20% on top, for a combined ~44% increase).
+- Preserved all existing Windows, Linux, and macOS PyInstaller build targets in `build.py` unchanged.
+- Documented the full browser build/serve/rebuild workflow in `README.md`, including that the Pygbag dev server must be restarted after every rebuild since it doesn't hot-reload.
+
+Validation completed:
+
+- Rebuilt the web target repeatedly with `build.py --web` and served it with `python -m pygbag build/web-source`, verifying in a real browser session that the game loads past "Loading", renders correctly, and plays sound/music without errors or overlaps.
+- Confirmed rapid-fire weapon sounds stay in sync using the pooled `BrowserClip` audio elements.
+
+## Step. 28 PROD Deploy
+
+### Prompt
+
+> Can you help me deploy this app on GitHub pages?
+
+### Output
+
+- Added `.github/workflows/deploy-pages.yml`, a GitHub Actions workflow that builds the web target with `build.py --web` and publishes `build/web` to GitHub Pages on every push to `main` (or manual dispatch).
+- Fixed a `build.py --web` bug where `web_dir.mkdir(exist_ok=True)` failed on a fresh checkout because the parent `build/` directory didn't exist yet (only worked locally because `build/` already existed from prior local builds); changed to `mkdir(parents=True, exist_ok=True)`.
+- Documented the one-time setup (enabling **Settings → Pages → Source: GitHub Actions**) and the resulting live URL in `README.md`, with direct links to the repository's Pages settings, Actions tab, and the deployed site.
+
+Validation completed:
+
+- Diagnosed a failed workflow run via the shared Actions log output, identified the missing-parent-directory error, fixed it, and pushed; the workflow re-triggers automatically on push to `main`.
