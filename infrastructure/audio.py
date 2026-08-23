@@ -35,7 +35,10 @@ class Sound:
         self.npc_shot.set_volume(0.2)
         self.player_pain = self._load(sound_loader, 'player_pain.wav')
         try:
-            self.theme = music_loader(self._resolve('theme.mp3'))
+            # pg.mixer.music.load() always returns None on success (per pygame's own
+            # docs), so the return value can't signal success -- track it explicitly.
+            music_loader(self._resolve('theme.mp3'))
+            self.theme = True
         except (FileNotFoundError, OSError, pg.error):
             self.theme = None
         pg.mixer.music.set_volume(0.3)

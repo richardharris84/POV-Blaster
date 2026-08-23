@@ -1,0 +1,36 @@
+{
+    "enemy_count": 20,
+    "enemy_weights": {
+        "SoldierNPC": 70,
+        "CacoDemonNPC": 20,
+        "CyberDemonNPC": 10
+    },
+    "restricted_area": {
+        "x_range": [0, 10],
+        "y_range": [0, 10]
+    },
+    "scenery": [
+        {"pos": [11.5, 3.5]},
+        {"pos": [1.5, 1.5]},
+        {"pos": [1.5, 7.5]},
+        {"pos": [5.5, 3.25]},
+        {"pos": [5.5, 4.75]},
+        {"pos": [7.5, 2.5]},
+        {"pos": [7.5, 5.5]},
+        {"pos": [14.5, 1.5]},
+        {"pos": [14.5, 4.5]},
+        {"path": "red_light/0.png", "pos": [14.5, 5.5]},
+        {"path": "red_light/0.png", "pos": [14.5, 7.5]},
+        {"path": "red_light/0.png", "pos": [12.5, 7.5]},
+        {"path": "red_light/0.png", "pos": [9.5, 7.5]},
+        {"path": "red_light/0.png", "pos": [14.5, 12.5]},
+        {"path": "red_light/0.png", "pos": [9.5, 20.5]},
+        {"path": "red_light/0.png", "pos": [10.5, 20.5]},
+        {"path": "red_light/0.png", "pos": [3.5, 14.5]},
+        {"path": "red_light/0.png", "pos": [3.5, 18.5]},
+        {"pos": [14.5, 24.5]},
+        {"pos": [14.5, 30.5]},
+        {"pos": [1.5, 30.5]},
+        {"pos": [1.5, 24.5]}
+    ]
+}

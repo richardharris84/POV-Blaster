@@ -2,8 +2,7 @@ from pathlib import Path
 
 import pygame as pg
 
-
-BASE_DIR = Path(__file__).resolve().parent.parent
+from settings import BASE_DIR
 
 
 def resolve_resource_path(path):

@@ -19,7 +19,8 @@ from domain.combat import Combatant
 from domain.movement import movement_delta
 from infrastructure.assets import AssetLoader
 from infrastructure.scores import BrowserHighScores, HighScores
-from settings import NUM_RAYS
+from npc_systems import npc_can_see_player
+from settings import HALF_WIDTH, NUM_RAYS
 from web_main import WEB_PLAYER_NAME, WEB_THEME
 
 
@@ -209,6 +210,146 @@ class HeadlessSmokeTests(unittest.TestCase):
             pg.quit()
 
         self.assertEqual(layouts[0], layouts[1])
+
+    def test_sound_backend_is_not_rebuilt_on_restart(self):
+        game = Game(THEMES[3], seed=1)
+        try:
+            first_sound = game.sound
+            game.new_game()
+            self.assertIs(game.sound, first_sound)
+        finally:
+            pg.quit()
+
+
+class NpcSystemsTests(unittest.TestCase):
+    def test_visible_when_player_shares_the_npcs_cell(self):
+        game = Game(THEMES[3], seed=7)
+        try:
+            npc = game.object_handler.npc_list[0]
+            game.player.x, game.player.y = npc.x, npc.y
+            self.assertTrue(npc_can_see_player(npc))
+        finally:
+            pg.quit()
+
+    def test_resolve_hit_damages_npc_and_clears_the_shot_flag(self):
+        game = Game(THEMES[3], seed=7)
+        try:
+            npc = game.object_handler.npc_list[0]
+            npc.ray_cast_value = True
+            npc.screen_x = HALF_WIDTH
+            npc.sprite_half_width = 50
+            game.player.shot = True
+            starting_health = npc.health
+
+            npc.combat_resolver.resolve_hit(npc)
+
+            self.assertFalse(game.player.shot)
+            self.assertTrue(npc.pain)
+            self.assertLess(npc.health, starting_health)
+        finally:
+            pg.quit()
+
+    def test_resolve_death_awards_a_kill_once_defeated(self):
+        game = Game(THEMES[3], seed=7)
+        try:
+            npc = game.object_handler.npc_list[0]
+            npc.combat.take_damage(npc.combat.health.maximum)
+            starting_kills = game.player.kills
+
+            npc.combat_resolver.resolve_death(npc)
+
+            self.assertFalse(npc.alive)
+            self.assertEqual(game.player.kills, starting_kills + 1)
+        finally:
+            pg.quit()
+
+    def test_animation_controller_clears_pain_after_trigger(self):
+        game = Game(THEMES[3], seed=7)
+        try:
+            npc = game.object_handler.npc_list[0]
+            npc.pain = True
+            npc.animation_trigger = True
+
+            npc.animation_controller.play_pain()
+
+            self.assertFalse(npc.pain)
+        finally:
+            pg.quit()
+
+
+class WebHtmlPatchTests(unittest.TestCase):
+    def test_patches_apply_to_a_representative_template(self):
+        from build import apply_web_html_patches
+
+        html = (
+            '<style>\n'
+            '        #infobox {\n'
+            '            position: fixed; /* center relative to viewport */\n'
+            '            background: green;\n'
+            '            color: blue;\n'
+            '        }\n'
+            '        body {\n'
+            '            font-family: arial;\n'
+            '            margin: 0;\n'
+            '            padding: none;\n'
+            '            background-color:powderblue;\n'
+            '        }\n'
+            '        canvas.emscripten {\n'
+            '            width: 100%;\n'
+            '            height: 100%;\n'
+            '            z-index: 5;\n'
+            '        }\n'
+            '</style>'
+        )
+
+        patched = apply_web_html_patches(html)
+
+        self.assertIn('background: black;', patched)
+        self.assertIn('color: white;', patched)
+        self.assertIn('background-color: #d3d3d3;', patched)
+        self.assertIn('object-fit: contain;', patched)
+        self.assertIn('html {\n            width: 100%;\n            height: 100%;\n        }', patched)
+
+    def test_raises_loudly_when_expected_markup_is_missing(self):
+        from build import apply_web_html_patches
+
+        with self.assertRaises(RuntimeError):
+            apply_web_html_patches('<html><body>unexpected template</body></html>')
+
+
+class AssetIntegrityTests(unittest.TestCase):
+    def test_every_theme_loads_without_falling_back_to_a_placeholder(self):
+        # regression test: content/levels/*.json scenery paths must not duplicate the
+        # 'sprites/animated_sprites/' prefix that object_handler.py already applies,
+        # or the resulting path 404s and silently renders a placeholder instead.
+        import infrastructure.assets as assets_module
+
+        original_load_image = assets_module.AssetLoader.load_image
+        missing_paths = []
+
+        def load_image_and_record_misses(self, path, size=None, alpha=True, fallback_label='?'):
+            resource_path = assets_module.resolve_resource_path(path)
+            if not resource_path.is_file():
+                missing_paths.append(str(resource_path))
+            return original_load_image(self, path, size=size, alpha=alpha, fallback_label=fallback_label)
+
+        assets_module.AssetLoader.load_image = load_image_and_record_misses
+        try:
+            for theme in THEMES:
+                game = Game(theme, seed=1)
+                pg.quit()
+        finally:
+            assets_module.AssetLoader.load_image = original_load_image
+
+        self.assertEqual(missing_paths, [])
+
+    def test_sound_theme_loads_successfully_for_every_theme(self):
+        # regression test: pg.mixer.music.load() always returns None on success, so
+        # Sound must not rely on that return value to know whether music loaded.
+        for theme in THEMES:
+            game = Game(theme, seed=1)
+            self.assertTrue(game.sound.theme)
+            pg.quit()
 
 
 if __name__ == '__main__':

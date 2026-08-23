@@ -4,6 +4,15 @@ POV-Blaster is a Python and Pygame first-person shooter built with a classic ray
 
 The game uses a 2D grid map to produce a pseudo-3D view. It supports textured walls, animated scenery, mouse-look, WASD movement, a shotgun, enemy line of sight, BFS pathfinding, health, damage, victory, and game-over states.
 
+<p align="center">
+  <a href="https://richardharris84.github.io/POV-Blaster/">
+    <img alt="PLAY" src="https://img.shields.io/badge/PLAY-000000?style=for-the-badge#gh-light-mode-only">
+  </a>
+  <a href="https://richardharris84.github.io/POV-Blaster/">
+    <img alt="PLAY" src="https://img.shields.io/badge/PLAY-ffffff?style=for-the-badge#gh-dark-mode-only">
+  </a>
+</p>
+
 ![POV-Blaster gameplay](screenshots/gameplay_1.gif)
 
 ## Table of Contents
@@ -27,6 +36,8 @@ The game uses a 2D grid map to produce a pseudo-3D view. It supports textured wa
 - Left mouse button: fire
 - `Esc`: return to the startup menu
 
+<div align="right"><a href="#table-of-contents">^ TOC</a></div>
+
 ## Requirements
 
 - Python 3.10 or newer
@@ -36,11 +47,15 @@ The game uses a 2D grid map to produce a pseudo-3D view. It supports textured wa
 - imageio-ffmpeg — only needed by `build.py --web`; bundles a portable `ffmpeg` binary used to transcode sound assets to OGG for the browser build
 - A desktop environment with graphics and audio support (for the desktop build)
 
+<div align="right"><a href="#table-of-contents">^ TOC</a></div>
+
 ## What Copilot Wasn't Great At
 
 1. Converting rendering to Binary Space Partitioning (BSP).
 2. Upgrading the graphics without completely changing the rendering.
 3. Doing QA (e.g. perform simulations of real game play, take screen captures, and make fixes).
+
+<div align="right"><a href="#table-of-contents">^ TOC</a></div>
 
 ## Running the Script
 
@@ -79,6 +94,8 @@ On WSL, the game needs a GUI provider. WSLg is supported automatically. If using
 ```
 
 The Linux executable automatically detects a reachable VcXsrv display when running under WSL. If necessary, set `DISPLAY` manually to the Windows host display, for example `DISPLAY=172.19.64.1:0`.
+
+<div align="right"><a href="#table-of-contents">^ TOC</a></div>
 
 ## Build Executables
 
@@ -165,29 +182,65 @@ The `build.py` script rejects builds requested from the wrong operating system, 
 2. Push to `main` (or run the workflow manually from the [Actions](https://github.com/richardharris84/POV-Blaster/actions) tab).
 3. Once the workflow finishes, the game is served at **https://richardharris84.github.io/POV-Blaster/**.
 
+<div align="right"><a href="#table-of-contents">^ TOC</a></div>
+
 ## Project Structure
 
 ```text
-main.py              Game startup, event loop, update, and draw lifecycle
-web_main.py          Async browser entry point for Pygbag
-settings.py          Display, player, raycasting, and gameplay constants
-map.py               Grid map and wall texture IDs
-maps/                Predefined plain-text maps, including 1_mini_map_default.txt
-player.py            Player movement, collision, health, and firing
-raycasting.py        Wall ray traversal and wall-column projection
-object_renderer.py   Background, walls, sprites, HUD, and end screens
-sprite_object.py     Static and animated billboard sprites
-object_handler.py    Scenery, NPC spawning, updates, and victory checks
-npc.py               Enemy behavior, visibility, combat, and animation
-pathfinding.py       Grid graph and breadth-first navigation
-weapon.py            Shotgun animation and damage
-sound.py             Music and sound effects
-resources/           Runtime textures, sprites, and audio
-theme.py             Theme definitions and startup selection
-build.py             Windows, Linux, macOS, and browser build targets
-generate_themes.ps1  Procedural theme and animation asset generator
-screenshots/         Project screenshots
+main.py                Desktop/CLI entry point (theme + name prompt, then Game.run())
+web_main.py            Async browser entry point (fixed player/theme, Game.run_async())
+build.py               Multi-target build script: Windows/Linux/macOS executables + browser build
+settings.py            Screen, movement, raycasting, and mouse-sensitivity constants
+theme.py               Theme definitions (enemies, asset paths, weapon, fire sound) + CLI picker
+map.py                 Plain-text map loading and wall lookup table (Map)
+player.py              Player state, input, movement, health, and shooting
+raycasting.py          First-person wall raycasting and wall-column projection
+sprite_object.py       Static/animated sprite projection with depth-buffer occlusion
+object_handler.py      NPC/sprite registration, content-driven spawning, and victory check
+npc.py                 NPC base class + SoldierNPC/CacoDemonNPC/CyberDemonNPC
+npc_systems.py         NPC visibility raycast, AnimationController, and CombatResolver
+pathfinding.py         Grid graph + breadth-first NPC navigation
+weapon.py              Weapon animation, reload state, and damage value
+sound.py               Thin re-export shim: `from infrastructure.audio import Sound`
+
+application/           Composition root and cross-cutting contracts
+  game.py                Game: owns pygame lifecycle, the frame loop, and object wiring
+  ports.py               Protocol definitions (GameContext, Renderer, AudioOutput, ...)
+  renderer.py            Re-exports Renderer protocol for presentation layer
+  snapshot.py            RenderSnapshot: immutable per-frame render data
+
+domain/                Pure game-rule logic with no Pygame/IO dependency
+  health.py              Health value object (damage/recover/depleted)
+  combat.py              Combatant value object (health + damage + accuracy)
+  movement.py            movement_delta(): WASD -> (dx, dy), diagonal-normalized
+  game_state.py          GameState: playing/game_over/victory + countdown timer
+
+infrastructure/        Adapters to the outside world (files, audio devices, browser APIs, OS windowing)
+  assets.py              AssetLoader: cached image loading with drawn fallback sprites
+  audio.py               Sound (desktop, pg.mixer) and BrowserSound/BrowserClip (web, native <audio>)
+  scores.py              HighScores (scores.xml) and BrowserHighScores (browser localStorage)
+  input.py               Re-exports InputAdapter for the presentation layer
+  windowing.py           Windows-only: positions/focuses the game window relative to the console
+
+presentation/          Pygame-facing adapters behind the application layer's ports
+  input.py               InputAdapter: wraps pg.event.get()
+  renderer.py            ObjectRenderer: background/sky, walls, sprites, HUD, end screens
+
+content/levels/        Data-driven scenery placement and NPC spawn tables, keyed by map name
+maps/                  Plain-text maps ('.' = empty, digit = wall texture id)
+resources/<theme>/     Per-theme textures, sprites, and sound (default/candy_kingdom/space/graveyard)
+tests/                 unittest suite (domain, map, audio, scores, NPC systems, web build patches)
+tools/profile_game.py  Headless cProfile harness for update()/draw()
+docs/                  Design/audit/reconstruction documentation
+.github/workflows/     CI (tests) and GitHub Pages deployment (web build)
+build/                 Build outputs (gitignored): platform executables and the web bundle
+generate_themes.ps1    Procedural theme and animation asset generator
+screenshots/           Project screenshots
 ```
+
+See [docs/CodeBase.md](docs/CodeBase.md) for a full walkthrough of how these pieces fit together.
+
+<div align="right"><a href="#table-of-contents">^ TOC</a></div>
 
 ## How the Game Works
 
@@ -235,6 +288,8 @@ Each generated NPC includes unique idle, walk, attack, pain, and death sequences
 ### Combat and game states
 
 The shotgun fires from the center of the screen and applies damage to a visible enemy in the shot path. Player health recovers over time. Defeating all living enemies produces a victory state; health reaching zero produces a game-over state.
+
+<div align="right"><a href="#table-of-contents">^ TOC</a></div>
 
 ## Development Walkthrough
 
@@ -324,6 +379,8 @@ The complete gameplay loop combines movement, mouse-look, raycast rendering, tex
 
 ![POV-Blaster final gameplay](screenshots/gameplay_1.gif)
 
+<div align="right"><a href="#table-of-contents">^ TOC</a></div>
+
 ## Assets
 
 Runtime assets are stored under `resources/`:
@@ -342,6 +399,8 @@ resources/
 
 Keep asset paths relative to the project resource root. The asset-loading and packaging strategy is scheduled for improvement as part of the production refactoring plan.
 
+<div align="right"><a href="#table-of-contents">^ TOC</a></div>
+
 ## Development Notes
 
 The current implementation is a compact prototype and is intentionally being evolved toward cleaner architecture. The next improvements should prioritize:
@@ -355,12 +414,16 @@ The current implementation is a compact prototype and is intentionally being evo
 
 See the audit and comparison reports before making foundational changes.
 
+<div align="right"><a href="#table-of-contents">^ TOC</a></div>
+
 ## See Also
 
-- [CodeBase.md](docs/archive/CodeBase.md): reconstruction guide and codebase walkthrough
+- [CodeBase.md](docs/CodeBase.md): up-to-date reconstruction guide and codebase walkthrough (the original, now superseded, walkthrough is archived at [docs/archive/CodeBase-Orig.md](docs/archive/CodeBase-Orig.md))
 - [CodeAudit.md](docs/CodeAudit.md): architecture, quality, performance, and scalability audit
 - [CloneCompare.md](docs/archive/CloneCompare.md): comparison of the related game projects and first-patch recommendations
 - [CHANGELOG.md](CHANGELOG.md): project history and prior development prompts
+
+<div align="right"><a href="#table-of-contents">^ TOC</a></div>
 
 ## Project Lineage
 
@@ -403,3 +466,5 @@ weapon.py             identical (content)
 ```
 
 Only **17 lines differ** out of **958 total shared lines** — about 98.2% line-for-line identical, confirming `CloneCompare.md`'s original finding that this is a copy/near-copy rather than an independent implementation.
+
+<div align="right"><a href="#table-of-contents">^ TOC</a></div>

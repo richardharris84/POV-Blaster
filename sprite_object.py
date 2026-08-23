@@ -27,8 +27,16 @@ class SpriteObject:
     def get_sprite_projection(self):
         proj = SCREEN_DIST / self.norm_dist * self.SPRITE_SCALE
         proj_width, proj_height = proj * self.IMAGE_RATIO, proj
+        width_px, height_px = max(1, int(proj_width)), max(1, int(proj_height))
 
-        image = pg.transform.scale(self.image, (proj_width, proj_height))
+        # cache the scaled (but not yet depth-masked) sprite: many NPCs of the same
+        # type/frame share the same source Surface, so this reuses work across actors,
+        # not just across frames of one actor.
+        renderer = self.game.object_renderer
+        cached = renderer.cached_scale(
+            renderer.sprite_scale_cache, (id(self.image), width_px, height_px),
+            lambda: pg.transform.scale(self.image, (width_px, height_px)),
+        )
 
         self.sprite_half_width = proj_width // 2
         height_shift = proj_height * self.SPRITE_HEIGHT_SHIFT
@@ -36,11 +44,13 @@ class SpriteObject:
 
         depth_buffer = self.game.raycasting.depth_buffer
         if depth_buffer:
-            image = image.copy()
+            image = cached.copy()
             for image_x in range(image.get_width()):
                 ray = int((pos[0] + image_x) / SCALE)
                 if 0 <= ray < len(depth_buffer) and depth_buffer[ray] < self.norm_dist:
                     image.fill((0, 0, 0, 0), (image_x, 0, 1, image.get_height()))
+        else:
+            image = cached
 
         self.game.raycasting.objects_to_render.append((self.norm_dist, image, pos))
 

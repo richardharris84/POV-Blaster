@@ -5,11 +5,18 @@ from infrastructure.assets import AssetLoader
 
 
 class ObjectRenderer:
+    # bounds the per-round wall/sprite scale caches so a long session can't grow them
+    # unboundedly; simply cleared on overflow rather than true LRU, since a full
+    # raycasting-heavy renderer regenerates most entries within a handful of frames.
+    SCALE_CACHE_LIMIT = 4096
+
     def __init__(self, game, image_loader=None):
         self.game = game
         self.screen = game.screen
         self.image_loader = image_loader or game.asset_loader.load_image
         self.wall_textures = self.load_wall_textures()
+        self.wall_column_cache = {}
+        self.sprite_scale_cache = {}
         self.sky_image = self.get_texture('textures/sky.png', (WIDTH, HALF_HEIGHT))
         self.sky_offset = 0
         self.blood_screen = self.get_texture('textures/blood_screen.png', RES)
@@ -19,6 +26,15 @@ class ObjectRenderer:
         self.digits = dict(zip(map(str, range(11)), self.digit_images))
         self.game_over_image = self.get_texture('textures/game_over.png', RES)
         self.win_image = self.get_texture('textures/win.png', RES)
+
+    def cached_scale(self, cache, key, build_fn):
+        cached = cache.get(key)
+        if cached is None:
+            cached = build_fn()
+            if len(cache) >= self.SCALE_CACHE_LIMIT:
+                cache.clear()
+            cache[key] = cached
+        return cached
 
     def draw(self, snapshot=None):
         self.draw_background()

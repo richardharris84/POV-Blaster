@@ -17,22 +17,32 @@ class RayCasting:
     def get_objects_to_render(self):
         self.objects_to_render = []
         self.depth_buffer = [result[0] for result in self.ray_casting_result]
+        renderer = self.game.object_renderer
         for ray, values in enumerate(self.ray_casting_result):
             depth, proj_height, texture, offset = values
+            # snap the continuous offset/height to integer pixel buckets so identical
+            # (texture, position, size) combinations reuse a cached scaled surface
+            # instead of re-cropping and re-scaling from scratch every single frame.
+            src_x = int(offset * (TEXTURE_SIZE - SCALE))
 
             if proj_height < HEIGHT:
-                wall_column = self.textures[texture].subsurface(
-                    offset * (TEXTURE_SIZE - SCALE), 0, SCALE, TEXTURE_SIZE
+                height_px = max(1, int(proj_height))
+                wall_column = renderer.cached_scale(
+                    renderer.wall_column_cache, ('near', texture, src_x, height_px),
+                    lambda tex=texture, x=src_x, h=height_px: pg.transform.scale(
+                        self.textures[tex].subsurface(x, 0, SCALE, TEXTURE_SIZE), (SCALE, h)
+                    ),
                 )
-                wall_column = pg.transform.scale(wall_column, (SCALE, proj_height))
                 wall_pos = (ray * SCALE, HALF_HEIGHT - proj_height // 2)
             else:
-                texture_height = TEXTURE_SIZE * HEIGHT / proj_height
-                wall_column = self.textures[texture].subsurface(
-                    offset * (TEXTURE_SIZE - SCALE), HALF_TEXTURE_SIZE - texture_height // 2,
-                    SCALE, texture_height
+                texture_height = max(1, int(TEXTURE_SIZE * HEIGHT / proj_height))
+                src_y = int(HALF_TEXTURE_SIZE - texture_height // 2)
+                wall_column = renderer.cached_scale(
+                    renderer.wall_column_cache, ('far', texture, src_x, src_y, texture_height),
+                    lambda tex=texture, x=src_x, y=src_y, th=texture_height: pg.transform.scale(
+                        self.textures[tex].subsurface(x, y, SCALE, th), (SCALE, HEIGHT)
+                    ),
                 )
-                wall_column = pg.transform.scale(wall_column, (SCALE, HEIGHT))
                 wall_pos = (ray * SCALE, 0)
 
             self.objects_to_render.append((depth, wall_column, wall_pos))

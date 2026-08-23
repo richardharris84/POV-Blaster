@@ -1,7 +1,26 @@
+import json
 import random
+from pathlib import Path
+
 from application.ports import GameContext
 from npc import CacoDemonNPC, CyberDemonNPC, SoldierNPC
 from sprite_object import AnimatedSprite
+
+CONTENT_DIR = Path(__file__).resolve().parent / 'content' / 'levels'
+NPC_TYPES_BY_NAME = {
+    'SoldierNPC': SoldierNPC,
+    'CacoDemonNPC': CacoDemonNPC,
+    'CyberDemonNPC': CyberDemonNPC,
+}
+
+
+def load_spawn_config(map_name):
+    """Scenery placement and enemy spawn tables live in content/levels/<map_name>.json
+    rather than hardcoded Python, so a new level's content doesn't require a code change."""
+    config_path = CONTENT_DIR / f'{map_name}.json'
+    if not config_path.is_file():
+        raise FileNotFoundError(f'No spawn config found for map {map_name!r}: {config_path}')
+    return json.loads(config_path.read_text(encoding='utf-8'))
 
 
 class ObjectHandler:
@@ -14,49 +33,26 @@ class ObjectHandler:
         self.static_sprite_path = 'sprites/static_sprites/'
         self.anim_sprite_path = 'sprites/animated_sprites/'
         add_sprite = self.add_sprite
-        add_npc = self.add_npc
         self.npc_positions = {}
 
+        config = load_spawn_config(game.map.map_name)
+
         # spawn npc
-        self.enemies = 20  # npc count
-        self.npc_types = [SoldierNPC, CacoDemonNPC, CyberDemonNPC]
-        self.weights = [70, 20, 10]
-        self.restricted_area = {(i, j) for i in range(10) for j in range(10)}
+        self.enemies = config['enemy_count']
+        self.npc_types = [NPC_TYPES_BY_NAME[name] for name in config['enemy_weights']]
+        self.weights = list(config['enemy_weights'].values())
+        x_lo, x_hi = config['restricted_area']['x_range']
+        y_lo, y_hi = config['restricted_area']['y_range']
+        self.restricted_area = {(i, j) for i in range(x_lo, x_hi) for j in range(y_lo, y_hi)}
         self.spawn_npc()
 
         # sprite map
-        add_sprite(AnimatedSprite(game))
-        add_sprite(AnimatedSprite(game, pos=(1.5, 1.5)))
-        add_sprite(AnimatedSprite(game, pos=(1.5, 7.5)))
-        add_sprite(AnimatedSprite(game, pos=(5.5, 3.25)))
-        add_sprite(AnimatedSprite(game, pos=(5.5, 4.75)))
-        add_sprite(AnimatedSprite(game, pos=(7.5, 2.5)))
-        add_sprite(AnimatedSprite(game, pos=(7.5, 5.5)))
-        add_sprite(AnimatedSprite(game, pos=(14.5, 1.5)))
-        add_sprite(AnimatedSprite(game, pos=(14.5, 4.5)))
-        add_sprite(AnimatedSprite(game, path=self.anim_sprite_path + 'red_light/0.png', pos=(14.5, 5.5)))
-        add_sprite(AnimatedSprite(game, path=self.anim_sprite_path + 'red_light/0.png', pos=(14.5, 7.5)))
-        add_sprite(AnimatedSprite(game, path=self.anim_sprite_path + 'red_light/0.png', pos=(12.5, 7.5)))
-        add_sprite(AnimatedSprite(game, path=self.anim_sprite_path + 'red_light/0.png', pos=(9.5, 7.5)))
-        add_sprite(AnimatedSprite(game, path=self.anim_sprite_path + 'red_light/0.png', pos=(14.5, 12.5)))
-        add_sprite(AnimatedSprite(game, path=self.anim_sprite_path + 'red_light/0.png', pos=(9.5, 20.5)))
-        add_sprite(AnimatedSprite(game, path=self.anim_sprite_path + 'red_light/0.png', pos=(10.5, 20.5)))
-        add_sprite(AnimatedSprite(game, path=self.anim_sprite_path + 'red_light/0.png', pos=(3.5, 14.5)))
-        add_sprite(AnimatedSprite(game, path=self.anim_sprite_path + 'red_light/0.png', pos=(3.5, 18.5)))
-        add_sprite(AnimatedSprite(game, pos=(14.5, 24.5)))
-        add_sprite(AnimatedSprite(game, pos=(14.5, 30.5)))
-        add_sprite(AnimatedSprite(game, pos=(1.5, 30.5)))
-        add_sprite(AnimatedSprite(game, pos=(1.5, 24.5)))
-
-        # npc map
-        # add_npc(SoldierNPC(game, pos=(11.0, 19.0)))
-        # add_npc(SoldierNPC(game, pos=(11.5, 4.5)))
-        # add_npc(SoldierNPC(game, pos=(13.5, 6.5)))
-        # add_npc(SoldierNPC(game, pos=(2.0, 20.0)))
-        # add_npc(SoldierNPC(game, pos=(4.0, 29.0)))
-        # add_npc(CacoDemonNPC(game, pos=(5.5, 14.5)))
-        # add_npc(CacoDemonNPC(game, pos=(5.5, 16.5)))
-        # add_npc(CyberDemonNPC(game, pos=(14.5, 25.5)))
+        for entry in config['scenery']:
+            pos = tuple(entry['pos'])
+            if 'path' in entry:
+                add_sprite(AnimatedSprite(game, path=self.anim_sprite_path + entry['path'], pos=pos))
+            else:
+                add_sprite(AnimatedSprite(game, pos=pos))
 
     def spawn_npc(self):
         valid_positions = [

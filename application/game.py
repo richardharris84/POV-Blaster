@@ -12,6 +12,8 @@ from domain.game_state import GameState
 from infrastructure.audio import Sound
 from infrastructure.assets import AssetLoader
 from infrastructure.scores import HighScores
+from infrastructure.windowing import (focus_console_window, focus_game_window,
+                                      position_game_window_on_console_monitor)
 from presentation.input import InputAdapter
 from presentation.renderer import ObjectRenderer
 from settings import FPS, HALF_HEIGHT, HALF_WIDTH, MAX_DELTA_TIME, RES
@@ -32,12 +34,17 @@ class Game:
         self.score_recorded = False
         self.random = random.Random(seed)
         self.configure_display_backend()
+        headless = os.environ.get('SDL_VIDEODRIVER') == 'dummy'
         if os.environ.get('SDL_VIDEODRIVER') == 'x11':
             os.environ.setdefault('SDL_VIDEO_WINDOW_POS', '0,0')
+        elif not headless:
+            position_game_window_on_console_monitor(RES)
         pg.init()
         pg.mouse.set_visible(False)
         self.screen = pg.display.set_mode(RES)
         pg.display.set_caption('POV-Blaster')
+        if not headless:
+            focus_game_window()
         self.mouse_active = False
         self.mouse_center = (HALF_WIDTH, HALF_HEIGHT)
         if os.environ.get('SDL_VIDEODRIVER') != 'x11':
@@ -99,9 +106,13 @@ class Game:
         self.raycasting = RayCasting(self)
         self.object_handler = ObjectHandler(self, self.random)
         self.weapon = Weapon(self)
-        if getattr(self, 'sound', None) is not None:
+        # theme (and therefore the sound backend's content) never changes across restarts
+        # within one Game instance, so build it once instead of re-decoding every audio
+        # file (costly on the web build, which re-embeds base64 <audio> data per instance).
+        if getattr(self, 'sound', None) is None:
+            self.sound = self.sound_factory(self)
+        else:
             self.sound.stop_theme()
-        self.sound = self.sound_factory(self)
         self.pathfinding = PathFinding(self)
         self.render_snapshot = RenderSnapshot()
         self.sound.play_theme()
@@ -177,6 +188,8 @@ class Game:
         pg.mouse.set_visible(True)
         self.sound.stop_theme()
         pg.quit()
+        if os.environ.get('SDL_VIDEODRIVER') != 'dummy':
+            focus_console_window()
 
     def run(self):
         while True:

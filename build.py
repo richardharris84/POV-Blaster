@@ -73,6 +73,9 @@ def build(target):
     maps = PROJECT_ROOT / 'maps'
     if not maps.is_dir():
         raise FileNotFoundError(f'Map directory not found: {maps}')
+    content = PROJECT_ROOT / 'content'
+    if not content.is_dir():
+        raise FileNotFoundError(f'Content directory not found: {content}')
 
     BUILD_DIR.mkdir(exist_ok=True)
     target_names = {
@@ -91,7 +94,9 @@ def build(target):
         str(ENTRY_POINT),
         '--name', target_name,
         '--onefile',
-        '--windowed',
+        # not --windowed: main.py's CLI flow (player name prompt, theme menu, and
+        # returning to the console after each round) needs a real console attached,
+        # or input() raises "lost sys.stdin" in a --windowed/noconsole build.
         '--clean',
         '--noconfirm',
         '--distpath', str(BUILD_DIR),
@@ -99,6 +104,7 @@ def build(target):
         '--specpath', str(SPEC_DIR),
         '--add-data', f'{resources}{separator}resources',
         '--add-data', f'{maps}{separator}maps',
+        '--add-data', f'{content}{separator}content',
     ])
 
     if target == 'windows':
@@ -138,25 +144,49 @@ def upgrade_web_audio(web_source):
         audio_path.unlink()
 
 
+def _require_replace(html, old, new, description):
+    """str.replace() silently no-ops if `old` isn't found, which would let a Pygbag
+    template change silently undo one of these fixes with no error and no test to
+    catch it. Fail loudly instead."""
+    if old not in html:
+        raise RuntimeError(
+            f"Web HTML patch failed: {description} -- expected substring not found. "
+            "Pygbag's generated template may have changed; update apply_web_html_patches()."
+        )
+    return html.replace(old, new)
+
+
 def apply_web_html_patches(html):
     """Pygbag's default template styling: recolor the loading box/background, and
     make the game canvas fill the whole browser window while preserving aspect ratio
     (letterboxed via object-fit) instead of stretching or being cropped."""
-    return html.replace(
+    html = _require_replace(
+        html,
         '#infobox {\n            position: fixed; /* center relative to viewport */\n            background: green;\n            color: blue;',
         '#infobox {\n            position: fixed; /* center relative to viewport */\n            background: black;\n            color: white;',
-    ).replace(
+        'recolor the loading box',
+    )
+    html = _require_replace(
+        html,
         'background-color:powderblue;',
         'background-color: #d3d3d3;',
-    ).replace(
+        'recolor the page background',
+    )
+    html = _require_replace(
+        html,
         'body {\n            font-family: arial;\n            margin: 0;\n            padding: none;',
         'html {\n            width: 100%;\n            height: 100%;\n        }\n\n'
         '        body {\n            font-family: arial;\n            margin: 0;\n            padding: none;\n'
         '            width: 100%;\n            height: 100%;\n            overflow: hidden;',
-    ).replace(
+        'make html/body fill the viewport',
+    )
+    html = _require_replace(
+        html,
         '            width: 100%;\n            height: 100%;\n            z-index: 5;',
         '            width: 100%;\n            height: 100%;\n            object-fit: contain;\n            z-index: 5;',
+        'preserve canvas aspect ratio via object-fit',
     )
+    return html
 
 
 def build_web():

@@ -1,6 +1,6 @@
 # POV-Blaster Code Audit and Architecture Refactoring Plan (Re-Audit)
 
-> This report supersedes the original `CodeAudit.md`. The codebase has since undergone a substantial refactor (a `domain/application/infrastructure/presentation` split, a plain-text map format, a dual-backend audio/high-score system, and an entire second platform target — a Pygbag/WASM browser build). This re-audit credits what was fixed, re-flags what remains open, and adds new findings specific to the current architecture, including the browser build. For a full narrative walkthrough of the current implementation, see `docs/CodeBase-Updated.md` (the original `docs/archive/CodeBase.md` is now out of date).
+> This report supersedes the original `CodeAudit.md`. The codebase has since undergone a substantial refactor (a `domain/application/infrastructure/presentation` split, a plain-text map format, a dual-backend audio/high-score system, and an entire second platform target — a Pygbag/WASM browser build). This re-audit credits what was fixed, re-flags what remains open, and adds new findings specific to the current architecture, including the browser build. For a full narrative walkthrough of the current implementation, see `docs/CodeBase.md` (the original walkthrough is archived at `docs/archive/CodeBase-Orig.md` and is now out of date).
 
 ## Executive Summary
 
@@ -10,17 +10,17 @@ That said, "millions of users" is still primarily a **client-performance and sta
 
 The highest-priority remaining items are:
 
-1. ☐ The renderer still re-scales every wall column and every visible sprite from scratch, every frame, with no caching — the single biggest remaining performance risk at higher resolutions/entity counts.
-2. ☐ `NPC` still mixes AI decision-making, animation, combat resolution, and audio side effects in one class; `ObjectHandler` still hardcodes scenery/spawn tables in Python.
-3. ☐ The web build's HTML/CSS patching in `build.py` is a pile of fragile exact-string `.replace()` calls with no test coverage — it will silently stop working the moment Pygbag's upstream template changes.
-4. ☐ `settings.py` remains a flat, unvalidated module of constants, and there are now **two independent definitions** of "where is the project root" (`settings.py` and `infrastructure/assets.py`) that must be kept in sync by hand.
-5. ☐ Per-round setup still rebuilds every subsystem (including, on the web build, re-embedding every sound file as a fresh base64 `<audio>` element) rather than separating long-lived services from per-round state.
+1. ☑ The renderer still re-scales every wall column and every visible sprite from scratch, every frame, with no caching — the single biggest remaining performance risk at higher resolutions/entity counts. **Fixed**: `ObjectRenderer` now owns bounded wall-column/sprite scale caches (`presentation/renderer.py`), used by `raycasting.py` and `sprite_object.py`. Measured ~33% faster over 300 profiled frames (17.0s → 11.4s), with `get_objects_to_render` ~67% faster and `pygame.transform.scale` no longer in the top 10 cost centers.
+2. ☑ `NPC` still mixes AI decision-making, animation, combat resolution, and audio side effects in one class; `ObjectHandler` still hardcodes scenery/spawn tables in Python. **Fixed**: scenery/spawn data moved out of `object_handler.py` into `content/levels/<map_name>.json` (validated, fails loudly if missing); `PyInstaller` builds now bundle `content/` alongside `resources/`/`maps/`. `NPC` was further decomposed into `VisibilityService`, `CombatResolver`, and an `AnimationController` collaborator, with `NPC` reduced to a thin coordinator over its own state.
+3. ☑ The web build's HTML/CSS patching in `build.py` is a pile of fragile exact-string `.replace()` calls with no test coverage — it will silently stop working the moment Pygbag's upstream template changes. **Fixed**: `apply_web_html_patches` now raises a clear `RuntimeError` when an expected substring is missing instead of silently no-op'ing, with unit tests covering both the happy path and the failure path.
+4. ☑ `settings.py` remains a flat, unvalidated module of constants, and there are now **two independent definitions** of "where is the project root" (`settings.py` and `infrastructure/assets.py`) that must be kept in sync by hand. **Fixed** (the duplication): `infrastructure/assets.py` now imports `BASE_DIR` from `settings.py` instead of recomputing it. `settings.py` itself is still a flat, unvalidated module — that part of this finding remains open (see M9).
+5. ☑ Per-round setup still rebuilds every subsystem (including, on the web build, re-embedding every sound file as a fresh base64 `<audio>` element) rather than separating long-lived services from per-round state. **Fixed**: `Game.new_game()` now builds the sound backend once per `Game` instance (theme never changes across restarts) instead of every round, with a regression test asserting the backend identity is preserved across `new_game()` calls.
 
 The recommended path is still a modular-monolith-first approach: harden the existing layered engine, make content and platform differences data-driven instead of scattered `getattr(..., 'browser_mode', False)` checks, and keep the option open to swap rendering technology later without touching gameplay rules.
 
 ## Audit Scope and Rating Model
 
-Reviewed the current source tree (root gameplay modules, `application/`, `domain/`, `infrastructure/`, `presentation/`, `build.py`, `tests/`, `.github/workflows/`) against the walkthrough in [CodeBase-Updated.md](CodeBase-Updated.md):
+Reviewed the current source tree (root gameplay modules, `application/`, `domain/`, `infrastructure/`, `presentation/`, `build.py`, `tests/`, `.github/workflows/`) against the walkthrough in [CodeBase.md](CodeBase.md):
 
 - [main.py](../main.py), [web_main.py](../web_main.py), [build.py](../build.py)
 - [settings.py](../settings.py), [theme.py](../theme.py), [map.py](../map.py)
@@ -62,6 +62,8 @@ Credit where due — the following findings from the original audit are **resolv
 
 #### H1 (new). The renderer re-scales every wall column and sprite from scratch, every frame
 
+**Status: Fixed.** `ObjectRenderer` (`presentation/renderer.py`) now owns bounded `wall_column_cache`/`sprite_scale_cache` dicts with a shared `cached_scale()` helper. `raycasting.py`'s `get_objects_to_render` snaps the continuous offset/height values to integer pixel buckets and caches the scaled wall column per `(texture, position, size)` key; `sprite_object.py`'s `get_sprite_projection` caches the pre-occlusion scaled sprite per `(image_id, width, height)` key (occlusion masking still copies per-frame, since it's cheap and depth-dependent). Measured on `tools/profile_game.py` over 300 frames: total runtime 17.0s → 11.4s (~33% faster), `get_objects_to_render` cumulative time 3.61s → 1.19s (~67% faster), and `pygame.transform.scale` dropped out of the top-10 cost centers entirely.
+
 **Location:** `RayCasting.get_objects_to_render` (wall columns), `SpriteObject.get_sprite_projection` (sprites)
 
 For every ray (`NUM_RAYS`, currently `WIDTH // 2` = 800 at the default resolution), the renderer takes a texture `subsurface` and calls `pg.transform.scale()`. For every visible sprite, `pg.transform.scale()` runs again on the *original* source image. Neither is cached; both re-run unconditionally every frame regardless of whether the column/sprite's projected size changed since the last frame.
@@ -70,9 +72,11 @@ For every ray (`NUM_RAYS`, currently `WIDTH // 2` = 800 at the default resolutio
 
 #### H2 (new). Duplicated, hand-rolled DDA raycasting algorithm
 
-**Location:** `RayCasting.ray_cast` and `NPC.ray_cast_player_npc`
+**Status: Partially addressed.** The NPC-visibility copy of the algorithm was extracted out of `NPC` into a standalone `npc_can_see_player()` function in `npc_systems.py` (as part of the M6 fix below), which at least isolates it to one clearly-named place with its own tests. The underlying duplication against `RayCasting.ray_cast` is unchanged — unifying both into one shared implementation remains open and was out of scope for this pass (it touches the performance-critical, already-optimized wall-rendering path from H1).
 
-The exact same horizontal/vertical grid-traversal algorithm (including the same `RAY_EPSILON` axis-alignment guards) is implemented twice — once for wall rendering, once for NPC line-of-sight. Any future bug fix or optimization (e.g. the still-open H1) has to be applied twice and can silently drift apart.
+**Location:** `RayCasting.ray_cast` and `npc_systems.npc_can_see_player` (formerly `NPC.ray_cast_player_npc`)
+
+The exact same horizontal/vertical grid-traversal algorithm (including the same `RAY_EPSILON` axis-alignment guards) is implemented twice — once for wall rendering, once for NPC line-of-sight. Any future bug fix or optimization (e.g. the now-fixed H1) has to be applied twice and can silently drift apart.
 
 **Recommendation:** extract a single `cast_ray(origin, angle, world_map) -> RayHit` function (or class) used by both the renderer and NPC visibility checks.
 
@@ -86,11 +90,13 @@ Every alive NPC independently checks "am I visible, and is `player.shot` still `
 
 #### H4 (new). Per-round teardown/rebuild is expensive, and worse on the web build
 
+**Status: Fixed.** `Game.new_game()` now builds the sound backend once per `Game` instance (only on the first call) instead of on every restart, since the theme — and therefore the sound backend's content — never changes across restarts within one `Game` instance. Only `stop_theme()`/`play_theme()` run on subsequent restarts. Covered by `test_sound_backend_is_not_rebuilt_on_restart`, which asserts `game.sound` is the exact same object before and after `new_game()`.
+
 **Location:** `Game.new_game()`
 
 Every restart (win/loss countdown expiring, or pressing Escape in the browser build) reconstructs `ObjectRenderer`, `RayCasting`, `ObjectHandler`, `Weapon`, and the entire sound backend from scratch — this was flagged before (H6) and remains true. It is now *worse* on the web build specifically: `BrowserSound.__init__` re-reads every sound file from disk, re-base64-encodes it, and creates brand-new `<audio>` DOM elements on every single restart, which is pure waste since the theme (and therefore the audio content) hasn't changed.
 
-**Recommendation:** separate "load once per theme" assets (textures, sprite frames, encoded audio data URIs) from "reset per round" state (player position, NPC list, weapon reload state). At minimum, cache `BrowserClip`'s data URIs at the theme level so restarting a round doesn't re-encode unchanged audio.
+**Recommendation:** separate "load once per theme" assets (textures, sprite frames, encoded audio data URIs) from "reset per round" state (player position, NPC list, weapon reload state). At minimum, cache `BrowserClip`'s data URIs at the theme level so restarting a round doesn't re-encode unchanged audio. (Note: `ObjectRenderer`/`RayCasting`/`ObjectHandler`/`Weapon` are still rebuilt every round — only the sound backend was addressed in this pass, since it was the specific case called out as worse on the web build.)
 
 ### Medium-Priority
 
@@ -112,6 +118,8 @@ Two unrelated files independently probe `getattr(self.game, 'browser_mode', Fals
 
 #### M3 (new). `build.py`'s web HTML/CSS patching is fragile, untested, exact-string matching
 
+**Status: Fixed.** `apply_web_html_patches` now routes every substitution through a `_require_replace()` helper that raises a clear `RuntimeError` (naming which fix failed) when the expected substring isn't found, instead of silently no-op'ing. Added `WebHtmlPatchTests` (a happy-path test against a representative fixture template, and a test asserting the loud failure on unexpected markup), and re-verified against a real `build.py --web` run to confirm the stricter matching still succeeds against the actual Pygbag template.
+
 **Location:** `build.py`'s `apply_web_html_patches`, `upgrade_web_audio`
 
 `apply_web_html_patches` chains several exact-substring `.replace()` calls against Pygbag's generated template (colors, background rules, canvas CSS). None of these have a test, and none fail loudly if the substring no longer matches (a `.replace()` on a missing substring is a silent no-op) — a Pygbag version bump that reformats its template would silently undo these fixes with no error and no test failure to catch it.
@@ -119,6 +127,8 @@ Two unrelated files independently probe `getattr(self.game, 'browser_mode', Fals
 **Recommendation:** assert the expected substring is present before replacing (raise a clear error if not), and add a unit test that runs `apply_web_html_patches` against a fixture HTML string and asserts the expected output — this was learned the hard way this session (the "loading box" color, background color, and canvas aspect-ratio fixes all needed re-discovery multiple times because they weren't caught by any test).
 
 #### M4 (new). Two independent definitions of "project root"
+
+**Status: Fixed.** `infrastructure/assets.py` now imports `BASE_DIR` from `settings.py` instead of recomputing it independently. (The broader M9 finding — `settings.py` itself being a flat, unvalidated module — is unchanged and still open.)
 
 **Location:** `settings.py` (`BASE_DIR = Path(__file__).resolve().parent`) and `infrastructure/assets.py` (`BASE_DIR = Path(__file__).resolve().parent.parent`)
 
@@ -128,6 +138,8 @@ Both resolve to the same directory today only because of where each file happens
 
 #### M5. Map format still doesn't carry entity/spawn metadata (partial carry-over from the original M5)
 
+**Status: Fixed**, via the sibling-manifest option explicitly allowed by the original recommendation. See M7 below — scenery/spawn tables now live in `content/levels/<map_name>.json`, keyed by the map's own name, rather than in `object_handler.py`.
+
 **Location:** `maps/*.txt`, `object_handler.py`
 
 Maps now validate rectangular shape and cell characters (an improvement), but NPC/scenery placement is still entirely separate, hardcoded Python (`ObjectHandler.__init__`'s `add_sprite(...)` calls and `spawn_npc`'s random sampling) rather than being expressed in the map/level data itself.
@@ -136,7 +148,9 @@ Maps now validate rectangular shape and cell characters (an improvement), but NP
 
 #### M6. `NPC` still combines AI, animation, combat, and audio in one class
 
-**Location:** `npc.py`
+**Status: Fixed.** `npc.py` now delegates to three collaborators in the new `npc_systems.py` module: `npc_can_see_player()` (visibility raycast), `AnimationController` (idle/walk/attack/pain/death animation selection), and `CombatResolver` (attack/hit/death resolution and their audio side effects). `NPC` itself is now a thin coordinator: `run_logic()` reads as a state machine delegating to `self.animation_controller`/`self.combat_resolver` rather than calling its own mixed-concern methods. `SoldierNPC`/`CacoDemonNPC`/`CyberDemonNPC` are unaffected (they only override data). Covered by four new `NpcSystemsTests` exercising visibility, hit resolution, death/kill-count, and animation-state transitions.
+
+**Location:** `npc.py`, `npc_systems.py`
 
 Unchanged from the original audit's M6: `NPC` is responsible for line-of-sight raycasting, movement/pathfinding requests, animation frame selection, damage application, and playing sound effects, all in one class. `SoldierNPC`/`CacoDemonNPC`/`CyberDemonNPC` correctly express *data* differences without duplicating logic, which is good, but the base class itself is still doing too much.
 
@@ -144,7 +158,9 @@ Unchanged from the original audit's M6: `NPC` is responsible for line-of-sight r
 
 #### M7. Scenery/spawn tables are still hardcoded Python
 
-**Location:** `ObjectHandler.__init__`
+**Status: Fixed.** Scenery placements and enemy spawn weights moved from hardcoded Python in `ObjectHandler.__init__` into `content/levels/<map_name>.json`, loaded by `load_spawn_config()` (which raises a clear `FileNotFoundError` if a map's config is missing, rather than silently falling back). This also surfaced and fixed a packaging gap: `build.py`'s PyInstaller targets now bundle `content/` alongside `resources/`/`maps/` (previously would have shipped executables that crashed on startup, since the config is now required at runtime).
+
+**Location:** `ObjectHandler.__init__`, `content/levels/1_mini_map_default.json`
 
 `self.enemies = 20`, `self.npc_types`/`self.weights`, `self.restricted_area`, and ~20 hardcoded `add_sprite(...)` calls with literal coordinates are unchanged from the original audit's M7.
 
@@ -325,22 +341,30 @@ This keeps the already-correct dependency direction, avoids a disruptive full-re
 
 ## File-by-File Refactoring Plan
 
-- **`raycasting.py` + `npc.py`**: extract the shared DDA traversal into `domain/raycasting.py` (H2); have both consumers call it.
-- **`presentation/renderer.py`**: add wall-column and sprite-scale caches (H1).
-- **`npc.py`**: split into a slim `NPC` data holder plus `VisibilitySystem`/`CombatSystem`/`AnimationController` collaborators (M6); route hit resolution through a single nearest-target query instead of per-NPC independent checks (H3).
-- **`object_handler.py`**: move scenery positions and enemy weight tables into a `content/` data file, validated at CI time (M7, extends M5).
-- **`infrastructure/audio.py`**: split into `infrastructure/audio/desktop.py` and `infrastructure/audio/browser.py` (M1); cache `BrowserClip` data URIs at the theme level so they're not re-encoded every `new_game()` (H4).
-- **`application/game.py`**: introduce a `Platform`/`PlatformConfig` object instead of scattered `getattr(..., 'browser_mode', False)` checks (M2); pass it into `Player`'s mouse-sensitivity selection too.
-- **`build.py`**: split into `build_desktop.py` (PyInstaller targets) and `build_web.py` (Pygbag + audio transcoding + HTML patching); make `apply_web_html_patches` raise loudly on a missing substring instead of silently no-op'ing (M3); add unit tests for both the pure HTML-patch functions and the (fakeable) `BrowserSound`/`BrowserClip` classes (M11).
-- **`settings.py`**: group into small validated config objects; resolve the duplicate `BASE_DIR` definition with `infrastructure/assets.py` (M4, M9).
-- **`requirements.txt`**: pin/constrain versions; add a separate dev-tools requirements file (M10).
+- ☑ **`raycasting.py` + `npc.py`/`npc_systems.py`**: NPC visibility was extracted into `npc_systems.npc_can_see_player` (M6). The shared DDA traversal itself is still duplicated against `RayCasting.ray_cast`, not yet unified into one `domain/raycasting.py` implementation (H2, still open).
+- ☑ **`presentation/renderer.py`**: added wall-column and sprite-scale caches (H1).
+- ☑ **`npc.py`**: split into a slim `NPC` coordinator plus `AnimationController`/`CombatResolver` collaborators and a standalone `npc_can_see_player()` function, all in `npc_systems.py` (M6). Hit resolution still claims the first NPC whose crosshair check passes rather than querying the nearest target via the depth buffer (H3, still open, out of scope for this pass).
+- ☑ **`object_handler.py`**: scenery positions and enemy weight tables moved into `content/levels/<map_name>.json`, validated (fails loudly if missing) (M7, extends M5).
+- ☐ **`infrastructure/audio.py`**: still one file with all four classes; splitting into `infrastructure/audio/desktop.py` and `infrastructure/audio/browser.py` (M1) remains open. `BrowserClip`/theme-level data URI caching (H4's audio-specific angle) also remains open — H4 was addressed at the `Game.new_game()` level (not rebuilding the backend at all on restart) rather than by caching within `BrowserClip` itself.
+- ☐ **`application/game.py`**: still no `Platform`/`PlatformConfig` object; `getattr(..., 'browser_mode', False)` checks remain scattered (M2, open).
+- ☑ **`build.py`**: `apply_web_html_patches` now raises loudly on a missing substring instead of silently no-op'ing (M3), with unit tests for both the patch functions and the failure path. PyInstaller targets now also bundle `content/` (a gap surfaced by the M7 fix). Splitting `build.py` into separate desktop/web modules, and adding fakeable `BrowserSound`/`BrowserClip` tests (M11), remain open.
+- ☑ **`settings.py`**/**`infrastructure/assets.py`**: resolved the duplicate `BASE_DIR` definition (M4). Grouping `settings.py` into small validated config objects (M9) remains open.
+- ☐ **`requirements.txt`**: still unpinned (M10, open).
 
 ## Summary of Suggested Changes
 
-1. **Performance (highest priority, unaddressed since the original audit):** cache scaled wall columns and sprite variants (H1); this is the change most likely to matter to actual players on both desktop and — especially — the browser build.
-2. **Correctness (moderate priority):** deduplicate the raycasting DDA algorithm (H2); resolve NPC hits against the nearest visible target instead of "first NPC to notice" (H3).
-3. **Web-build robustness (moderate priority, high risk of silent regression):** make `build.py`'s HTML patching fail loudly instead of silently (M3); stop re-encoding unchanged audio on every restart (H4); add test coverage for the entire browser-specific code path, which currently has none (M11).
-4. **Content/platform extensibility (lower urgency, compounds over time):** move scenery/spawn tables and platform-specific behavior out of hardcoded Python and into data/config objects (M2, M5, M7), so growing the game (more themes, more platforms, more contributors) doesn't require touching the same handful of files every time.
-5. **Housekeeping (low priority):** split `infrastructure/audio.py` by platform (M1); resolve the duplicate project-root definition (M4); pin dependencies (M10); clean up naming/dead code (L1/L2).
+All five highest-priority items from the Executive Summary are now resolved:
 
-None of this requires undoing the layered architecture already in place — it requires finishing the migration into it.
+1. ☑ **Performance:** wall-column and sprite scale caching (H1) — measured ~33% faster over 300 profiled frames, ~67% faster specifically in `get_objects_to_render`.
+2. ☑ **`NPC` decomposition + hardcoded tables:** `NPC` now delegates to `AnimationController`/`CombatResolver`/`npc_can_see_player` (M6); scenery/spawn tables moved to `content/levels/*.json` (M7), with a packaging fix so PyInstaller builds still work.
+3. ☑ **Web-build robustness:** `build.py`'s HTML patching now fails loudly instead of silently, with test coverage (M3).
+4. ☑ **Duplicate project-root definition:** `infrastructure/assets.py` now imports `BASE_DIR` from `settings.py` (M4).
+5. ☑ **Per-round rebuild waste:** the sound backend is now built once per `Game` instance instead of every restart (H4).
+
+Remaining open items, not part of this pass but worth prioritizing next:
+
+- **H2/H3 (correctness/maintainability):** fully deduplicate the raycasting DDA algorithm; resolve NPC hits against the nearest visible target instead of "first NPC to notice."
+- **M1/M2 (housekeeping/extensibility):** split `infrastructure/audio.py` by platform; introduce a `Platform`/`PlatformConfig` object instead of scattered `getattr(..., 'browser_mode', False)` checks.
+- **M9/M10/M11 (hardening):** validate `settings.py`'s derived constants; pin dependencies; add fakeable unit tests for `BrowserSound`/`BrowserClip`.
+
+None of this required undoing the layered architecture already in place — it was a matter of finishing the migration into it.

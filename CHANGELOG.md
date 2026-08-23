@@ -35,7 +35,7 @@ Repository: https://github.com/richardharris84/POV-Blaster
 
 ### Output
 
-Created the complete reconstruction guide in [CodeBase.md](docs/archive/CodeBase.md).
+Created the complete reconstruction guide in [CodeBase.md](docs/archive/CodeBase-Orig.md).
 
 The guide covers:
 
@@ -817,3 +817,39 @@ Validation completed:
 Validation completed:
 
 - Diagnosed a failed workflow run via the shared Actions log output, identified the missing-parent-directory error, fixed it, and pushed; the workflow re-triggers automatically on push to `main`.
+
+## Step 29. Refactor the code
+
+### Prompt
+
+> Role: Act as a Senior Software Engineer & Architect refactoring the current codebase to use cleaner architecture principles and higher production quality that we will use to create a video game meant for millions of users.
+>
+> Task:
+> - Create a report which will be a full audit of this project's code, a Markdown file called CodeAudit.md. Refer to CodeBase.md for pre-generated context.
+> - Be mindful of system architecture. We cant to create the most scalable version possible while still having a high quality game (i.e. assets).
+> - Identify any issues you see in the code quality or potential performance bottlenecks. Suggest improvements to the game engine, graphics rendering, performance, and scalability.
+> - Separate concerns properly.
+> - Increase scalability.
+> - Finally provide - suggested new folder structure, clean architecture breakdown, a list of files to refactor and a summary of suggested changes.
+
+### Output
+
+- Drafted and refined the full audit request for `docs/CodeAudit.md` using a production-quality architecture lens.
+- Scoped the requested deliverables to include code quality and performance bottlenecks.
+- Scoped the requested deliverables to include engine/rendering/scalability recommendations.
+- Scoped the requested deliverables to include separation-of-concerns guidance.
+- Scoped the requested deliverables to include a target folder structure and clean architecture breakdown.
+- Scoped the requested deliverables to include a file-by-file refactor list and summary of suggested changes.
+
+## Step 30. Upgrade the code
+
+### Prompt
+
+> Role: Act as a Senior Software Engineer & Architect updating the current codebase to use cleaner architecture principles and higher production quality that we will use to create a video game meant for millions of users.
+>
+> Task: Take the "highest-priority remaining items" from docs/CodeAudit.md and iteratively work on these items. Provide me with updates as you go along.
+
+### Output
+
+- Converted the upgrade direction into an execution-focused step centered on `docs/CodeAudit.md`'s highest-priority remaining items.
+- Established iterative delivery with progress updates as each item is implemented and validated.
