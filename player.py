@@ -6,7 +6,7 @@ from settings import (HALF_HEIGHT, HALF_WIDTH, HEIGHT, LINUX_MOUSE_SENSITIVITY,
                       MOUSE_BORDER_LEFT, MOUSE_BORDER_RIGHT, MOUSE_MAX_REL,
                       MOUSE_SENSITIVITY, PLAYER_ANGLE, PLAYER_MAX_HEALTH,
                       PLAYER_POS, PLAYER_ROT_SPEED, PLAYER_SIZE_SCALE,
-                      PLAYER_SPEED, WIDTH)
+                      PLAYER_SPEED, WEB_MOUSE_SENSITIVITY, WIDTH)
 from domain.health import Health
 from domain.movement import movement_delta
 from application.ports import GameContext
@@ -124,7 +124,8 @@ class Player:
             pg.event.pump()
             pg.mouse.get_rel()
         self.rel = max(-MOUSE_MAX_REL, min(MOUSE_MAX_REL, self.rel))
-        self.angle += self.rel * MOUSE_SENSITIVITY
+        sensitivity = WEB_MOUSE_SENSITIVITY if getattr(self.game, 'browser_mode', False) else MOUSE_SENSITIVITY
+        self.angle += self.rel * sensitivity
 
     def update(self):
         self.movement()

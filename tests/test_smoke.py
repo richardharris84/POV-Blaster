@@ -1,5 +1,6 @@
 import os
 import ast
+import asyncio
 import tempfile
 import unittest
 from pathlib import Path
@@ -17,8 +18,9 @@ from domain.game_state import GameState
 from domain.combat import Combatant
 from domain.movement import movement_delta
 from infrastructure.assets import AssetLoader
-from infrastructure.scores import HighScores
+from infrastructure.scores import BrowserHighScores, HighScores
 from settings import NUM_RAYS
+from web_main import WEB_PLAYER_NAME, WEB_THEME
 
 
 class HealthTests(unittest.TestCase):
@@ -118,8 +120,21 @@ class HighScoreTests(unittest.TestCase):
             self.assertEqual(saved[0].kills, 100)
             self.assertNotIn('Player 0', [score.player_name for score in saved])
 
+    def test_browser_scores_fall_back_to_memory_on_desktop(self):
+        scores = BrowserHighScores()
+
+        scores.add('Browser Player', 12)
+
+        self.assertEqual(scores.load()[0].player_name, 'Browser Player')
+        self.assertEqual(scores.load()[0].kills, 12)
+
 
 class ThemeSelectionTests(unittest.TestCase):
+    def test_web_defaults_use_player_one_and_doom(self):
+        self.assertEqual(WEB_PLAYER_NAME, 'Player 1')
+        self.assertIs(WEB_THEME, THEMES[3])
+        self.assertEqual(WEB_THEME.label, 'Doom')
+
     def test_player_name_is_requested_before_theme_selection(self):
         choices = iter(['', 'Alice'])
 
@@ -134,6 +149,15 @@ class ThemeSelectionTests(unittest.TestCase):
 
 
 class HeadlessSmokeTests(unittest.TestCase):
+    def test_async_game_loop_returns_on_escape(self):
+        game = Game(THEMES[0], player_name='Web Player', high_scores=BrowserHighScores())
+        try:
+            pg.event.post(pg.event.Event(pg.KEYDOWN, key=pg.K_ESCAPE))
+            asyncio.run(game.run_async())
+            self.assertTrue(game.score_recorded)
+        finally:
+            pg.quit()
+
     def test_game_over_records_player_score_once(self):
         with tempfile.TemporaryDirectory() as directory:
             scores = HighScores(Path(directory) / 'scores.xml')

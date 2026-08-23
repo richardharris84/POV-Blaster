@@ -44,7 +44,6 @@ class HighScores:
 
     def _sort(self, scores):
         return sorted(scores, key=lambda score: (-score.kills, score.player_name.casefold()))
-
     def _save(self, scores):
         root = ElementTree.Element('scores')
         for score in scores:
@@ -62,3 +61,39 @@ class HighScores:
         for index, score in enumerate(scores, start=1):
             output_func(f'{index}) {score.player_name} - {score.kills} kills')
         return scores
+
+
+class BrowserHighScores:
+    storage_key = 'pov-blaster-high-scores'
+
+    def __init__(self, limit=10):
+        self.limit = limit
+        self._memory = []
+
+    def load(self):
+        try:
+            import json
+            import platform
+            stored = platform.window.localStorage.getItem(self.storage_key)
+            if stored:
+                return self._sort([Score(item['player_name'], int(item['kills'])) for item in json.loads(stored)])
+        except (AttributeError, ImportError, KeyError, TypeError, ValueError):
+            pass
+        return list(self._memory)
+
+    def add(self, player_name, kills):
+        scores = self._sort(self.load() + [Score(player_name.strip() or 'Player', max(0, int(kills)))])[:self.limit]
+        self._memory = scores
+        try:
+            import json
+            import platform
+            platform.window.localStorage.setItem(
+                self.storage_key,
+                json.dumps([score.__dict__ for score in scores]),
+            )
+        except (AttributeError, ImportError):
+            pass
+        return scores
+
+    def _sort(self, scores):
+        return sorted(scores, key=lambda score: (-score.kills, score.player_name.casefold()))

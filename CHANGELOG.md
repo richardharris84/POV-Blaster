@@ -722,6 +722,31 @@ Validation completed:
 - The macOS host guard rejects `-m` on Windows.
 - `build.py` compilation and `git diff --check` passed.
 
+## Step 27. Web Build
+
+### Prompt
+
+> Convert POV-Blaster to a web-based Pygbag build while maintaining the existing `build.py` executable targets.
+
+### Output
+
+- Added `build.py -b`/`--web` for browser packaging through Pygbag.
+- Added `web_main.py` with an asynchronous browser-compatible game loop.
+- Preserved the existing Windows, Linux, and Mac PyInstaller targets.
+- Added browser-local high-score storage with desktop memory fallback.
+- Kept desktop XML persistence through `scores.xml`.
+- Added web build documentation and platform-specific audio guidance.
+- Updated the canonical `main.py` entry point to launch the async browser path under Emscripten instead of blocking on desktop console input.
+- Added local BrowserFS packaging to avoid the unavailable Pygbag CDN BrowserFS reference that caused the grey startup screen.
+
+Validation completed:
+
+- Pygbag 0.9.3 installed successfully.
+- `build.py -b` completed successfully and produced `build/web`.
+- Browser score adapter and async Escape tests passed.
+- Full test suite passed with 16 tests.
+- Python compilation and `git diff --check` passed.
+
 ## Step 26. Map File
 
 ### Prompt

@@ -9,7 +9,7 @@ DEFAULT_MAP_NAME = '1_mini_map_default'
 def load_map(map_name=DEFAULT_MAP_NAME):
     map_path = MAPS_DIR / f'{map_name}.txt'
     try:
-        rows = [line.strip() for line in map_path.read_text(encoding='ascii').splitlines() if line.strip()]
+        rows = [line.strip() for line in map_path.read_text(encoding='utf-8').splitlines() if line.strip()]
     except FileNotFoundError:
         if map_name != DEFAULT_MAP_NAME:
             return load_map(DEFAULT_MAP_NAME)

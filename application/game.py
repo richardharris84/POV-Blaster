@@ -2,6 +2,7 @@ import os
 import random
 import socket
 import sys
+import asyncio
 
 import pygame as pg
 
@@ -23,10 +24,11 @@ from weapon import Weapon
 
 
 class Game:
-    def __init__(self, theme, player_name='Player', seed=None, high_scores=None):
+    def __init__(self, theme, player_name='Player', seed=None, high_scores=None, sound_factory=None):
         self.theme = theme
         self.player_name = player_name
         self.high_scores = high_scores or HighScores()
+        self.sound_factory = sound_factory or Sound
         self.score_recorded = False
         self.random = random.Random(seed)
         self.configure_display_backend()
@@ -50,12 +52,11 @@ class Game:
         self.game_state = GameState()
         self.render_snapshot = RenderSnapshot()
         self.global_trigger = False
-        self.global_event = pg.USEREVENT + 0
-        pg.time.set_timer(self.global_event, 40)
+        self.global_trigger_accum = 0
         pg.event.set_allowed([
             pg.QUIT, pg.KEYDOWN, pg.KEYUP, pg.MOUSEMOTION,
             pg.MOUSEBUTTONDOWN, pg.MOUSEBUTTONUP,
-            pg.WINDOWFOCUSGAINED, pg.WINDOWFOCUSLOST, self.global_event,
+            pg.WINDOWFOCUSGAINED, pg.WINDOWFOCUSLOST,
         ])
         self.new_game()
 
@@ -98,10 +99,12 @@ class Game:
         self.raycasting = RayCasting(self)
         self.object_handler = ObjectHandler(self, self.random)
         self.weapon = Weapon(self)
-        self.sound = Sound(self)
+        if getattr(self, 'sound', None) is not None:
+            self.sound.stop_theme()
+        self.sound = self.sound_factory(self)
         self.pathfinding = PathFinding(self)
         self.render_snapshot = RenderSnapshot()
-        pg.mixer.music.play(-1)
+        self.sound.play_theme()
 
     def set_state(self, state):
         if state == 'game_over':
@@ -137,17 +140,22 @@ class Game:
         elif self.game_state.name == 'game_over':
             self.object_renderer.game_over()
 
+    def update_global_trigger(self):
+        self.global_trigger_accum += self.delta_time
+        self.global_trigger = self.global_trigger_accum >= 40
+        if self.global_trigger:
+            self.global_trigger_accum -= 40
+
     def check_events(self):
-        self.global_trigger = False
         for event in self.input.poll():
             if event.type == pg.QUIT:
+                if getattr(self, 'browser_mode', False):
+                    continue
                 self.record_score()
                 pg.quit()
                 sys.exit()
             elif event.type == pg.KEYDOWN and event.key == pg.K_ESCAPE:
                 return True
-            elif event.type == self.global_event:
-                self.global_trigger = True
             elif event.type == pg.WINDOWFOCUSLOST:
                 self.mouse_active = False
                 if os.environ.get('SDL_VIDEODRIVER') != 'x11':
@@ -167,7 +175,7 @@ class Game:
         self.record_score()
         pg.event.set_grab(False)
         pg.mouse.set_visible(True)
-        pg.mixer.music.stop()
+        self.sound.stop_theme()
         pg.quit()
 
     def run(self):
@@ -176,7 +184,25 @@ class Game:
                 self.close()
                 return
             self.delta_time = min(self.clock.tick(FPS), MAX_DELTA_TIME)
+            self.update_global_trigger()
             self.update()
             self.draw()
             pg.display.flip()
             pg.display.set_caption(f'{self.clock.get_fps() :.1f}')
+
+    async def run_async(self, return_on_exit=True):
+        self.browser_mode = not return_on_exit
+        while True:
+            if self.check_events():
+                self.record_score()
+                if return_on_exit:
+                    return
+                self.new_game()
+                continue
+            self.delta_time = min(self.clock.tick(FPS), MAX_DELTA_TIME)
+            self.update_global_trigger()
+            self.update()
+            self.draw()
+            pg.display.flip()
+            pg.display.set_caption(f'{self.clock.get_fps() :.1f}')
+            await asyncio.sleep(0)

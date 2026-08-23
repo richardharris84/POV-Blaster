@@ -126,12 +126,32 @@ Open the application bundle from Finder or run it with:
 open build/POV-Blaster_mac.app
 ```
 
+### Browser build
+
+Install the dependencies, then run the Pygbag target from the project root:
+
+```bash
+python3 build.py -b
+# or: python3 build.py --web
+```
+
+This creates the browser build under `build/web`. To run it locally, start Pygbag's runtime-aware server against the staged web source:
+
+```bash
+python3 -m pygbag build/web-source
+```
+
+Then open `http://localhost:8000`. Pygbag's server provides the required `/cdn/` runtime route; a plain HTTP server is not sufficient. The web entry point uses an asynchronous game loop and browser-local storage for high scores. Desktop builds continue to use `scores.xml`. Pygbag's runtime may require a user click to unlock browser media before starting.
+
+The Pygbag dev server re-packages the app fresh each time it starts, but not while running — so after any `python3 build.py --web` rebuild, you must stop and restart the dev server (Ctrl+C, then run `python3 -m pygbag build/web-source` again) for changes to actually take effect.
+
 The `build.py` script rejects builds requested from the wrong operating system, preventing incorrectly named non-native executables. macOS builds must run on macOS because PyInstaller creates native artifacts for the host platform.
 
 ## Project Structure
 
 ```text
 main.py              Game startup, event loop, update, and draw lifecycle
+web_main.py          Async browser entry point for Pygbag
 settings.py          Display, player, raycasting, and gameplay constants
 map.py               Grid map and wall texture IDs
 maps/                Predefined plain-text maps, including 1_mini_map_default.txt
@@ -146,6 +166,7 @@ weapon.py            Shotgun animation and damage
 sound.py             Music and sound effects
 resources/           Runtime textures, sprites, and audio
 theme.py             Theme definitions and startup selection
+build.py             Windows, Linux, macOS, and browser build targets
 generate_themes.ps1  Procedural theme and animation asset generator
 screenshots/         Project screenshots
 ```
