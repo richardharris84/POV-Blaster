@@ -164,7 +164,7 @@ def build_web():
         raise FileNotFoundError(f'Web entry point not found: {WEB_ENTRY_POINT}')
 
     web_dir = BUILD_DIR / 'web'
-    web_dir.mkdir(exist_ok=True)
+    web_dir.mkdir(parents=True, exist_ok=True)
     web_source = BUILD_DIR / 'web-source'
     if web_source.exists():
         shutil.rmtree(web_source)
