@@ -147,6 +147,14 @@ The Pygbag dev server re-packages the app fresh each time it starts, but not whi
 
 The `build.py` script rejects builds requested from the wrong operating system, preventing incorrectly named non-native executables. macOS builds must run on macOS because PyInstaller creates native artifacts for the host platform.
 
+#### Deploying to GitHub Pages
+
+`.github/workflows/deploy-pages.yml` builds the web target and publishes `build/web` to GitHub Pages automatically on every push to `main`. To enable it:
+
+1. In the repository, go to **Settings → Pages** and set **Source** to **GitHub Actions**.
+2. Push to `main` (or run the workflow manually from the **Actions** tab).
+3. Once the workflow finishes, the game is served at `https://<username>.github.io/<repo>/`.
+
 ## Project Structure
 
 ```text
