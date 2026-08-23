@@ -365,3 +365,41 @@ See the audit and comparison reports before making foundational changes.
 ## Project Lineage
 
 POV-Blaster is a direct fork of [StanislavPetrovV/DOOM-style-Game](https://github.com/StanislavPetrovV/DOOM-style-Game). The related [Saurabh-66/DOOM-3D-FPS-Shooting-Game](https://github.com/Saurabh-66/DOOM-3D-FPS-Shooting-Game) project was also compared during planning; see [CloneCompare.md](docs/archive/CloneCompare.md) for the source-similarity evidence and recommended improvements.
+
+### Similarity Analysis
+
+**POV-Blaster vs. `DOOM-style-Game` — ~35–40% similar**
+
+POV-Blaster started as a literal fork, so the *conceptual lineage* of the core engine is still clearly traceable: the DDA raycasting math in `raycasting.py`, the sprite-projection formula in `sprite_object.py`, the NPC line-of-sight check in `npc.py`, and the BFS pathfinding in `pathfinding.py` are essentially unchanged algorithms. But almost nothing is byte-identical anymore, because POV-Blaster has since:
+
+- Split the original ~12 flat modules into a layered `application/` / `domain/` / `infrastructure/` / `presentation/` architecture (health, combat, movement, and game-state logic extracted into pure, dependency-free `domain/` classes).
+- Added a 4-theme system (Doom/Candy Kingdom/Space/Graveyard) that swaps enemies, art, weapon, and sound per theme — the original has exactly one fixed asset set.
+- Added an entire second platform target: a browser build (Pygbag/WASM), with its own audio backend (`BrowserSound`), high-score backend (`BrowserHighScores`), and HTML/CSS patching pipeline — none of this exists upstream.
+- Added a `tests/` suite, CI, GitHub Pages deployment, plain-text map files (vs. a hardcoded grid), and multi-platform PyInstaller builds.
+
+Current POV-Blaster is **1,667 lines across 29 files**, versus the original's **~958 lines across 12 files** — roughly 1.7x the code, with the majority of the growth being net-new subsystems rather than modified originals.
+
+**POV-Blaster vs. `DOOM-3D-FPS-Shooting-Game` — ~30–35% similar**
+
+Slightly lower than above. Per `CloneCompare.md`, `DOOM-3D-FPS-Shooting-Game` is itself an almost-unmodified copy of `DOOM-style-Game`, with a handful of small intentional deviations — it *removed* the diagonal-movement correction and mouse-grab call that `DOOM-style-Game` has. POV-Blaster explicitly *kept* the diagonal correction (now `domain/movement.py`'s `movement_delta()`) and kept mouse-grab handling (now with an X11/browser-aware branch), so on those specific points POV-Blaster tracks closer to `DOOM-style-Game` than to `DOOM-3D-FPS-Shooting-Game`'s variant — pushing its similarity to the latter slightly lower.
+
+**`DOOM-style-Game` vs. `DOOM-3D-FPS-Shooting-Game` — ~95–98% similar**
+
+A direct hash/diff comparison of all 12 shared modules:
+
+```
+main.py             1 line differs
+map.py               identical (content)
+npc.py                byte-identical
+object_handler.py     identical (content)
+object_renderer.py    identical (content)
+pathfinding.py       2 lines differ
+player.py           12 lines differ
+raycasting.py         identical (content)
+settings.py           identical (content)
+sound.py             2 lines differ
+sprite_object.py      byte-identical
+weapon.py             identical (content)
+```
+
+Only **17 lines differ** out of **958 total shared lines** — about 98.2% line-for-line identical, confirming `CloneCompare.md`'s original finding that this is a copy/near-copy rather than an independent implementation.
