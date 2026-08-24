@@ -430,7 +430,7 @@ class WebHtmlPatchTests(unittest.TestCase):
 
         self.assertIn('background: black;', patched)
         self.assertIn('color: white;', patched)
-        self.assertIn('background-color: #d3d3d3;', patched)
+        self.assertIn('background-color: #000000;', patched)
         self.assertIn('object-fit: fill;', patched)
         self.assertIn('html {\n            width: 100%;\n            height: 100%;\n        }', patched)
 

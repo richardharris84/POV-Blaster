@@ -188,8 +188,8 @@ def apply_web_html_patches(html):
     html = _require_replace(
         html,
         'background-color:powderblue;',
-        'background-color: #d3d3d3;',
-        'recolor the page background',
+        'background-color: #000000;',
+        'set the page background to black',
     )
     html = _require_replace(
         html,
