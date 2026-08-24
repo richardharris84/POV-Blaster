@@ -44,7 +44,7 @@ jobs:
 
   notify:
     needs: deploy
-    if: ${{ needs.deploy.result == 'success' }}
+    if: ${{ needs.deploy.result == 'success' && secrets.SMTP_SERVER != '' && secrets.SMTP_PORT != '' && secrets.SMTP_USERNAME != '' && secrets.SMTP_PASSWORD != '' }}
     runs-on: ubuntu-latest
     steps:
       - name: Send completion email
