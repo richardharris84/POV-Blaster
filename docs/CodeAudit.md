@@ -369,3 +369,9 @@ Remaining open items, not part of this pass but worth prioritizing next:
 - **M9/M10/M11 (hardening):** validate `settings.py`'s derived constants; pin dependencies; add fakeable unit tests for `BrowserSound`/`BrowserClip`.
 
 None of this required undoing the layered architecture already in place — it was a matter of finishing the migration into it.
+
+## Release Checkpoint: Steps 39-44
+
+The current implementation has passed the automated release gates for all five themes. The Hunting hunter generator now keeps the rifle connected to the hand, insets sprite content within its frame, and passes both the clipping audit and detached-component regression test. The HUD kill counter, Caps Lock minimap toggle, Doom default selection, browser touch controls, and clean-architecture module boundaries are covered by the regression suite.
+
+The themes are ready for automated play testing: Candy Kingdom, Space, Hunting, Graveyard, and Doom. A real-device touch play test and professional art-direction approval against a named commercial-quality benchmark remain manual gates before describing the project as fully gold-code production ready.

@@ -412,3 +412,7 @@ These are real issues hit while building the web target — worth knowing before
 - **Calling a JS constructor via the Pygbag/`platform.window` bridge is not the same as `new Foo()`.** `window.Audio.new(...)` doesn't exist (returns `None`), and `window.Audio(...)` fails with "Please use the 'new' operator". `document.createElement('audio')` sidesteps the problem entirely for anything the DOM lets you construct that way.
 - **Cloning and playing a fresh `<audio>` node per sound trigger is too slow for rapid-fire SFX** — each clone re-decodes its `src` from scratch. Pre-create and pre-load a small pool of elements up front and round-robin them instead.
 - **A new backend instance per game restart needs explicit cleanup.** Creating a fresh `BrowserSound` (and thus a fresh `<audio>` element) every `new_game()` without stopping the previous instance's theme track first causes overlapping/duplicate music — desktop's single global `pg.mixer.music` channel hid this same bug by construction.
+
+## Release Checkpoint: Steps 39-44
+
+The project currently passes the automated graphics, gameplay, architecture, and web deployment gates. All five themes are ready for automated play testing. Physical mobile touch testing and a professional art-direction review remain manual release gates.

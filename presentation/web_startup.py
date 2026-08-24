@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import asyncio
+import platform
+import sys
 
 import pygame as pg
 
@@ -47,6 +49,53 @@ def _event_position(event):
     return None
 
 
+class _BrowserNameInput:
+    """Bridge the canvas name field to the mobile browser keyboard."""
+
+    def __init__(self, on_change):
+        self.element = None
+        if sys.platform != "emscripten":
+            return
+        try:
+            document = platform.document
+            element = document.createElement("input")
+            element.type = "text"
+            element.maxLength = 24
+            element.autocomplete = "off"
+            element.autocapitalize = "words"
+            element.spellcheck = False
+            element.setAttribute("aria-label", "Player name")
+            element.style.position = "fixed"
+            element.style.left = "50%"
+            element.style.top = "50%"
+            element.style.width = "1px"
+            element.style.height = "1px"
+            element.style.opacity = "0.01"
+            element.style.fontSize = "16px"
+            element.style.zIndex = "2147483647"
+            element.addEventListener("input", on_change)
+            document.body.appendChild(element)
+            self.element = element
+        except Exception:
+            self.element = None
+
+    def focus(self):
+        if self.element is not None:
+            self.element.focus()
+
+    def set_value(self, value):
+        if self.element is not None and self.element.value != value:
+            self.element.value = value
+
+    def value(self):
+        return "" if self.element is None else str(self.element.value)
+
+    def close(self):
+        if self.element is not None:
+            self.element.remove()
+            self.element = None
+
+
 async def choose_startup():
     """Return the selected (player name, theme), or None when Escape is pressed."""
     surface = pg.display.get_surface()
@@ -58,6 +107,14 @@ async def choose_startup():
     phase = "name"
     error = ""
     focused = True
+    browser_name_input = None
+
+    def browser_name_changed(event):
+        nonlocal player_name
+        value = str(event.target.value)
+        player_name = value[:24]
+
+    browser_name_input = _BrowserNameInput(browser_name_changed)
     pg.key.start_text_input()
     try:
         while True:
@@ -86,6 +143,8 @@ async def choose_startup():
                 elif event.type == pg.TEXTINPUT and phase == "name" and focused:
                     if len(player_name) < 24:
                         player_name += event.text
+                        if browser_name_input is not None:
+                            browser_name_input.set_value(player_name)
                 elif event.type in (pg.MOUSEBUTTONDOWN, pg.FINGERDOWN):
                     if event.type == pg.MOUSEBUTTONDOWN and event.button != 1:
                         continue
@@ -97,6 +156,8 @@ async def choose_startup():
                         if name_rect.collidepoint(pos):
                             focused = True
                             pg.key.start_text_input()
+                            if browser_name_input is not None:
+                                browser_name_input.focus()
                         elif pg.Rect(WIDTH // 2 - 150, 395, 300, 58).collidepoint(pos):
                             error = validate_player_name(player_name) or ""
                             if not error:
@@ -134,4 +195,6 @@ async def choose_startup():
             await asyncio.sleep(0)
     finally:
         pg.key.stop_text_input()
+        if browser_name_input is not None:
+            browser_name_input.close()
 

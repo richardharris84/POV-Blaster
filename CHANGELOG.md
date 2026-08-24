@@ -1040,6 +1040,69 @@ Validation completed:
 - Space theme loads successfully without missing asset errors.
 - Visual review confirms the forward-facing deer composition, themed bear/hunter silhouettes, and sci-fi space look are aligned with the requested mood and structure.
 
+## Step 39. Production Graphics Gate
+
+### Output
+
+- [x] Audited all five playable themes with required dimensions, nonblank, alpha, clipping, duplicate-frame, and animation checks.
+- [x] Repaired Hunting hunter frame geometry so the rifle remains attached and every non-death frame stays inside its canvas.
+- [x] Confirmed each NPC has meaningful `idle`, `walk`, `attack`, `pain`, and `death` animation folders.
+- [x] Confirmed all themes are ready for automated play testing: Candy Kingdom, Space, Hunting, Graveyard, and Doom.
+- [ ] A professional art-direction review against Quake or Counter-Strike 1.6 remains outside automated validation.
+
+## Step 40. Gameplay HUD and Minimap
+
+### Output
+
+- [x] Added the player kill counter in the top-right using each theme's digit textures.
+- [x] Preserved kills across level completion and theme changes; reset kills only when the player dies.
+- [x] Added Caps Lock minimap toggling during gameplay.
+- [x] Added regression coverage for kill persistence and minimap toggling.
+
+## Step 41. Default Theme Selection
+
+### Output
+
+- [x] Kept Doom as menu option 5 and preselected it in the console and web theme menus.
+- [x] Required Enter to confirm the preselected theme.
+- [x] Covered the shared selection behavior with startup tests.
+
+## Step 42. Mobile Controls
+
+### Output
+
+- [x] Added mobile and browser touch detection.
+- [x] Added isolated left and right virtual joystick axes for movement and turning.
+- [x] Added tap-to-shoot outside the joystick zones.
+- [x] Added touch startup-menu interaction coverage.
+
+Validation completed:
+
+- [x] Desktop and phone-sized browser viewports load the deployed game.
+- [x] Desktop name entry, Doom selection, Enter confirmation, and gameplay were exercised on GitHub Pages.
+- [ ] Physical-device touch play testing remains required; browser emulation does not replace a real phone or tablet test.
+
+## Step 43. Clean Architecture Refactor
+
+### Output
+
+- [x] Kept domain rules isolated from Pygame and infrastructure concerns.
+- [x] Kept application orchestration separate from presentation and runtime adapters.
+- [x] Kept build and audit tooling outside the application layers.
+- [x] Validated the architecture with the full regression suite and headless rendering tests.
+
+## Step 44. Release Documentation and Deployment
+
+### Output
+
+- [x] Updated the release record with Steps 39-44 and per-theme play-test readiness.
+- [x] Updated web build documentation for black letterboxing around the fixed-aspect canvas.
+- [x] Pages deployment run `32738819389` completed successfully for the graphics release.
+- [x] SMTP notification completed successfully for that Pages deployment.
+- [ ] CI run `32738820065` remains the final graphics-release gate to verify.
+
+Final release status: automated graphics and gameplay gates pass; production art approval and physical mobile play testing remain open before declaring gold-code complete.
+
 ## Step 36. Hunting Weapon
 
 ### Prompt
