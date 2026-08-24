@@ -2,7 +2,7 @@ from pathlib import Path
 
 import pygame as pg
 
-MAPS_DIR = Path(__file__).resolve().parent / 'maps'
+MAPS_DIR = Path(__file__).resolve().parents[1] / 'maps'
 DEFAULT_MAP_NAME = '1_mini_map_default'
 
 

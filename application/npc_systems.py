@@ -8,7 +8,7 @@ import math
 
 from random import random
 
-from settings import HALF_WIDTH, MAX_DEPTH, RAY_EPSILON
+from infrastructure.settings import HALF_WIDTH, MAX_DEPTH, RAY_EPSILON
 
 
 def npc_can_see_player(npc):
@@ -142,4 +142,6 @@ class CombatResolver:
         if npc.combat.defeated:
             npc.alive = False
             self.game.player.kills += 1
+            self.game.kill_count = self.game.player.kills
             self.game.sound.npc_death.play()
+

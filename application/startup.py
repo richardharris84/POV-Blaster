@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import re
 
-from theme import THEMES
+from application.theme import THEMES
 
 PROFANITY_PATTERN = re.compile(
     r"(?i)(?:\bass(?:hole)?\b|\bbastard\b|\bbitch\b|\bcrap\b|\bcunt\b|\bdick\b|\bfuck\b|\bpiss\b|\bshit\b|\bslut\b|\bwhore\b)"
@@ -24,3 +24,4 @@ def validate_player_name(name: str) -> str | None:
 def theme_menu_items():
     """Return the same ordered theme data displayed by the console menu."""
     return tuple((index, theme) for index, theme in enumerate(THEMES, start=1))
+

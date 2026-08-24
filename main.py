@@ -4,8 +4,7 @@ import platform
 
 from application.game import Game
 from application.startup import validate_player_name
-from infrastructure.scores import BrowserHighScores
-from theme import THEMES, choose_theme
+from application.theme import THEMES, choose_theme
 from infrastructure.scores import HighScores
 
 
@@ -20,8 +19,9 @@ def choose_player_name(input_func=input, output_func=print):
 
 
 async def run_web():
-    game = Game(THEMES[-1], player_name='Player 1', high_scores=BrowserHighScores())
-    await game.run_async(return_on_exit=False)
+    from application.web_main import main as web_main
+
+    await web_main()
 
 
 if sys.platform == 'emscripten' or hasattr(platform, 'window'):
@@ -35,3 +35,4 @@ elif __name__ == '__main__':
         if selected_theme is None:
             sys.exit(0)
         Game(selected_theme, player_name=player_name, high_scores=high_scores).run()
+

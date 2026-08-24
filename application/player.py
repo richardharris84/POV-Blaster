@@ -2,7 +2,7 @@ import pygame as pg
 import math
 import os
 import sys
-from settings import (HALF_HEIGHT, HALF_WIDTH, HEIGHT, LINUX_MOUSE_SENSITIVITY,
+from infrastructure.settings import (HALF_HEIGHT, HALF_WIDTH, HEIGHT, LINUX_MOUSE_SENSITIVITY,
                       MOUSE_BORDER_LEFT, MOUSE_BORDER_RIGHT, MOUSE_MAX_REL,
                       MOUSE_SENSITIVITY, PLAYER_ANGLE, PLAYER_MAX_HEALTH,
                       PLAYER_POS, PLAYER_ROT_SPEED, PLAYER_SIZE_SCALE,
@@ -43,6 +43,8 @@ class Player:
     def check_game_over(self):
         if self.health < 1:
             self.health = 0
+            self.game.record_score()
+            self.game.reset_kill_count()
             self.game.set_state('game_over')
 
     def get_damage(self, damage):
@@ -61,13 +63,26 @@ class Player:
 
     def single_fire_event(self, event):
         if event.type == pg.MOUSEBUTTONDOWN:
-            if event.button == 1 and not self.shot and not self.game.weapon.reloading:
-                self.game.sound.shotgun.play()
-                self.shot = True
-                self.game.weapon.reloading = True
+            if event.button == 1:
+                self.fire()
+
+    def fire(self):
+        if not self.shot and not self.game.weapon.reloading:
+            self.game.sound.shotgun.play()
+            self.shot = True
+            self.game.weapon.reloading = True
 
     def movement(self):
         speed = PLAYER_SPEED * self.game.delta_time
+        touch_controller = getattr(self.game, 'touch_controller', None)
+        if touch_controller is not None:
+            move_x, move_y, _ = touch_controller.axes()
+            dx = speed * (move_y * math.cos(self.angle) - move_x * math.sin(self.angle))
+            dy = speed * (move_y * math.sin(self.angle) + move_x * math.cos(self.angle))
+            self.check_wall_collision(dx, dy)
+            self.angle %= math.tau
+            return
+
         keys = pg.key.get_pressed()
         dx, dy = movement_delta(
             self.angle,
@@ -103,6 +118,14 @@ class Player:
         pg.draw.circle(self.game.screen, 'green', (self.x * 100, self.y * 100), 15)
 
     def mouse_control(self):
+        touch_controller = getattr(self.game, 'touch_controller', None)
+        if touch_controller is not None:
+            _, _, turn_x = touch_controller.axes()
+            sensitivity = WEB_MOUSE_SENSITIVITY if getattr(self.game, 'browser_mode', False) else MOUSE_SENSITIVITY
+            self.rel = turn_x * MOUSE_MAX_REL
+            self.angle += self.rel * sensitivity
+            return
+
         if not self.game.mouse_active:
             self.rel = 0
             self.mouse_motion = 0

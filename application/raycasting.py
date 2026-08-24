@@ -1,6 +1,6 @@
 import pygame as pg
 import math
-from settings import (DELTA_ANGLE, FOV, HALF_FOV, HALF_HEIGHT, HALF_TEXTURE_SIZE,
+from infrastructure.settings import (DELTA_ANGLE, FOV, HALF_FOV, HALF_HEIGHT, HALF_TEXTURE_SIZE,
                       MAX_DEPTH, NUM_RAYS, RAY_EPSILON, SCALE, SCREEN_DIST,
                       TEXTURE_SIZE, HEIGHT)
 from application.ports import GameContext

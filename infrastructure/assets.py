@@ -2,7 +2,7 @@ from pathlib import Path
 
 import pygame as pg
 
-from settings import BASE_DIR
+from infrastructure.settings import BASE_DIR
 
 
 def resolve_resource_path(path):
@@ -49,3 +49,4 @@ class AssetLoader:
 
         self.cache[cache_key] = surface
         return surface
+

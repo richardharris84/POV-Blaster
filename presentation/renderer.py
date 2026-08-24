@@ -3,7 +3,7 @@ from pathlib import Path
 
 import pygame as pg
 
-from settings import FLOOR_COLOR, HALF_HEIGHT, HEIGHT, RES, SCALE, TEXTURE_SIZE, WIDTH
+from infrastructure.settings import FLOOR_COLOR, HALF_HEIGHT, HEIGHT, RES, SCALE, TEXTURE_SIZE, WIDTH
 from infrastructure.assets import AssetLoader
 
 
@@ -135,3 +135,4 @@ class ObjectRenderer:
             4: self.get_texture('textures/4.png'),
             5: self.get_texture('textures/5.png'),
         }
+

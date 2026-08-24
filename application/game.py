@@ -16,13 +16,14 @@ from infrastructure.windowing import (focus_console_window, focus_game_window,
                                       position_game_window_on_console_monitor)
 from presentation.input import InputAdapter
 from presentation.renderer import ObjectRenderer
-from settings import FPS, HALF_HEIGHT, HALF_WIDTH, MAX_DELTA_TIME, RES
-from map import Map
-from object_handler import ObjectHandler
-from pathfinding import PathFinding
-from player import Player
-from raycasting import RayCasting
-from weapon import Weapon
+from presentation.touch import TouchController, is_mobile_touch_device
+from infrastructure.settings import FPS, HALF_HEIGHT, HALF_WIDTH, MAX_DELTA_TIME, RES
+from application.map import Map
+from application.object_handler import ObjectHandler
+from application.pathfinding import PathFinding
+from application.player import Player
+from application.raycasting import RayCasting
+from application.weapon import Weapon
 
 
 class Game:
@@ -32,6 +33,7 @@ class Game:
         self.high_scores = high_scores or HighScores()
         self.sound_factory = sound_factory or Sound
         self.score_recorded = False
+        self.kill_count = 0
         self.random = random.Random(seed)
         self.configure_display_backend()
         headless = os.environ.get('SDL_VIDEODRIVER') == 'dummy'
@@ -40,15 +42,17 @@ class Game:
         elif not headless:
             position_game_window_on_console_monitor(RES)
         pg.init()
-        pg.mouse.set_visible(False)
         self.screen = pg.display.set_mode(RES)
         pg.display.set_caption('POV Blaster')
+        self.touch_controller = TouchController(*RES) if is_mobile_touch_device() else None
+        self.mobile_controls_enabled = self.touch_controller is not None
+        pg.mouse.set_visible(self.mobile_controls_enabled)
         if not headless:
             focus_game_window()
-        self.mouse_active = False
+        self.mouse_active = self.mobile_controls_enabled
         self.minimap_enabled = True
         self.mouse_center = (HALF_WIDTH, HALF_HEIGHT)
-        if os.environ.get('SDL_VIDEODRIVER') != 'x11':
+        if os.environ.get('SDL_VIDEODRIVER') != 'x11' and not self.mobile_controls_enabled:
             pg.event.set_grab(True)
             pg.mouse.set_pos(self.mouse_center)
         pg.event.pump()
@@ -64,11 +68,15 @@ class Game:
         pg.event.set_allowed([
             pg.QUIT, pg.KEYDOWN, pg.KEYUP, pg.MOUSEMOTION,
             pg.MOUSEBUTTONDOWN, pg.MOUSEBUTTONUP,
+            pg.FINGERDOWN, pg.FINGERMOTION, pg.FINGERUP,
             pg.WINDOWFOCUSGAINED, pg.WINDOWFOCUSLOST,
         ])
         self.new_game()
 
     def activate_mouse(self):
+        if self.mobile_controls_enabled:
+            self.mouse_active = True
+            return
         if self.mouse_active:
             return
         self.mouse_active = True
@@ -109,6 +117,8 @@ class Game:
         self.minimap_enabled = True
         self.map = Map(self)
         self.player = Player(self)
+        self.player.kills = self.kill_count
+        self.kill_count = self.player.kills
         self.object_renderer: Renderer = ObjectRenderer(self)
         self.raycasting = RayCasting(self)
         self.object_handler = ObjectHandler(self, self.random)
@@ -134,6 +144,11 @@ class Game:
             self.high_scores.add(self.player_name, self.player.kills)
             self.score_recorded = True
 
+    def reset_kill_count(self):
+        self.kill_count = 0
+        if getattr(self, 'player', None) is not None:
+            self.player.kills = 0
+
     def update(self):
         if self.game_state.name != 'playing':
             if self.game_state.advance(self.delta_time):
@@ -153,6 +168,8 @@ class Game:
     def draw(self):
         self.object_renderer.draw(self.render_snapshot)
         self.weapon.draw()
+        if self.game_state.name == 'playing' and self.touch_controller is not None:
+            self.touch_controller.draw(self.screen)
         if self.game_state.name == 'victory':
             self.object_renderer.win()
         elif self.game_state.name == 'game_over':
@@ -166,6 +183,10 @@ class Game:
 
     def check_events(self):
         for event in self.input.poll():
+            if self.touch_controller is not None:
+                self.touch_controller.handle_event(event)
+                if self.game_state.name == 'playing' and self.touch_controller.consume_shoot():
+                    self.player.fire()
             if event.type == pg.QUIT:
                 if getattr(self, 'browser_mode', False):
                     continue
@@ -235,3 +256,4 @@ class Game:
             if not self.browser_mode:
                 pg.display.set_caption(f'{self.clock.get_fps() :.1f}')
             await asyncio.sleep(0)
+

@@ -1,9 +1,9 @@
 import math
 from random import randint
 import pygame as pg
-from sprite_object import AnimatedSprite
+from application.sprite_object import AnimatedSprite
 from domain.combat import Combatant
-from npc_systems import AnimationController, CombatResolver, npc_can_see_player
+from application.npc_systems import AnimationController, CombatResolver, npc_can_see_player
 from application.ports import GameContext
 
 
@@ -152,6 +152,7 @@ class HuntingBearNPC(CyberDemonNPC):
                  scale=1.0, shift=0.04, animation_time=210):
         super().__init__(game, path, pos, scale, shift, animation_time)
         self.attack_sound_name = 'bear_roar'
+
 
 
 

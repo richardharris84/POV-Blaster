@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from pathlib import Path
 
-from settings import RESOURCE_DIR
+from infrastructure.settings import RESOURCE_DIR
 
 
 @dataclass(frozen=True)

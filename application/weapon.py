@@ -1,7 +1,7 @@
 import pygame as pg
 from collections import deque
-from settings import HALF_WIDTH, HEIGHT, WIDTH
-from sprite_object import AnimatedSprite
+from infrastructure.settings import HALF_WIDTH, HEIGHT, WIDTH
+from application.sprite_object import AnimatedSprite
 from application.ports import GameContext
 
 

@@ -10,7 +10,7 @@ from infrastructure.scores import BrowserHighScores
 async def main():
     pg.init()
     pg.display.set_mode((1600, 900))
-    from web_startup import choose_startup
+    from presentation.web_startup import choose_startup
 
     startup = await choose_startup()
     if startup is None:
@@ -24,3 +24,4 @@ async def main():
 
 if __name__ == '__main__':
     asyncio.run(main())
+

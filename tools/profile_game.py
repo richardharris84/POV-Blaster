@@ -13,7 +13,7 @@ os.environ.setdefault('SDL_AUDIODRIVER', 'dummy')
 import pygame as pg
 
 from main import Game
-from theme import THEMES
+from application.theme import THEMES
 
 
 def run(frames):
@@ -42,3 +42,4 @@ def main():
 
 if __name__ == '__main__':
     main()
+

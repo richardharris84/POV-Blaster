@@ -12,18 +12,19 @@ os.environ.setdefault('SDL_AUDIODRIVER', 'dummy')
 import pygame as pg
 
 from main import Game, choose_player_name
-from map import DEFAULT_MAP_NAME, load_map
-from theme import THEMES, choose_theme
+from application.map import DEFAULT_MAP_NAME, load_map
+from application.theme import THEMES, choose_theme
 from application.startup import theme_menu_items, validate_player_name
-from web_startup import choose_startup
+from presentation.web_startup import choose_startup
 from domain.health import Health
 from domain.game_state import GameState
 from domain.combat import Combatant
 from domain.movement import movement_delta
 from infrastructure.assets import AssetLoader
 from infrastructure.scores import BrowserHighScores, HighScores
-from npc_systems import npc_can_see_player
-from settings import HALF_WIDTH, NUM_RAYS
+from application.npc_systems import npc_can_see_player
+from presentation.touch import TouchController
+from infrastructure.settings import HALF_WIDTH, NUM_RAYS
 
 
 class HealthTests(unittest.TestCase):
@@ -71,6 +72,43 @@ class MovementTests(unittest.TestCase):
 
         self.assertAlmostEqual(diagonal[0], 1 / 2**0.5)
         self.assertAlmostEqual(diagonal[1], 1 / 2**0.5)
+
+
+class TouchControllerTests(unittest.TestCase):
+    def test_left_and_right_joysticks_produce_isolated_axes(self):
+        pg.init()
+        try:
+            touch = TouchController(1600, 900)
+            left_id = 11
+            right_id = 22
+            touch.handle_event(pg.event.Event(pg.FINGERDOWN, finger_id=left_id, x=0.15, y=0.85, dx=0.0, dy=0.0, touch_id=0))
+            touch.handle_event(pg.event.Event(pg.FINGERMOTION, finger_id=left_id, x=0.19, y=0.76, dx=0.04, dy=-0.09, touch_id=0))
+            touch.handle_event(pg.event.Event(pg.FINGERDOWN, finger_id=right_id, x=0.85, y=0.85, dx=0.0, dy=0.0, touch_id=0))
+            touch.handle_event(pg.event.Event(pg.FINGERMOTION, finger_id=right_id, x=0.94, y=0.85, dx=0.09, dy=0.0, touch_id=0))
+
+            move_x, move_y, turn_x = touch.axes()
+            self.assertGreater(move_x, 0.0)
+            self.assertGreater(move_y, 0.0)
+            self.assertGreater(turn_x, 0.0)
+
+            touch.handle_event(pg.event.Event(pg.FINGERUP, finger_id=left_id, x=0.19, y=0.76, dx=0.0, dy=0.0, touch_id=0))
+            touch.handle_event(pg.event.Event(pg.FINGERUP, finger_id=right_id, x=0.94, y=0.85, dx=0.0, dy=0.0, touch_id=0))
+            self.assertEqual(touch.axes(), (0.0, 0.0, 0.0))
+        finally:
+            pg.quit()
+
+    def test_tap_outside_joystick_zones_queues_shot(self):
+        pg.init()
+        try:
+            touch = TouchController(1600, 900)
+            finger_id = 33
+            touch.handle_event(pg.event.Event(pg.FINGERDOWN, finger_id=finger_id, x=0.50, y=0.20, dx=0.0, dy=0.0, touch_id=0))
+            touch.handle_event(pg.event.Event(pg.FINGERUP, finger_id=finger_id, x=0.50, y=0.20, dx=0.0, dy=0.0, touch_id=0))
+
+            self.assertTrue(touch.consume_shoot())
+            self.assertFalse(touch.consume_shoot())
+        finally:
+            pg.quit()
 
 
 class DomainBoundaryTests(unittest.TestCase):
@@ -163,6 +201,21 @@ class ThemeSelectionTests(unittest.TestCase):
         finally:
             pg.quit()
 
+    def test_web_startup_accepts_touch_for_name_continue_and_theme(self):
+        pg.init()
+        pg.display.set_mode((1600, 900))
+        try:
+            pg.event.post(pg.event.Event(pg.FINGERDOWN, finger_id=1, x=0.5, y=(250 + 32) / 900, dx=0.0, dy=0.0, touch_id=0))
+            pg.event.post(pg.event.Event(pg.TEXTINPUT, text='Alice'))
+            pg.event.post(pg.event.Event(pg.FINGERDOWN, finger_id=2, x=0.5, y=(395 + 29) / 900, dx=0.0, dy=0.0, touch_id=0))
+            pg.event.post(pg.event.Event(pg.FINGERDOWN, finger_id=3, x=0.5, y=(195 + (4 * 76) + 30) / 900, dx=0.0, dy=0.0, touch_id=0))
+
+            player_name, selected_theme = asyncio.run(choose_startup())
+            self.assertEqual(player_name, 'Alice')
+            self.assertEqual(selected_theme, THEMES[-1])
+        finally:
+            pg.quit()
+
     def test_theme_order_has_hunting_before_graveyard_and_doom_is_default(self):
         self.assertEqual(THEMES[2].key, 'hunting')
         self.assertEqual(THEMES[3].key, 'graveyard')
@@ -234,6 +287,30 @@ class HeadlessSmokeTests(unittest.TestCase):
             self.assertFalse(game.check_events())
             self.assertTrue(game.minimap_enabled)
             game.draw()
+        finally:
+            pg.quit()
+
+    def test_kills_persist_across_level_and_theme_reset_but_reset_on_death(self):
+        game = Game(THEMES[0], player_name='Alice')
+        try:
+            game.player.kills = 7
+            game.kill_count = 7
+            game.new_game()
+            self.assertEqual(game.player.kills, 7)
+            self.assertEqual(game.kill_count, 7)
+
+            game.player.kills = 11
+            game.kill_count = 11
+            game.player.health = 0
+            game.player.check_game_over()
+            self.assertEqual(game.player.kills, 0)
+            self.assertEqual(game.kill_count, 0)
+
+            game.player.kills = 9
+            game.kill_count = 9
+            game.new_game()
+            self.assertEqual(game.player.kills, 9)
+            self.assertEqual(game.kill_count, 9)
         finally:
             pg.quit()
 
@@ -451,3 +528,4 @@ class AssetIntegrityTests(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
+

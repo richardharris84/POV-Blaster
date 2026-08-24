@@ -3,7 +3,7 @@ import os
 import re
 import math
 from collections import deque
-from settings import (DELTA_ANGLE, HALF_HEIGHT, HALF_NUM_RAYS, HALF_WIDTH,
+from infrastructure.settings import (DELTA_ANGLE, HALF_HEIGHT, HALF_NUM_RAYS, HALF_WIDTH,
                       NUM_RAYS, RAY_EPSILON, SCALE, SCREEN_DIST, WIDTH)
 from infrastructure.assets import create_fallback_surface, resolve_resource_path
 from application.ports import GameContext
@@ -126,3 +126,4 @@ class AnimatedSprite(SpriteObject):
             images.append(self.game.asset_loader.load_image(resource_path / file_name,
                                                             fallback_label=file_name[0].upper()))
         return images
+

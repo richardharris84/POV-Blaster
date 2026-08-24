@@ -3,10 +3,10 @@ import random
 from pathlib import Path
 
 from application.ports import GameContext
-from npc import CacoDemonNPC, CyberDemonNPC, HuntingBearNPC, SoldierNPC
-from sprite_object import AnimatedSprite
+from application.npc import CacoDemonNPC, CyberDemonNPC, HuntingBearNPC, SoldierNPC
+from application.sprite_object import AnimatedSprite
 
-CONTENT_DIR = Path(__file__).resolve().parent / 'content' / 'levels'
+CONTENT_DIR = Path(__file__).resolve().parents[1] / 'content' / 'levels'
 NPC_TYPES_BY_NAME = {
     'SoldierNPC': SoldierNPC,
     'CacoDemonNPC': CacoDemonNPC,

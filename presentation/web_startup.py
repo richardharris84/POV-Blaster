@@ -7,7 +7,7 @@ import asyncio
 import pygame as pg
 
 from application.startup import theme_menu_items, validate_player_name
-from settings import HEIGHT, WIDTH
+from infrastructure.settings import HEIGHT, WIDTH
 
 BACKGROUND = (13, 19, 29)
 PANEL = (24, 34, 48)
@@ -37,6 +37,14 @@ def _button(surface, rect, label, selected=False):
     pg.draw.rect(surface, ACCENT if selected else BORDER, rect, width=3, border_radius=8)
     rendered = _font(24, bold=True).render(label, True, TEXT)
     surface.blit(rendered, rendered.get_rect(center=rect.center))
+
+
+def _event_position(event):
+    if hasattr(event, 'pos'):
+        return event.pos
+    if hasattr(event, 'x') and hasattr(event, 'y'):
+        return int(event.x * WIDTH), int(event.y * HEIGHT)
+    return None
 
 
 async def choose_startup():
@@ -78,19 +86,25 @@ async def choose_startup():
                 elif event.type == pg.TEXTINPUT and phase == "name" and focused:
                     if len(player_name) < 24:
                         player_name += event.text
-                elif event.type == pg.MOUSEBUTTONDOWN and event.button == 1:
+                elif event.type in (pg.MOUSEBUTTONDOWN, pg.FINGERDOWN):
+                    if event.type == pg.MOUSEBUTTONDOWN and event.button != 1:
+                        continue
+                    pos = _event_position(event)
+                    if pos is None:
+                        continue
                     if phase == "name":
-                        name_rect = pg.Rect(WIDTH // 2 - 300, 365, 600, 64)
-                        if name_rect.collidepoint(event.pos):
+                        name_rect = pg.Rect(WIDTH // 2 - 300, 250, 600, 64)
+                        if name_rect.collidepoint(pos):
                             focused = True
-                        elif pg.Rect(WIDTH // 2 - 150, 395, 300, 58).collidepoint(event.pos):
+                            pg.key.start_text_input()
+                        elif pg.Rect(WIDTH // 2 - 150, 395, 300, 58).collidepoint(pos):
                             error = validate_player_name(player_name) or ""
                             if not error:
                                 phase = "theme"
                     else:
                         for index, (_, theme) in enumerate(theme_menu_items()):
                             rect = pg.Rect(WIDTH // 2 - 300, 195 + index * 76, 600, 60)
-                            if rect.collidepoint(event.pos):
+                            if rect.collidepoint(pos):
                                 selected_theme = index
                                 return player_name.strip(), theme
 
@@ -120,3 +134,4 @@ async def choose_startup():
             await asyncio.sleep(0)
     finally:
         pg.key.stop_text_input()
+

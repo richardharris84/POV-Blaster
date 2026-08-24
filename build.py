@@ -12,7 +12,7 @@ from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).resolve().parent
 ENTRY_POINT = PROJECT_ROOT / 'main.py'
-WEB_ENTRY_POINT = PROJECT_ROOT / 'web_main.py'
+WEB_ENTRY_POINT = PROJECT_ROOT / 'application' / 'web_main.py'
 BUILD_DIR = PROJECT_ROOT / 'build'
 WORK_DIR = BUILD_DIR / 'pyinstaller-work'
 SPEC_DIR = BUILD_DIR / 'pyinstaller-spec'
@@ -262,7 +262,7 @@ def build_web():
     (web_source / 'main.py').write_text(
         # pygbag statically scans this file's text for 'import pygame' to know which
         # WASM packages to preload, so keep that import literal even though unused here.
-        "import asyncio\n\nimport pygame  # noqa: F401\n\nfrom web_main import main\n\nasyncio.run(main())\n",
+        "import asyncio\n\nimport pygame  # noqa: F401\n\nfrom application.web_main import main\n\nasyncio.run(main())\n",
         encoding='utf-8',
     )
     subprocess.run([
@@ -326,3 +326,4 @@ def main():
 
 if __name__ == '__main__':
     main()
+
