@@ -46,6 +46,7 @@ class Game:
         if not headless:
             focus_game_window()
         self.mouse_active = False
+        self.minimap_enabled = True
         self.mouse_center = (HALF_WIDTH, HALF_HEIGHT)
         if os.environ.get('SDL_VIDEODRIVER') != 'x11':
             pg.event.set_grab(True)
@@ -105,6 +106,7 @@ class Game:
     def new_game(self):
         self.game_state.set('playing', 0)
         self.score_recorded = False
+        self.minimap_enabled = True
         self.map = Map(self)
         self.player = Player(self)
         self.object_renderer: Renderer = ObjectRenderer(self)
@@ -172,6 +174,8 @@ class Game:
                 sys.exit()
             elif event.type == pg.KEYDOWN and event.key == pg.K_ESCAPE:
                 return True
+            elif event.type == pg.KEYDOWN and event.key == pg.K_CAPSLOCK and self.game_state.name == 'playing':
+                self.minimap_enabled = not self.minimap_enabled
             elif event.type == pg.WINDOWFOCUSLOST:
                 self.mouse_active = False
                 if os.environ.get('SDL_VIDEODRIVER') != 'x11':

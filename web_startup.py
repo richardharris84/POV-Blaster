@@ -46,7 +46,7 @@ async def choose_startup():
         surface = pg.display.set_mode((WIDTH, HEIGHT))
     clock = pg.time.Clock()
     player_name = ""
-    selected_theme = 0
+    selected_theme = len(theme_menu_items()) - 1
     phase = "name"
     error = ""
     focused = True
@@ -114,8 +114,7 @@ async def choose_startup():
                 for index, (number, theme) in enumerate(theme_menu_items()):
                     rect = pg.Rect(WIDTH // 2 - 300, 195 + index * 76, 600, 60)
                     _button(surface, rect, f"{number}  {theme.label}", selected=index == selected_theme)
-                _draw_centered(surface, "Menu navigation: Up/Down or W/S  |  Enter to play", _font(17), MUTED, 650)
-                _draw_centered(surface, "Game controls: W/A/S/D move  |  Mouse look  |  Left click fire  |  Esc exit", _font(17), MUTED, 690)
+                _draw_centered(surface, "Game controls: W/A/S/D move  |  Mouse look  |  Left click fire  |  Caps Lock toggles mini-map  |  Esc exit", _font(17), MUTED, 650)
             pg.display.flip()
             clock.tick(60)
             await asyncio.sleep(0)

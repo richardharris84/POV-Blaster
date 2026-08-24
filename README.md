@@ -9,6 +9,7 @@ The game uses a 2D grid map to produce a pseudo-3D view. It supports textured wa
 - `W`, `A`, `S`, `D`: move
 - Mouse: look around
 - Left click: fire
+- `Caps Lock`: toggle the mini-map in the top-left during gameplay
 - `Esc`: exit to the startup menu
 
 <p align="center">

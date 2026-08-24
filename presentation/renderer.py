@@ -1,5 +1,8 @@
-import pygame as pg
+import math
 from pathlib import Path
+
+import pygame as pg
+
 from settings import FLOOR_COLOR, HALF_HEIGHT, HEIGHT, RES, SCALE, TEXTURE_SIZE, WIDTH
 from infrastructure.assets import AssetLoader
 
@@ -40,6 +43,50 @@ class ObjectRenderer:
         self.draw_background()
         self.render_game_objects(snapshot)
         self.draw_player_health()
+        self.draw_player_kills()
+        self.draw_minimap()
+
+    def draw_minimap(self):
+        if not self.game.minimap_enabled:
+            return
+
+        map_grid = getattr(self.game.map, 'mini_map', None)
+        if not map_grid or not map_grid[0]:
+            return
+
+        map_w = len(map_grid[0])
+        map_h = len(map_grid)
+        panel_size = 170
+        margin = 12
+        cell = max(4, min((panel_size / max(map_w, map_h)), 12))
+        panel_w = max(4, cell * map_w)
+        panel_h = max(4, cell * map_h)
+        minimap = pg.Surface((panel_w + 2, panel_h + 2), pg.SRCALPHA)
+        pg.draw.rect(minimap, (18, 22, 28, 190), minimap.get_rect(), border_radius=8)
+        pg.draw.rect(minimap, (120, 130, 145, 200), minimap.get_rect(), width=2, border_radius=8)
+
+        for y, row in enumerate(map_grid):
+            for x, value in enumerate(row):
+                if value:
+                    pg.draw.rect(minimap, (214, 214, 214), (x * cell + 1, y * cell + 1, cell - 1, cell - 1))
+
+        player_x = self.game.player.x * cell
+        player_y = self.game.player.y * cell
+        dir_x = math.cos(self.game.player.angle) * (cell * 1.5)
+        dir_y = math.sin(self.game.player.angle) * (cell * 1.5)
+
+        if hasattr(self.game, 'object_handler') and getattr(self.game.object_handler, 'npc_list', None):
+            for npc in self.game.object_handler.npc_list:
+                if getattr(npc, 'alive', False):
+                    enemy_x = npc.x * cell
+                    enemy_y = npc.y * cell
+                    pg.draw.circle(minimap, (220, 50, 50), (int(enemy_x) + 1, int(enemy_y) + 1), max(2, int(cell * 0.35)))
+
+        pg.draw.line(minimap, (120, 255, 80), (player_x + 1, player_y + 1), (player_x + dir_x + 1, player_y + dir_y + 1), 2)
+        pg.draw.circle(minimap, (120, 255, 80), (int(player_x) + 1, int(player_y) + 1), max(3, int(cell * 0.35)))
+
+        health_height = self.digit_size
+        self.screen.blit(minimap, (margin, health_height + margin * 2))
 
     def win(self):
         self.screen.blit(self.win_image, (0, 0))
@@ -52,6 +99,14 @@ class ObjectRenderer:
         for i, char in enumerate(health):
             self.screen.blit(self.digits[char], (i * self.digit_size, 0))
         self.screen.blit(self.digits['10'], ((i + 1) * self.digit_size, 0))
+
+    def draw_player_kills(self):
+        kills = str(max(0, self.game.player.kills))
+        if not kills:
+            kills = '0'
+        start_x = WIDTH - ((len(kills) + 1) * self.digit_size) - 16
+        for i, char in enumerate(kills):
+            self.screen.blit(self.digits[char], (start_x + (i * self.digit_size), 0))
 
     def player_damage(self):
         self.screen.blit(self.blood_screen, (0, 0))

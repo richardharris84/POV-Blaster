@@ -159,9 +159,20 @@ class ThemeSelectionTests(unittest.TestCase):
             pg.event.post(pg.event.Event(pg.KEYDOWN, key=pg.K_RETURN))
             player_name, selected_theme = asyncio.run(choose_startup())
             self.assertEqual(player_name, 'Alice')
-            self.assertEqual(selected_theme, THEMES[0])
+            self.assertEqual(selected_theme, THEMES[-1])
         finally:
             pg.quit()
+
+    def test_theme_order_has_hunting_before_graveyard_and_doom_is_default(self):
+        self.assertEqual(THEMES[2].key, 'hunting')
+        self.assertEqual(THEMES[3].key, 'graveyard')
+        self.assertEqual(THEMES[4].key, 'default')
+
+    def test_blank_console_selection_uses_default_doom_theme(self):
+        selected = choose_theme(lambda prompt: '', lambda message: None)
+
+        self.assertEqual(selected.key, 'default')
+        self.assertEqual(selected.label, 'Doom')
 
     def test_doom_is_menu_option_five(self):
         choices = iter(['5'])
@@ -211,6 +222,20 @@ class HeadlessSmokeTests(unittest.TestCase):
                 self.assertEqual(scores.load()[0].kills, 0)
             finally:
                 pg.quit()
+
+    def test_caps_lock_toggles_minimap_for_gameplay(self):
+        game = Game(THEMES[3], player_name='Alice')
+        try:
+            self.assertTrue(game.minimap_enabled)
+            pg.event.post(pg.event.Event(pg.KEYDOWN, key=pg.K_CAPSLOCK))
+            self.assertFalse(game.check_events())
+            self.assertFalse(game.minimap_enabled)
+            pg.event.post(pg.event.Event(pg.KEYDOWN, key=pg.K_CAPSLOCK))
+            self.assertFalse(game.check_events())
+            self.assertTrue(game.minimap_enabled)
+            game.draw()
+        finally:
+            pg.quit()
 
     def test_game_initializes_and_renders_one_frame(self):
         game = Game(THEMES[3], player_name='Alice')

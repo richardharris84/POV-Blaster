@@ -20,7 +20,7 @@ def choose_player_name(input_func=input, output_func=print):
 
 
 async def run_web():
-    game = Game(THEMES[3], player_name='Player 1', high_scores=BrowserHighScores())
+    game = Game(THEMES[-1], player_name='Player 1', high_scores=BrowserHighScores())
     await game.run_async(return_on_exit=False)
 
 

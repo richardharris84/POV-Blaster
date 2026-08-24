@@ -38,12 +38,6 @@ THEMES = (
         ('alien_drone', 'alien_warrior', 'alien_overlord'),
     ),
     Theme(
-        'graveyard',
-        'Graveyard',
-        ('Ghost', 'Vampire', 'Werewolf'),
-        ('ghost', 'vampire', 'werewolf'),
-    ),
-    Theme(
         'hunting',
         'Hunting',
         ('Hunter', 'Deer', 'Bear'),
@@ -51,6 +45,12 @@ THEMES = (
         'sprites/weapon/shotgun/0.png',
         'shotgun.wav',
         ('npc_attack.wav', 'npc_attack.wav', 'bear_roar.wav'),
+    ),
+    Theme(
+        'graveyard',
+        'Graveyard',
+        ('Ghost', 'Vampire', 'Werewolf'),
+        ('ghost', 'vampire', 'werewolf'),
     ),
     Theme(
         'default',
@@ -72,6 +72,8 @@ def choose_theme(input_func=input, output_func=print):
 
     while True:
         choice = input_func('Selection: ').strip()
+        if choice == '':
+            choice = str(len(THEMES))
         if choice == '0':
             return None
         if choice.isdigit() and 1 <= int(choice) <= len(THEMES):
