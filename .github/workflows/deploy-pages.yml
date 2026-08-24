@@ -57,7 +57,7 @@ jobs:
           password: ${{ secrets.SMTP_PASSWORD }}
           subject: "POV-Blaster: GitHub Pages deploy completed"
           to: "richardharris84@gmail.com"
-          from: ${{ secrets.SMTP_FROM != '' && secrets.SMTP_FROM || secrets.SMTP_USERNAME }}
+          from: "richardharris84@gmail.com"
           body: |
             Gold code finalize. All builds completed successfully. Project publish to GitHub Pages.
 
