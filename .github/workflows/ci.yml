@@ -26,3 +26,28 @@ jobs:
         run: ./generate_themes.ps1 -ValidateOnly
       - name: Audit theme image assets
         run: python tools/audit_themes.py --check
+
+  notify:
+    needs: test
+    if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' && needs.test.result == 'success' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send CI success email
+        continue-on-error: true
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: ${{ secrets.SMTP_SERVER }}
+          server_port: ${{ secrets.SMTP_PORT }}
+          secure: false
+          username: ${{ secrets.SMTP_USERNAME }}
+          password: ${{ secrets.SMTP_PASSWORD }}
+          subject: "POV-Blaster: CI build passed"
+          to: "richardharris84@gmail.com"
+          from: "richardharris84@gmail.com"
+          body: |
+            POV-Blaster CI passed on main.
+
+            The GitHub Pages deployment workflow is publishing the corresponding web build.
+            Repository: ${{ github.repository }}
+            Commit: ${{ github.sha }}
+            Workflow run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
