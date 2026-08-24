@@ -989,3 +989,53 @@ Validation completed:
 - [x] Rebuilt the web bundle and verified the staged Graveyard assets are present.
 - [x] Pygbag packaging and local serving were exercised; BrowserFS staging was corrected for the served source directory.
 - [ ] Linux and macOS native builds cannot be produced on the Windows host and require their respective operating systems.
+
+## Step 36. Hunting Weapon
+
+### Prompt
+
+> We have redundancy in our weapon folder for hunting theme. Move `C:\Users\Richard\Dropbox\Workspace\Code\Python\POV-Blaster\resources\hunting\sprites\weapon\weapon\shotgun` into `C:\Users\Richard\Dropbox\Workspace\Code\Python\POV-Blaster\resources\hunting\sprites\weapon\shotgun`.
+
+### Output
+
+- Moved the redundant Hunting shotgun asset from the nested `weapon/weapon/shotgun` directory to the expected `resources/hunting/sprites/weapon/shotgun` path.
+- Normalized the Hunting weapon asset structure so the theme loader resolves a single canonical shotgun folder.
+- Removed the duplicate path ambiguity that could cause theme-asset lookup confusion during startup or builds.
+- Kept the asset contract intact for the Hunting weapon sprites and load pipeline.
+
+Validation completed:
+
+- Hunting weapon asset lookup resolves without missing-file or path errors.
+- Hunting theme initialization and headless render smoke tests passed.
+- No remaining duplicate Hunting weapon directory structure remained in the repo.
+
+## Step 37. Theme adjustment
+
+### Prompt
+
+> Replace hunting 4.png with something like this (still forward facing for ours though):
+> https://c7.alamy.com/comp/3D6MWEH/pixel-art-deer-head-with-detailed-antlers-on-blue-background-vector-illustration-3D6MWEH.jpg
+>
+> Replace hunting npc bear with something like this:
+> https://c7.alamy.com/comp/2GDTT96/bear-pixel-art-animal-retro-video-game-cartoon-2GDTT96.jpg
+>
+> Replace hunting npc hunter with something like this:
+> https://www.shutterstock.com/shutterstock/photos/776350228/display_1500/stock-vector-hunter-icon-pixel-art-old-school-computer-graphic-style-games-elements-776350228.jpg
+>
+> Replace space textures with images that look like this:
+> "C:\Users\Richard\Downloads\space"
+
+### Output
+
+- Replaced the Hunting `4.png` texture with a forward-facing deer-head composition inspired by the provided reference while preserving the game’s forward-facing render orientation.
+- Replaced the Hunting bear NPC artwork with a retro pixel-art bear silhouette and palette aligned to the forest/cabin theme.
+- Replaced the Hunting hunter NPC artwork with a retro pixel-art hunter silhouette using a readable weapon silhouette and a forest-hunting pose.
+- Updated the Space theme textures to a dark sci-fi corridor look inspired by the supplied reference folder, while retaining the game’s existing wall-tile convention and renderable surface behavior.
+- Kept the theme asset sizing and file conventions aligned with the renderer contract so the art remains valid across all menu and gameplay paths.
+
+Validation completed:
+
+- Hunting and Space textures remain within the expected renderable dimensions and format contract.
+- Hunting theme loads successfully through the startup theme selection flow.
+- Space theme loads successfully without missing asset errors.
+- Visual review confirms the forward-facing deer composition, themed bear/hunter silhouettes, and sci-fi space look are aligned with the requested mood and structure.
