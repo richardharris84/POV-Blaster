@@ -229,6 +229,7 @@ def npc_frame(spec, role, action, frame):
         hat_shift = (frame % 3) - 1
         draw.polygon([(18 + hat_shift, 14 + bob), (58 - hat_shift, 14 + bob), (63, 23 + bob), (13, 23 + bob)], fill=deep, outline=outline, width=3)
         draw.rectangle((19 + hat_shift, 22 + bob, 57 - hat_shift, 28 + bob), fill=mid, outline=outline, width=2)
+        draw.line((16 + hat_shift, 27 + bob, 25, 30 + bob), fill=mid, width=3)
         draw.rectangle((25, 27 + bob, 51, 45 + bob), fill=light, outline=outline, width=3)
         draw.rectangle((28, 34 + bob, 32, 38 + bob), fill=outline); draw.rectangle((44, 34 + bob, 48, 38 + bob), fill=outline)
         draw.rectangle((35, 39 + bob, 41, 43 + bob), fill=cream)
@@ -238,6 +239,7 @@ def npc_frame(spec, role, action, frame):
         draw.rectangle((27, 63 + bob, 49, 69 + bob), fill=cream)
         draw.line((28, 84 + bob, 20, 103 + bob), fill=light, width=8); draw.line((48, 84 + bob, 56, 103 + bob), fill=light, width=8)
         draw.line((20, 72 + bob, 8, 90 + bob), fill=mid, width=6); draw.line((56, 72 + bob, 68, 90 + bob), fill=mid, width=6)
+        draw.line((50, 60 + bob, 58, 58 + bob), fill=mid, width=4)
         draw.rectangle((56, 56 + bob, 70, 60 + bob), fill=mid, outline=outline, width=2)
         draw.rectangle((68, 54 + bob, 75, 58 + bob), fill=light, outline=outline, width=2)
     elif role == "drone":
@@ -325,6 +327,10 @@ def npc_frame(spec, role, action, frame):
             draw.ellipse((26, ground_y - 16, 32, ground_y - 10), fill=light)
             draw.ellipse((45, ground_y - 24, 51, ground_y - 18), fill=light)
             draw.ellipse((55, ground_y - 10, 61, ground_y - 4), fill=light)
+    if role == "hunter":
+        inset = Image.new("RGBA", image.size)
+        inset.alpha_composite(image, (-2, -2))
+        return inset
     return image
 
 
