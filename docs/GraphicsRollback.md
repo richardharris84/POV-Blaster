@@ -131,7 +131,7 @@ This prompt was valuable as a design direction, but it needed tighter technical 
 >
 > Before editing:
 > 1. Inspect the current source files, asset dimensions, animation folders, and rendering pipeline.
-> 2. Read docs/CodeBase.md, docs/CodeAudit.md, and docs/CloneCompare.md.
+> 2. Read docs/CodeBase.md, docs/CodeAudit.md, and docs/archive/CloneCompare.md.
 > 3. Record the current wall texture dimensions, ray count, frame time if measurable, and all sprite animation folders.
 > 4. Identify any assets that already meet the requested dimensions.
 > 5. Do not overwrite user changes unrelated to this task.

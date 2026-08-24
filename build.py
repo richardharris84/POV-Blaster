@@ -202,19 +202,19 @@ def apply_web_html_patches(html):
     html = _require_replace(
         html,
         '            width: 100%;\n            height: 100%;\n            z-index: 5;',
-        '            width: 100%;\n            height: 100%;\n            object-fit: contain;\n            z-index: 5;',
-        'preserve canvas aspect ratio via object-fit',
+        '            width: 100%;\n            height: 100%;\n            object-fit: fill;\n            z-index: 5;',
+        'fill the browser viewport edge to edge',
     )
     html = _set_html_title(html, 'POV Blaster')
     if '</body>' in html:
-        if 'Built by: Richard Harris' not in html:
+        if '👨‍💻🧠💡🎮  Richard Harris 💻🛠️✨👾' not in html:
             footer = (
                 '\n<div id="built-by-richard" style="position: fixed; bottom: 8px; right: 8px; '
                 'z-index: 2147483647; font-family: Arial, sans-serif; font-size: 12px; '
                 'background: rgba(0, 0, 0, 0.65); color: #fff; padding: 4px 8px; border-radius: 4px;">'
-                'Built by: <a href="https://github.com/richardharris84/POV-Blaster" '
+                '👨‍💻🧠💡🎮  <a href="https://github.com/richardharris84/POV-Blaster" '
                 'target="_blank" rel="noopener noreferrer" style="color: #fff; text-decoration: underline;">'
-                'Richard Harris</a></div>\n'
+                'Richard Harris</a> 💻🛠️✨👾</div>\n'
             )
             html = html.replace('</body>', f'{footer}</body>', 1)
         if 'id="pov-blaster-brand"' not in html:
@@ -251,10 +251,6 @@ def build_web():
         relative = Path(directory).relative_to(PROJECT_ROOT)
         ignored = {'build', '.git', '.pytest_cache', '__pycache__', 'scores.xml',
                    'docs', 'screenshots', 'tests', 'tools', 'generate_themes.ps1'}
-        if relative == Path('.'):
-            ignored.update({'resources/candy_kingdom', 'resources/space', 'resources/graveyard'})
-        if relative == Path('resources'):
-            ignored.update({'candy_kingdom', 'space', 'graveyard'})
         return ignored.intersection(names)
 
     shutil.copytree(
@@ -287,12 +283,15 @@ def build_web():
             encoding='utf-8',
         )
     generated_web_dir = web_source / 'build' / 'web'
+    staged_browserfs = generated_web_dir / 'browserfs.min.js'
+    urlretrieve('https://cdn.jsdelivr.net/npm/browserfs@1.4.3/dist/browserfs.min.js', staged_browserfs)
     if generated_web_dir.exists() and generated_web_dir != web_dir:
         if web_dir.exists():
             shutil.rmtree(web_dir)
         shutil.copytree(generated_web_dir, web_dir)
     browserfs = web_dir / 'browserfs.min.js'
-    urlretrieve('https://cdn.jsdelivr.net/npm/browserfs@1.4.3/dist/browserfs.min.js', browserfs)
+    if not browserfs.exists():
+        shutil.copy2(staged_browserfs, browserfs)
     index = web_dir / 'index.html'
     embedded_index = web_dir / 'web-source.html'
     if embedded_index.exists():

@@ -4,37 +4,43 @@ POV-Blaster is a Python and Pygame first-person shooter built with a classic ray
 
 The game uses a 2D grid map to produce a pseudo-3D view. It supports textured walls, animated scenery, mouse-look, WASD movement, a shotgun, enemy line of sight, BFS pathfinding, health, damage, victory, and game-over states.
 
+## Controls
+
+- `W`, `A`, `S`, `D`: move
+- Mouse: look around
+- Left click: fire
+- `Esc`: exit to the startup menu
+
 <p align="center">
   <a href="https://richardharris84.github.io/POV-Blaster/">
-    <img alt="PLAY" src="https://img.shields.io/badge/PLAY-000000?style=for-the-badge#gh-light-mode-only">
-  </a>
-  <a href="https://richardharris84.github.io/POV-Blaster/">
-    <img alt="PLAY" src="https://img.shields.io/badge/PLAY-ffffff?style=for-the-badge#gh-dark-mode-only">
+    <span style="display:inline-block; width:208px; height:45px; box-sizing:border-box; background:#ffffff; color:#000000; border:3px solid #000000; border-radius:12px; font-family:'Arial Black','Trebuchet MS',sans-serif; font-size:25px; font-weight:900; letter-spacing:0.14em; line-height:39px; text-align:center; text-decoration:none;">PLAY</span>
   </a>
 </p>
+
+<div style="height:24px;"></div>
 
 ![POV-Blaster gameplay](screenshots/gameplay_1.gif)
 
 ## Table of Contents
 
+- [See Also](#see-also)
 - [Controls](#controls)
 - [Requirements](#requirements)
-- [What Copilot Wasn't Great At](#what-copilot-wasnt-great-at)
 - [Running the Script](#running-the-script)
+- [Build Executables](#build-executables)
 - [Project Structure](#project-structure)
 - [How the Game Works](#how-the-game-works)
 - [Development Walkthrough](#development-walkthrough)
 - [Assets](#assets)
 - [Development Notes](#development-notes)
-- [See Also](#see-also)
 - [Project Lineage](#project-lineage)
 
-## Controls
+## See Also
 
-- `W`, `A`, `S`, `D`: move and strafe
-- Mouse: look around
-- Left mouse button: fire
-- `Esc`: return to the startup menu
+- [CHANGELOG.md](CHANGELOG.md): project history and prior development prompts
+- [CodeAudit.md](docs/CodeAudit.md): architecture, quality, performance, and scalability audit
+- [CodeBase.md](docs/CodeBase.md): up-to-date reconstruction guide and codebase walkthrough (the original, now superseded, walkthrough is archived at [docs/archive/CodeBase-Orig.md](docs/archive/CodeBase-Orig.md))
+- [docs/archive/CloneCompare.md](docs/archive/CloneCompare.md): comparison of the related game projects and first-patch recommendations
 
 <div align="right"><a href="#table-of-contents">^ TOC</a></div>
 
@@ -45,17 +51,8 @@ The game uses a 2D grid map to produce a pseudo-3D view. It supports textured wa
 - PyInstaller — only needed to build the Windows/Linux/macOS executables
 - Pygbag — only needed to build/serve the browser version
 - imageio-ffmpeg — only needed by `build.py --web`; bundles a portable `ffmpeg` binary used to transcode sound assets to OGG for the browser build
+- Pillow, opencv-python, and scikit-image — used by the theme asset audit and Pixel-Harmony-compatible image comparisons
 - A desktop environment with graphics and audio support (for the desktop build)
-
-<div align="right"><a href="#table-of-contents">^ TOC</a></div>
-
-## What Copilot Wasn't Great At
-
-1. Converting rendering to Binary Space Partitioning (BSP).
-2. Upgrading the graphics without completely changing the rendering.
-3. Doing QA (e.g. perform simulations of real game play, take screen captures, and make fixes).
-
-<div align="right"><a href="#table-of-contents">^ TOC</a></div>
 
 ## Running the Script
 
@@ -184,11 +181,13 @@ The `build.py` script rejects builds requested from the wrong operating system, 
 
 <div align="right"><a href="#table-of-contents">^ TOC</a></div>
 
+<div align="right"><a href="#table-of-contents">^ TOC</a></div>
+
 ## Project Structure
 
 ```text
 main.py                Desktop/CLI entry point (theme + name prompt, then Game.run())
-web_main.py            Async browser entry point (fixed player/theme, Game.run_async())
+web_main.py            Async browser entry point (viewport startup menu, Game.run_async())
 build.py               Multi-target build script: Windows/Linux/macOS executables + browser build
 settings.py            Screen, movement, raycasting, and mouse-sensitivity constants
 theme.py               Theme definitions (enemies, asset paths, weapon, fire sound) + CLI picker
@@ -197,7 +196,7 @@ player.py              Player state, input, movement, health, and shooting
 raycasting.py          First-person wall raycasting and wall-column projection
 sprite_object.py       Static/animated sprite projection with depth-buffer occlusion
 object_handler.py      NPC/sprite registration, content-driven spawning, and victory check
-npc.py                 NPC base class + SoldierNPC/CacoDemonNPC/CyberDemonNPC
+npc.py                 NPC base class + SoldierNPC/CacoDemonNPC/CyberDemonNPC/HuntingBearNPC
 npc_systems.py         NPC visibility raycast, AnimationController, and CombatResolver
 pathfinding.py         Grid graph + breadth-first NPC navigation
 weapon.py              Weapon animation, reload state, and damage value
@@ -228,13 +227,16 @@ presentation/          Pygame-facing adapters behind the application layer's por
 
 content/levels/        Data-driven scenery placement and NPC spawn tables, keyed by map name
 maps/                  Plain-text maps ('.' = empty, digit = wall texture id)
-resources/<theme>/     Per-theme textures, sprites, and sound (default/candy_kingdom/space/graveyard)
-tests/                 unittest suite (domain, map, audio, scores, NPC systems, web build patches)
+resources/<theme>/     Per-theme textures, sprites, and sound (default/candy_kingdom/graveyard/hunting/space)
+tests/                 unittest suite (domain, map, audio, scores, NPC systems, assets, web patches)
+audit_themes.py        Repository-root entry point for the production asset audit
+tools/audit_themes.py  Required asset, image quality, clipping, and animation audit implementation
+tools/pixel_harmony_compare.py  Pixel-Harmony-compatible image comparison metrics
 tools/profile_game.py  Headless cProfile harness for update()/draw()
 docs/                  Design/audit/reconstruction documentation
 .github/workflows/     CI (tests) and GitHub Pages deployment (web build)
 build/                 Build outputs (gitignored): platform executables and the web bundle
-generate_themes.ps1    Procedural theme and animation asset generator
+generate_themes.ps1    Procedural theme and animation asset generator/validator
 screenshots/           Project screenshots
 ```
 
@@ -282,6 +284,21 @@ To validate existing animation folders without changing artwork, run:
 ```
 
 To explicitly generate replacements for missing or duplicate numbered frames, add `-RepairFrames`.
+
+For a complete deterministic regeneration of every non-default PNG asset, use the
+production pixel renderer:
+
+```powershell
+& "$env:LOCALAPPDATA\Programs\Python\Python313\python.exe" tools\generate_pixel_assets.py
+& "$env:LOCALAPPDATA\Programs\Python\Python313\python.exe" audit_themes.py --check
+```
+
+The installed Pixel Agents, OpenGame, Unity, Hootbu Pixel Agent, and Copilot Pixel
+Agents extensions were verified locally. They provide interactive authoring panels
+or development integration, not a documented batch PNG export API. Pixel-Harmony
+is used as a visual comparison reference; the local renderer is retained as the
+reproducible release-generation path rather than claiming unavailable automated AI
+asset output.
 
 Each generated NPC includes unique idle, walk, attack, pain, and death sequences. Candy Kingdom uses the imported CandyKingdom asset set, including the pastry-bag weapon and thick slime firing sound; its deaths melt the Marshmallow Man and crumble the Springfield Doughnut and Gingerbread Golem.
 
@@ -416,18 +433,11 @@ See the audit and comparison reports before making foundational changes.
 
 <div align="right"><a href="#table-of-contents">^ TOC</a></div>
 
-## See Also
-
-- [CodeBase.md](docs/CodeBase.md): up-to-date reconstruction guide and codebase walkthrough (the original, now superseded, walkthrough is archived at [docs/archive/CodeBase-Orig.md](docs/archive/CodeBase-Orig.md))
-- [CodeAudit.md](docs/CodeAudit.md): architecture, quality, performance, and scalability audit
-- [CloneCompare.md](docs/archive/CloneCompare.md): comparison of the related game projects and first-patch recommendations
-- [CHANGELOG.md](CHANGELOG.md): project history and prior development prompts
-
 <div align="right"><a href="#table-of-contents">^ TOC</a></div>
 
 ## Project Lineage
 
-POV-Blaster is a direct fork of [StanislavPetrovV/DOOM-style-Game](https://github.com/StanislavPetrovV/DOOM-style-Game). The related [Saurabh-66/DOOM-3D-FPS-Shooting-Game](https://github.com/Saurabh-66/DOOM-3D-FPS-Shooting-Game) project was also compared during planning; see [CloneCompare.md](docs/archive/CloneCompare.md) for the source-similarity evidence and recommended improvements.
+POV-Blaster is a direct fork of [StanislavPetrovV/DOOM-style-Game](https://github.com/StanislavPetrovV/DOOM-style-Game). The related [Saurabh-66/DOOM-3D-FPS-Shooting-Game](https://github.com/Saurabh-66/DOOM-3D-FPS-Shooting-Game) project was also compared during planning. The archived [docs/archive/CloneCompare.md](docs/archive/CloneCompare.md) records the source-similarity evidence, while [docs/archive/CodeBase-Orig.md](docs/archive/CodeBase-Orig.md) preserves the original flat-module architecture and runtime assumptions.
 
 ### Similarity Analysis
 
@@ -436,11 +446,13 @@ POV-Blaster is a direct fork of [StanislavPetrovV/DOOM-style-Game](https://githu
 POV-Blaster started as a literal fork, so the *conceptual lineage* of the core engine is still clearly traceable: the DDA raycasting math in `raycasting.py`, the sprite-projection formula in `sprite_object.py`, the NPC line-of-sight check in `npc.py`, and the BFS pathfinding in `pathfinding.py` are essentially unchanged algorithms. But almost nothing is byte-identical anymore, because POV-Blaster has since:
 
 - Split the original ~12 flat modules into a layered `application/` / `domain/` / `infrastructure/` / `presentation/` architecture (health, combat, movement, and game-state logic extracted into pure, dependency-free `domain/` classes).
-- Added a 4-theme system (Doom/Candy Kingdom/Space/Graveyard) that swaps enemies, art, weapon, and sound per theme — the original has exactly one fixed asset set.
+- Added a 5-theme system (Doom/Candy Kingdom/Space/Graveyard/Hunting) that swaps enemies, art, weapon, and sound per theme — the original has exactly one fixed asset set.
 - Added an entire second platform target: a browser build (Pygbag/WASM), with its own audio backend (`BrowserSound`), high-score backend (`BrowserHighScores`), and HTML/CSS patching pipeline — none of this exists upstream.
-- Added a `tests/` suite, CI, GitHub Pages deployment, plain-text map files (vs. a hardcoded grid), and multi-platform PyInstaller builds.
+- Added a `tests/` suite, CI, GitHub Pages deployment, plain-text map files (vs. a hardcoded grid), multi-platform PyInstaller builds, and reproducible theme asset tooling.
+- Added `audit_themes.py` and `tools/audit_themes.py`, which compare every theme with the Default baseline and check required assets, dimensions, blank images, clipping, animation folders, and duplicate frames. Pixel-Harmony-compatible comparison metrics are available through `tools/pixel_harmony_compare.py`.
+- Added theme-specific NPC animation and audio behavior, including Candy Kingdom melt/crumble deaths, Hunting Bear roar/spit attacks, and custom Hunting forest-cabin artwork. These are project-owned adaptations rather than replacements with unverified third-party assets.
 
-Current POV-Blaster is **1,667 lines across 29 files**, versus the original's **~958 lines across 12 files** — roughly 1.7x the code, with the majority of the growth being net-new subsystems rather than modified originals.
+The current POV-Blaster workspace is substantially larger than the original because it includes layered application code, five theme resource trees, browser packaging, automated tests, CI, and asset QA. The majority of that growth is net-new platform, content, and validation work rather than changes to the original raycasting algorithm.
 
 **POV-Blaster vs. `DOOM-3D-FPS-Shooting-Game` — ~30–35% similar**
 

@@ -33,6 +33,8 @@ class Sound:
         self.npc_death = self._load(sound_loader, 'npc_death.wav')
         self.npc_shot = self._load(sound_loader, 'npc_attack.wav')
         self.npc_shot.set_volume(0.2)
+        self.bear_roar = self._load(sound_loader, 'bear_roar.wav')
+        self.bear_roar.set_volume(0.35)
         self.player_pain = self._load(sound_loader, 'player_pain.wav')
         try:
             # pg.mixer.music.load() always returns None on success (per pygame's own
@@ -57,7 +59,7 @@ class Sound:
     def _load(self, sound_loader, filename):
         try:
             return sound_loader(self._resolve(filename))
-        except (FileNotFoundError, OSError, pg.error):
+        except (FileNotFoundError, OSError, TypeError, pg.error):
             return SilentClip()
 
 
@@ -109,6 +111,8 @@ class BrowserSound:
         self.npc_death = self._clip(document, 'npc_death.wav')
         self.npc_shot = self._clip(document, 'npc_attack.wav')
         self.npc_shot.set_volume(0.2)
+        self.bear_roar = self._clip(document, 'bear_roar.wav')
+        self.bear_roar.set_volume(0.35)
         self.player_pain = self._clip(document, 'player_pain.wav')
         self.theme = None
         self._theme_requested = False

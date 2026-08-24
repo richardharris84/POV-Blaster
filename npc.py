@@ -28,6 +28,7 @@ class NPC(AnimatedSprite):
         self.player_search_trigger = False
         self.animation_controller = AnimationController(self)
         self.combat_resolver = CombatResolver(game)
+        self.attack_sound_name = 'npc_shot'
 
     def update(self):
         self.check_animation_time()
@@ -144,6 +145,13 @@ class CyberDemonNPC(NPC):
         self.attack_damage = 15
         self.speed = 0.055
         self.accuracy = 0.25
+
+
+class HuntingBearNPC(CyberDemonNPC):
+    def __init__(self, game, path=None, pos=(11.5, 6.0),
+                 scale=1.0, shift=0.04, animation_time=210):
+        super().__init__(game, path, pos, scale, shift, animation_time)
+        self.attack_sound_name = 'bear_roar'
 
 
 

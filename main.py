@@ -3,17 +3,20 @@ import asyncio
 import platform
 
 from application.game import Game
+from application.startup import validate_player_name
 from infrastructure.scores import BrowserHighScores
 from theme import THEMES, choose_theme
 from infrastructure.scores import HighScores
 
 
-def choose_player_name(input_func=input):
+def choose_player_name(input_func=input, output_func=print):
     while True:
-        player_name = input_func('\nPlayer Name: ').strip()
-        if player_name:
-            return player_name
-        print('Player name cannot be empty.')
+        player_name = input_func('\nPlayer Name: ')
+        error = validate_player_name(player_name)
+        if error:
+            output_func(error)
+        else:
+            return player_name.strip()
 
 
 async def run_web():

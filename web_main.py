@@ -5,15 +5,20 @@ import pygame as pg
 from application.game import Game
 from infrastructure.audio import BrowserSound
 from infrastructure.scores import BrowserHighScores
-from theme import THEMES
-
-WEB_PLAYER_NAME = 'Player 1'
-WEB_THEME = THEMES[3]
 
 
 async def main():
+    pg.init()
+    pg.display.set_mode((1600, 900))
+    from web_startup import choose_startup
+
+    startup = await choose_startup()
+    if startup is None:
+        pg.quit()
+        return
+    player_name, selected_theme = startup
     scores = BrowserHighScores()
-    game = Game(WEB_THEME, player_name=WEB_PLAYER_NAME, high_scores=scores, sound_factory=BrowserSound)
+    game = Game(selected_theme, player_name=player_name, high_scores=scores, sound_factory=BrowserSound)
     await game.run_async(return_on_exit=False)
 
 

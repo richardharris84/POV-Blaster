@@ -2,6 +2,7 @@ import os
 import ast
 import asyncio
 import tempfile
+from collections import deque
 import unittest
 from pathlib import Path
 
@@ -13,6 +14,8 @@ import pygame as pg
 from main import Game, choose_player_name
 from map import DEFAULT_MAP_NAME, load_map
 from theme import THEMES, choose_theme
+from application.startup import theme_menu_items, validate_player_name
+from web_startup import choose_startup
 from domain.health import Health
 from domain.game_state import GameState
 from domain.combat import Combatant
@@ -21,7 +24,6 @@ from infrastructure.assets import AssetLoader
 from infrastructure.scores import BrowserHighScores, HighScores
 from npc_systems import npc_can_see_player
 from settings import HALF_WIDTH, NUM_RAYS
-from web_main import WEB_PLAYER_NAME, WEB_THEME
 
 
 class HealthTests(unittest.TestCase):
@@ -131,18 +133,38 @@ class HighScoreTests(unittest.TestCase):
 
 
 class ThemeSelectionTests(unittest.TestCase):
-    def test_web_defaults_use_player_one_and_doom(self):
-        self.assertEqual(WEB_PLAYER_NAME, 'Player 1')
-        self.assertIs(WEB_THEME, THEMES[3])
-        self.assertEqual(WEB_THEME.label, 'Doom')
-
     def test_player_name_is_requested_before_theme_selection(self):
         choices = iter(['', 'Alice'])
 
-        self.assertEqual(choose_player_name(lambda prompt: next(choices)), 'Alice')
+        self.assertEqual(choose_player_name(lambda prompt: next(choices), lambda message: None), 'Alice')
 
-    def test_doom_is_menu_option_four(self):
-        choices = iter(['4'])
+    def test_profane_player_name_is_rejected_and_reprompted(self):
+        choices = iter(['fUcK pilot', 'Alice'])
+        messages = []
+
+        self.assertEqual(choose_player_name(lambda prompt: next(choices), messages.append), 'Alice')
+        self.assertEqual(messages, ['Please enter a different name.'])
+
+    def test_console_and_web_share_startup_rules(self):
+        self.assertEqual(tuple(theme for _, theme in theme_menu_items()), THEMES)
+        self.assertIsNone(validate_player_name('Alice'))
+        self.assertIsNotNone(validate_player_name('shit pilot'))
+
+    def test_web_startup_collects_name_and_theme_in_viewport(self):
+        pg.init()
+        pg.display.set_mode((1600, 900))
+        try:
+            pg.event.post(pg.event.Event(pg.TEXTINPUT, text='Alice'))
+            pg.event.post(pg.event.Event(pg.KEYDOWN, key=pg.K_RETURN))
+            pg.event.post(pg.event.Event(pg.KEYDOWN, key=pg.K_RETURN))
+            player_name, selected_theme = asyncio.run(choose_startup())
+            self.assertEqual(player_name, 'Alice')
+            self.assertEqual(selected_theme, THEMES[0])
+        finally:
+            pg.quit()
+
+    def test_doom_is_menu_option_five(self):
+        choices = iter(['5'])
         selected = choose_theme(lambda prompt: next(choices), lambda message: None)
 
         self.assertEqual(selected.key, 'default')
@@ -307,7 +329,7 @@ class WebHtmlPatchTests(unittest.TestCase):
         self.assertIn('background: black;', patched)
         self.assertIn('color: white;', patched)
         self.assertIn('background-color: #d3d3d3;', patched)
-        self.assertIn('object-fit: contain;', patched)
+        self.assertIn('object-fit: fill;', patched)
         self.assertIn('html {\n            width: 100%;\n            height: 100%;\n        }', patched)
 
     def test_raises_loudly_when_expected_markup_is_missing(self):
@@ -350,6 +372,56 @@ class AssetIntegrityTests(unittest.TestCase):
             game = Game(theme, seed=1)
             self.assertTrue(game.sound.theme)
             pg.quit()
+
+    def test_hunting_hunter_has_no_detached_upper_sprite_chunks(self):
+        # regression test: hunter face/hat layers must not float as detached chunks
+        # above the main sprite body.
+        hunter_root = Path(__file__).parents[1] / 'resources' / 'hunting' / 'sprites' / 'npc' / 'hunter'
+        phases = ('idle', 'walk', 'attack', 'pain', 'death')
+
+        def connected_components(image):
+            width, height = image.get_size()
+            pixels = image.get_at
+            visited = [[False] * height for _ in range(width)]
+            groups = []
+
+            for x in range(width):
+                for y in range(height):
+                    if visited[x][y] or pixels((x, y))[3] == 0:
+                        continue
+                    queue = deque([(x, y)])
+                    visited[x][y] = True
+                    component = []
+
+                    while queue:
+                        cx, cy = queue.popleft()
+                        component.append((cx, cy))
+                        for nx, ny in ((cx + 1, cy), (cx - 1, cy), (cx, cy + 1), (cx, cy - 1)):
+                            if 0 <= nx < width and 0 <= ny < height and not visited[nx][ny] and pixels((nx, ny))[3] > 0:
+                                visited[nx][ny] = True
+                                queue.append((nx, ny))
+                    groups.append(component)
+
+            return groups
+
+        offenders = []
+        for phase in phases:
+            for frame_path in sorted((hunter_root / phase).glob('*.png')):
+                frame = pg.image.load(str(frame_path))
+                components = connected_components(frame)
+                if len(components) <= 1:
+                    continue
+
+                main = max(components, key=len)
+                main_min_y = min(y for _, y in main)
+                for component in components:
+                    if component is main:
+                        continue
+                    # Ignore one-pixel AA dust, but block meaningful detached chunks.
+                    if len(component) >= 20 and max(y for _, y in component) < main_min_y + 26:
+                        offenders.append(f'{phase}/{frame_path.name}:{len(component)}')
+
+        self.assertEqual(offenders, [])
 
 
 if __name__ == '__main__':

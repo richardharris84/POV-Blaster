@@ -12,6 +12,7 @@ class Theme:
     npc_assets: tuple
     weapon_asset: str = 'sprites/weapon/shotgun/0.png'
     fire_sound: str = 'shotgun.wav'
+    npc_attack_sounds: tuple = ('npc_attack.wav', 'npc_attack.wav', 'npc_attack.wav')
 
     @property
     def resource_dir(self):
@@ -41,6 +42,15 @@ THEMES = (
         'Graveyard',
         ('Ghost', 'Vampire', 'Werewolf'),
         ('ghost', 'vampire', 'werewolf'),
+    ),
+    Theme(
+        'hunting',
+        'Hunting',
+        ('Hunter', 'Deer', 'Bear'),
+        ('hunter', 'deer', 'bear'),
+        'sprites/weapon/shotgun/0.png',
+        'shotgun.wav',
+        ('npc_attack.wav', 'npc_attack.wav', 'bear_roar.wav'),
     ),
     Theme(
         'default',

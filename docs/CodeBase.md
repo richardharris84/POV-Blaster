@@ -11,7 +11,7 @@ POV-Blaster is a first-person shooter written in Python with Pygame. It recreate
 - Enemies and scenery are 2D images ("sprites") projected into the same 3D view, occluded by a per-column depth buffer.
 - The player moves with `WASD`, looks with the mouse, and fires with left click.
 - NPCs use line-of-sight raycasts, simple state machines, and breadth-first pathfinding to hunt the player.
-- Four selectable **themes** (Doom, Candy Kingdom, Space, Graveyard) swap enemy sprites, weapon art, textures, and music/sound without touching any game logic.
+- Five selectable **themes** (Doom, Candy Kingdom, Space, Graveyard, Hunting) swap enemy sprites, weapon art, textures, and music/sound without touching any game logic.
 - The player wins when every living NPC has been defeated; losing all health ends the run.
 - The exact same game logic runs three ways: as a desktop console-driven app, as standalone platform executables, and as an asynchronous browser build.
 
@@ -32,12 +32,16 @@ pygame
 pyinstaller
 pygbag
 imageio-ffmpeg
+Pillow
+opencv-python
+scikit-image
 ```
 
 - `pygame` — the only dependency needed to actually run the game.
 - `pyinstaller` — only needed to produce Windows/Linux/macOS executables.
 - `pygbag` — only needed to package/serve the browser build.
 - `imageio-ffmpeg` — only needed by `build.py --web`; it bundles a portable `ffmpeg` binary (no system install required) used to transcode sound assets to OGG Vorbis for the browser.
+- `Pillow`, `opencv-python`, and `scikit-image` — used by the integrated theme audit and Pixel-Harmony-compatible image comparisons.
 
 On Windows, verify the Python launcher is available:
 
@@ -66,7 +70,7 @@ Run it from the repository root — asset and map paths are resolved relative to
 
 ```text
 main.py                Desktop/CLI entry point (theme + name prompt, then Game.run())
-web_main.py             Async browser entry point (fixed player/theme, Game.run_async())
+web_main.py             Async browser entry point (viewport startup menu, Game.run_async())
 build.py                Multi-target build script: Windows/Linux/macOS executables + browser build
 settings.py             Screen, movement, raycasting, and mouse-sensitivity constants
 theme.py                Theme definitions (enemies, asset paths, weapon, fire sound) + CLI picker
@@ -74,8 +78,8 @@ map.py                  Plain-text map loading and wall lookup table (Map)
 player.py               Player state, input, movement, health, and shooting
 raycasting.py           First-person wall raycasting and wall-column projection
 sprite_object.py        Static/animated sprite projection with depth-buffer occlusion
-object_handler.py       NPC/sprite registration, random NPC spawning, and victory check
-npc.py                  NPC base class + SoldierNPC/CacoDemonNPC/CyberDemonNPC
+object_handler.py       Content-driven NPC/sprite registration, spawning, and victory check
+npc.py                  NPC base class + SoldierNPC/CacoDemonNPC/CyberDemonNPC/HuntingBearNPC
 pathfinding.py          Grid graph + breadth-first NPC navigation
 weapon.py               Weapon animation, reload state, and damage value
 sound.py                Thin re-export shim: `from infrastructure.audio import Sound`
@@ -103,8 +107,11 @@ presentation/           Pygame-facing adapters behind the application layer's po
   renderer.py             ObjectRenderer: background/sky, walls, sprites, HUD, end screens
 
 maps/                   Plain-text maps ('.' = empty, digit = wall texture id)
-resources/<theme>/      Per-theme textures, sprites, and sound (default/candy_kingdom/space/graveyard)
-tests/                  unittest suite (smoke tests across domain, map, audio, scores, async loop)
+resources/<theme>/      Per-theme textures, sprites, and sound (default/candy_kingdom/graveyard/hunting/space)
+tests/                  unittest suite (domain, map, audio, scores, NPC, assets, async loop)
+audit_themes.py         Root entry point for the production theme asset audit
+tools/audit_themes.py   Required asset, image quality, and animation audit implementation
+tools/pixel_harmony_compare.py  Pixel-Harmony-compatible image comparison metrics
 tools/profile_game.py   Headless cProfile harness for update()/draw()
 docs/                   Design/audit/reconstruction documentation
 .github/workflows/      CI (tests) and GitHub Pages deployment (web build)
@@ -151,7 +158,7 @@ new_game()
   -> RayCasting          (needs ObjectRenderer.wall_textures)
   -> ObjectHandler        (spawns NPCs onto the Map; needs Player to exist implicitly via game)
   -> Weapon              (needs the theme, for weapon sprite/animation)
-  -> stop_theme() on the *old* sound backend, then build a fresh sound_factory(self)
+  -> build sound_factory(self) on the first round, then stop/reuse it on restarts
   -> PathFinding          (needs ObjectHandler.npc_positions and Map.mini_map)
   -> play_theme()
 ```
@@ -275,9 +282,9 @@ dead -> play death animation once, driven by the shared global_trigger pulse
 
 `ray_cast_player_npc()` reuses the same horizontal/vertical DDA logic as `RayCasting`, but from the NPC's position toward the player, to determine line-of-sight (whether a wall is hit before reaching the player).
 
-Three subclasses (`SoldierNPC`, `CacoDemonNPC`, `CyberDemonNPC`) differ only in stats and defaults (health, attack range/damage, speed, accuracy, sprite scale/shift) — none override any logic. Their sprite folder is resolved from `game.theme.npc_assets[index]`, so switching themes swaps enemy art without any subclass changes.
+The standard subclasses (`SoldierNPC`, `CacoDemonNPC`, and `CyberDemonNPC`) differ in stats and defaults. `HuntingBearNPC` specializes the third role for the Hunting theme and routes its attack to a dedicated roar clip. Sprite folders are resolved from `game.theme.npc_assets`, so switching themes swaps enemy art without changing core gameplay.
 
-`ObjectHandler.spawn_npc()` randomly places a fixed `enemies = 20` count across valid, non-restricted map cells, weighted `[70, 20, 10]` toward `[SoldierNPC, CacoDemonNPC, CyberDemonNPC]`, using an injected `random.Random` instance (`Game.random`, seedable) so spawns are reproducible in tests.
+`ObjectHandler.spawn_npc()` reads the enemy count, weights, restricted area, and scenery from `content/levels/<map_name>.json`, places NPCs across valid non-restricted map cells, and uses an injected `random.Random` instance (`Game.random`, seedable) so spawns are reproducible in tests. Hunting maps the third role to `HuntingBearNPC`.
 
 `PathFinding` builds an 8-directional adjacency graph from the map once at construction, and runs a breadth-first search per NPC per frame (`get_path`), treating cells currently occupied by other living NPCs as temporarily blocked (`self.game.object_handler.npc_positions`) so NPCs don't stack on top of each other.
 
@@ -369,6 +376,8 @@ The dev server packs once at startup and does **not** hot-reload — after any `
 ## 17. Continuous Integration and Deployment
 
 `.github/workflows/ci.yml` runs on every push/PR (Windows runner, dummy SDL drivers): installs dependencies, compiles all modules, runs the test suite, and validates theme assets.
+
+The CI job also runs `python audit_themes.py --check`, which writes `build/theme_audit.json` and fails non-Default themes with missing required assets, invalid required dimensions, blank images, clipped NPC frames, missing animation folders, or duplicate animation frames. Run the same command locally before a release.
 
 `.github/workflows/deploy-pages.yml` runs on every push to `main` (or manual dispatch): installs dependencies, runs `python build.py --web`, uploads `build/web` as a Pages artifact, and deploys it via `actions/deploy-pages`. One-time setup: repository **Settings → Pages → Source: GitHub Actions**. Once enabled, the live build is served at `https://<username>.github.io/<repo>/`.
 

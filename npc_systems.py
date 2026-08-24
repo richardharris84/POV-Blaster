@@ -124,7 +124,8 @@ class CombatResolver:
 
     def resolve_attack(self, npc):
         if npc.animation_trigger:
-            self.game.sound.npc_shot.play()
+            attack_sound = getattr(self.game.sound, npc.attack_sound_name, self.game.sound.npc_shot)
+            attack_sound.play()
             if npc.combat.attack_hits(random()):
                 self.game.player.get_damage(npc.combat.attack_damage)
 

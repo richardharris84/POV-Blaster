@@ -2,7 +2,8 @@ param(
     [string]$ProjectRoot = $PSScriptRoot,
     [switch]$ValidateOnly,
     [switch]$RepairFrames,
-    [switch]$RegenerateThemeDigits
+    [switch]$RegenerateThemeDigits,
+    [string]$ThemeKey
 )
 
 Add-Type -AssemblyName System.Drawing
@@ -24,8 +25,23 @@ $themeSpecs = @(
         @{ Name = 'ghost'; Primary = [Drawing.Color]::FromArgb(210, 235, 225); Secondary = [Drawing.Color]::FromArgb(125, 180, 175); Death = 'fade' },
         @{ Name = 'vampire'; Primary = [Drawing.Color]::FromArgb(150, 35, 65); Secondary = [Drawing.Color]::FromArgb(35, 25, 55); Death = 'dust' },
         @{ Name = 'werewolf'; Primary = [Drawing.Color]::FromArgb(125, 105, 90); Secondary = [Drawing.Color]::FromArgb(55, 45, 45); Death = 'dust' }
+    ) },
+    @{ Key = 'hunting'; Wall = [Drawing.Color]::FromArgb(80, 105, 75); Sky = [Drawing.Color]::FromArgb(165, 195, 225); Accent = [Drawing.Color]::FromArgb(130, 90, 55); Enemies = @(
+        @{ Name = 'hunter'; Primary = [Drawing.Color]::FromArgb(102, 124, 86); Secondary = [Drawing.Color]::FromArgb(66, 46, 32); Death = 'dust' },
+        @{ Name = 'deer'; Primary = [Drawing.Color]::FromArgb(140, 103, 66); Secondary = [Drawing.Color]::FromArgb(214, 193, 153); Death = 'fade' },
+        @{ Name = 'bear'; Primary = [Drawing.Color]::FromArgb(92, 68, 49); Secondary = [Drawing.Color]::FromArgb(62, 44, 31); Death = 'dust' }
     ) }
 )
+
+$activeThemeSpecs = if ([string]::IsNullOrWhiteSpace($ThemeKey)) {
+    $themeSpecs
+} else {
+    $themeSpecs | Where-Object { $_.Key -eq $ThemeKey }
+}
+
+if ($activeThemeSpecs.Count -eq 0) {
+    throw "No theme matched ThemeKey '$ThemeKey'."
+}
 
 function New-Canvas([int]$Size = 96) {
     $bitmap = New-Object Drawing.Bitmap($Size, $Size)
@@ -123,7 +139,7 @@ function Repair-AnimationFrames($Enemy, [string]$Animation, [string]$AnimationRo
 }
 
 if ($RegenerateThemeDigits) {
-    foreach ($theme in $themeSpecs) {
+    foreach ($theme in $activeThemeSpecs) {
         $themeRoot = Join-Path $themesRoot $theme.Key
         New-Item (Join-Path $themeRoot 'textures/digits') -ItemType Directory -Force | Out-Null
         New-PercentTexture $theme (Join-Path $themeRoot 'textures/digits/10.png')
@@ -132,7 +148,7 @@ if ($RegenerateThemeDigits) {
 }
 
 if (-not $ValidateOnly -and -not $RegenerateThemeDigits) {
-foreach ($theme in $themeSpecs) {
+foreach ($theme in $activeThemeSpecs) {
     $themeRoot = Join-Path $themesRoot $theme.Key
     Copy-Item (Join-Path $defaultRoot 'sound') (Join-Path $themeRoot 'sound') -Recurse -Force
     Copy-Item (Join-Path $defaultRoot 'sprites/animated_sprites') (Join-Path $themeRoot 'sprites/animated_sprites') -Recurse -Force
@@ -142,14 +158,18 @@ foreach ($theme in $themeSpecs) {
     foreach ($file in Get-ChildItem (Join-Path $defaultRoot 'textures/digits')) { Copy-Item $file.FullName (Join-Path $themeRoot 'textures/digits') -Force }
     New-PercentTexture $theme (Join-Path $themeRoot 'textures/digits/10.png')
     New-Item (Join-Path $themeRoot 'textures') -ItemType Directory -Force | Out-Null
-    foreach ($name in @('blood_screen.png', 'game_over.png', 'win.png')) { Copy-Item (Join-Path $defaultRoot "textures/$name") (Join-Path $themeRoot 'textures') -Force }
+    if ($theme.Key -ne 'hunting') {
+        foreach ($name in @('blood_screen.png', 'game_over.png', 'win.png')) { Copy-Item (Join-Path $defaultRoot "textures/$name") (Join-Path $themeRoot 'textures') -Force }
+    }
 
-    $wallCanvas = New-Canvas 256; $wallCanvas.Graphics.Clear($theme.Wall); $wallCanvas.Graphics.DrawRectangle((New-Object Drawing.Pen($theme.Accent, 8)), 8, 8, 240, 240); Save-Frame $wallCanvas (Join-Path $themeRoot 'textures/1.png')
-    Copy-Item (Join-Path $themeRoot 'textures/1.png') (Join-Path $themeRoot 'textures/2.png') -Force
-    Copy-Item (Join-Path $themeRoot 'textures/1.png') (Join-Path $themeRoot 'textures/3.png') -Force
-    Copy-Item (Join-Path $themeRoot 'textures/1.png') (Join-Path $themeRoot 'textures/4.png') -Force
-    Copy-Item (Join-Path $themeRoot 'textures/1.png') (Join-Path $themeRoot 'textures/5.png') -Force
-    $skyCanvas = New-Canvas 256; $skyCanvas.Graphics.Clear($theme.Sky); Save-Frame $skyCanvas (Join-Path $themeRoot 'textures/sky.png')
+    if ($theme.Key -ne 'hunting') {
+        $wallCanvas = New-Canvas 256; $wallCanvas.Graphics.Clear($theme.Wall); $wallCanvas.Graphics.DrawRectangle((New-Object Drawing.Pen($theme.Accent, 8)), 8, 8, 240, 240); Save-Frame $wallCanvas (Join-Path $themeRoot 'textures/1.png')
+        Copy-Item (Join-Path $themeRoot 'textures/1.png') (Join-Path $themeRoot 'textures/2.png') -Force
+        Copy-Item (Join-Path $themeRoot 'textures/1.png') (Join-Path $themeRoot 'textures/3.png') -Force
+        Copy-Item (Join-Path $themeRoot 'textures/1.png') (Join-Path $themeRoot 'textures/4.png') -Force
+        Copy-Item (Join-Path $themeRoot 'textures/1.png') (Join-Path $themeRoot 'textures/5.png') -Force
+        $skyCanvas = New-Canvas 256; $skyCanvas.Graphics.Clear($theme.Sky); Save-Frame $skyCanvas (Join-Path $themeRoot 'textures/sky.png')
+    }
 
     foreach ($enemy in $theme.Enemies) {
         foreach ($animation in @('idle', 'walk', 'attack', 'pain', 'death')) {
@@ -163,7 +183,7 @@ foreach ($theme in $themeSpecs) {
 }
 }
 
-foreach ($theme in $themeSpecs) {
+foreach ($theme in $activeThemeSpecs) {
     foreach ($enemy in $theme.Enemies) {
         foreach ($animation in $animationMinimums.Keys) {
             $animationRoot = Join-Path $themesRoot "$($theme.Key)/sprites/npc/$($enemy.Name)/$animation"
@@ -178,5 +198,6 @@ if ($RepairFrames) {
 } elseif ($ValidateOnly) {
     Write-Host 'Validated theme animation assets without modifying artwork.'
 } else {
-    Write-Host 'Generated and validated Candy Kingdom, Space, and Graveyard theme assets.'
+    $generatedKeys = ($activeThemeSpecs | ForEach-Object { $_.Key }) -join ', '
+    Write-Host "Generated and validated theme assets for: $generatedKeys"
 }

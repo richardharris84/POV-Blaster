@@ -1,8 +1,10 @@
-# DOOM style 3d (raycasting) game in Python (based on Wolfenstein 3d)
+# POV Blaster: A cross-platform, retro FPS game engine built in Python with pseudo-3D graphics (raycasting - based on Wolfenstein 3D)
 
-Control: 'WASD' + mouse
+Control: 'WASD' + mouse <span style="float: right;"><a href="#step-32-new-hunting-theme">see last revision</a></span>
 
 ![doom](/screenshots/0.jpg)
+
+<div align="right"><a href="#step-32-new-hunting-theme">see last revision</a></div>
 
 ## Step 1. Create the Repository
 
@@ -35,7 +37,7 @@ Repository: https://github.com/richardharris84/POV-Blaster
 
 ### Output
 
-Created the complete reconstruction guide in [CodeBase.md](docs/archive/CodeBase-Orig.md).
+Created the complete reconstruction guide in [docs/archive/CodeBase-Orig.md](docs/archive/CodeBase-Orig.md).
 
 The guide covers:
 
@@ -103,7 +105,7 @@ Validation completed:
 
 ### Output
 
-Created the detailed comparison report in [CloneCompare.md](docs/archive/CloneCompare.md).
+Created the detailed comparison report in [docs/archive/CloneCompare.md](docs/archive/CloneCompare.md).
 
 The report covers:
 
@@ -263,7 +265,7 @@ Validation completed:
 
 ### Output
 
-Created the detailed POC comparison report in [POCFeatures.md](docs/archive/POCFeatures.md).
+Created the detailed POC comparison report in [docs/archive/POCFeatures.md](docs/archive/POCFeatures.md).
 
 The report covers:
 
@@ -853,3 +855,137 @@ Validation completed:
 
 - Converted the upgrade direction into an execution-focused step centered on `docs/CodeAudit.md`'s highest-priority remaining items.
 - Established iterative delivery with progress updates as each item is implemented and validated.
+
+## Step 31. Web Build Touch-up
+
+### Prompt
+
+> We need to increase the mouse sensitivity for browser by 50%. Make the code fix, rebuild, and then redeploy, and when everything is done, prompt me to launch https://richardharris84.github.io/POV-Blaster/.
+>
+> We need to increase the mouse sensitivity for browser by another 20%. Also, the background music isn't working for web. Make the code fixes, rebuild, and then redeploy, and when everything is done, prompt me to launch https://richardharris84.github.io/POV-Blaster/.
+>
+> Also, at the bottom of https://richardharris84.github.io/POV-Blaster/ page (web build), I want there to be a link saying "Built by: Richard Harris" and for "Richard Harris" to link to (https://github.com/richardharris84/POV-Blaster). This link should be in the bottom right of the browser window and overlay anything else.
+
+### Output
+
+- Increased browser mouse sensitivity in stages (+50%, then an additional +20%) via web sensitivity multiplier updates.
+- Implemented and refined web background-music startup logic to handle browser autoplay/gesture constraints with retry behavior.
+- Rebuilt the web target and redeployed through GitHub Pages after each major fix.
+- Added a bottom-right, always-on-top overlay label: `Built by: Richard Harris`, with `Richard Harris` linking to `https://github.com/richardharris84/POV-Blaster`.
+- Prompted launch verification on the live site after deployment completion: https://richardharris84.github.io/POV-Blaster/.
+
+## Step 32. New Hunting Theme
+
+### Prompt
+
+> Create a Hunting theme based on the existing DOOM/default resources, with a hunter, deer, and bear. Add the theme above DOOM in the startup menu.
+>
+> Create unique animation frames for every NPC action: attack, death, idle, pain, and walk. Make the Hunting textures theme appropriate: trees, log cabin, forest scenes, an interior with an upward-facing deer mount, and a cabin scene with vintage canoe paddles and a taxidermy fish mount. Use a blue Hunting sky with a gradient.
+>
+> Replace duplicate Hunting scenery sprites with distinct props: a cast-iron wood stove and an oil lantern. Make NPC pain and death animations show obvious body damage instead of a thin red line.
+>
+> The hunter must have a correctly attached face in every asset, a readable hunting rifle and shooting pose, and must look like a man hunting deer in a forest rather than a direct copy of the DOOM soldier.
+>
+> Re-create the Hunting `blood_screen.png`, `game_over.png`, `sky.png`, `win.png`, and `textures/digits` assets to match the theme and meet the quality of the DOOM/default theme. Ensure every NPC body remains inside its animation frame.
+
+### Output
+
+
+Completed:
+
+- [x] Added the Hunting theme and mapped Hunter, Deer, and Bear into the startup theme list.
+- [x] Added complete Hunting NPC animation folders for idle, walk, attack, pain, and death.
+- [x] Generated unique Hunting animation frames with the local deterministic pixel-asset generator.
+- [x] Re-created Hunting wall textures, sky, UI screens, and health digits with Hunting-specific palettes.
+- [x] Added Hunting-specific forest, cabin, deer-mount, mounted-fish, and separated-paddle compositions to the wall textures.
+- [x] Added a blue Hunting sky with the requested 30%-darker bottom gradient.
+- [x] Replaced Hunting scenery outputs with a cast-iron stove and oil lantern.
+- [x] Added automated checks for dimensions, alpha data, brightness, blank images, clipping, missing animation frames, and duplicate frames.
+- [x] Verified the Hunting assets with the repository audit and regression suite.
+
+Not completed and still requiring a dedicated art pass:
+
+- [ ] Hunting scenery still needs the requested leaf and large tree-stump variants in addition to the stove and lantern.
+- [ ] Hunter artwork has a readable face, rifle profile, and shooting cue, but does not yet meet the requested detailed forest-hunter quality bar.
+- [ ] Pain and death artwork has animation variation, but does not yet meet the requested high-detail wound, bruising, and collapse treatment.
+- [ ] The audit does not yet verify semantic object identity, facial anatomy, detached parts, or visual quality equal to Quake.
+
+Validation completed:
+
+- [x] Hunting UI texture dimensions match the renderer contract, including `sky.png` at 1200x400.
+- [x] Hunting digits 0 through 10 are present and nonblank.
+- [x] All Hunting NPC animation folders meet their minimum frame counts.
+- [x] Current audit reports no blank, clipped, or duplicated Hunting NPC frames.
+- [x] Theme generator Python syntax validation passed.
+- [x] Full regression suite passed with 27 tests.
+
+## Step 33. Graphics Upgrade
+
+### Prompt
+
+> Bring every playable theme under `resources/` to production-ready visual quality equal to or better than `default`, using the installed Pixel Agents, OpenGame AI Game Generator, Unity, Hootbu Pixel Agent, and Copilot Pixel Agents extensions when available.
+>
+> Use Pixel-Harmony to compare themes against Default for contrast, brightness, palette consistency, silhouette readability, sprite scale, animation consistency, texture cohesion, visual density, frame dimensions, and alpha quality. Regenerate all non-default theme assets, preserve the asset contract, and audit every texture, UI image, digit, sprite, weapon, scenery asset, and NPC action.
+>
+> Every NPC must provide meaningful `idle`, `walk`, `attack`, `pain`, and `death` animation. Reject placeholders, generic recolors, detached parts, clipping, unexplained artifacts, duplicate frames, and ambiguous silhouettes. Validate with `python audit_themes.py --check`, tests, builds, runtime smoke tests, and visual review.
+
+### Output
+
+- [x] Added deterministic local pixel/cel-shaded generation in `tools/generate_pixel_assets.py` for Candy Kingdom, Graveyard, Hunting, and Space.
+- [x] Regenerated non-default textures, UI screens, digits, scenery, weapons, and NPC animation sets.
+- [x] Added role-specific NPC silhouettes and attacks, including the Space paired-headed middle-tier alien inspired by classic retro sci-fi aliens without copying protected artwork.
+- [x] Added distinct Space Drone and Overlord silhouettes.
+- [x] Added Hunting forest, cabin, deer-mount, mounted-fish, paddle, stove, lantern, bear, deer, hunter, rifle, and blue-gradient artwork.
+- [x] Replaced generic NPC pain cross-lines with localized wound clusters, impact cores, bruising, and blood details. Cross-lines are reserved for temporary development/QA indicators only.
+- [x] Added role-specific death cues for animals, hunters, supernatural enemies, and science-fiction enemies.
+- [x] Integrated image dimensions, aspect ratio, color count, alpha, brightness, blank-image, clipping, duplicate-frame, missing-asset, comparison, and per-theme status reporting into the audit tooling.
+- [x] Made generation deterministic across Python processes.
+- [x] Removed the redundant `resources/hunting/sprites/animated_sprites/animated_sprites` directory.
+- [x] Verified the installed authoring extensions. They provide interactive panels or integrations, not a documented batch PNG export API; no unavailable AI generation was claimed.
+
+### Validation
+
+- [x] Candy Kingdom, Graveyard, Hunting, and Space pass non-default required asset gates.
+- [x] All five themes initialize and render headlessly.
+- [x] Full regression suite passes with 29 tests at the latest graphics/web checkpoint.
+- [x] Windows executable builds successfully.
+- [x] Web bundle builds successfully after including all selectable theme directories.
+- [x] Pixel-Harmony-compatible comparisons were run against Default.
+- [ ] The generated artwork has not been verified as equal to or better than Quake or Counter-Strike 1.6.
+- [ ] A professional high-detail art pass, full interactive playtest, and complete screenshot review remain required before final graphics approval.
+
+## Step 34. Name Curse Word Validation
+
+### Prompt
+
+> Add a regular-expression validator to the startup Player Name prompt. Reject curse words and ask for the name again.
+
+### Output
+
+- [x] Added shared case-insensitive profanity validation in `application/startup.py`.
+- [x] Console name entry now reprompts for empty or profane names.
+- [x] Web name entry uses the same validator.
+- [x] Added regression coverage for rejection and reprompt behavior.
+- [x] Full regression suite passes with 29 tests at the latest checkpoint.
+
+## Step 35. Web Menu
+
+### Prompt
+
+> Replicate the console startup menu in the web build game viewport. Analyze the local `pygame-menu`, `pygame-text-input`, and `pygbag` projects. Add a process so console and web startup menus remain synchronized.
+
+### Output
+
+- [x] Added shared startup rules and theme ordering in `application/startup.py`.
+- [x] Added an asynchronous Pygame viewport menu in `web_startup.py` for explicit name entry and theme selection.
+- [x] Added keyboard, mouse, Enter, Escape, Backspace, Up/Down, and W/S interaction.
+- [x] Removed implicit web selection of `Player 1` and the Default theme.
+- [x] Fixed web theme and Continue button hitboxes to match their rendered positions.
+- [x] Added headless web-menu interaction tests proving shared desktop/web behavior.
+- [x] Updated documentation to describe the interactive web startup menu.
+- [x] Included all selectable themes in the web bundle instead of excluding non-default themes.
+- [x] Updated the web canvas packaging to fill the viewport edge to edge.
+- [x] Applied the footer attribution `👨‍💻🧠💡🎮  Richard Harris 💻🛠️✨👾` in the web build template.
+- [x] Rebuilt the web bundle and verified the staged Graveyard assets are present.
+- [x] Pygbag packaging and local serving were exercised; BrowserFS staging was corrected for the served source directory.
+- [ ] Linux and macOS native builds cannot be produced on the Windows host and require their respective operating systems.

@@ -10,11 +10,13 @@ That said, "millions of users" is still primarily a **client-performance and sta
 
 The highest-priority remaining items are:
 
-1. ☑ The renderer still re-scales every wall column and every visible sprite from scratch, every frame, with no caching — the single biggest remaining performance risk at higher resolutions/entity counts. **Fixed**: `ObjectRenderer` now owns bounded wall-column/sprite scale caches (`presentation/renderer.py`), used by `raycasting.py` and `sprite_object.py`. Measured ~33% faster over 300 profiled frames (17.0s → 11.4s), with `get_objects_to_render` ~67% faster and `pygame.transform.scale` no longer in the top 10 cost centers.
+1. ☑ The renderer re-scaled every wall column and visible sprite from scratch, every frame. **Fixed**: `ObjectRenderer` now owns bounded wall-column/sprite scale caches (`presentation/renderer.py`), used by `raycasting.py` and `sprite_object.py`. Measured ~33% faster over 300 profiled frames (17.0s → 11.4s), with `get_objects_to_render` ~67% faster and `pygame.transform.scale` no longer in the top 10 cost centers.
 2. ☑ `NPC` still mixes AI decision-making, animation, combat resolution, and audio side effects in one class; `ObjectHandler` still hardcodes scenery/spawn tables in Python. **Fixed**: scenery/spawn data moved out of `object_handler.py` into `content/levels/<map_name>.json` (validated, fails loudly if missing); `PyInstaller` builds now bundle `content/` alongside `resources/`/`maps/`. `NPC` was further decomposed into `VisibilityService`, `CombatResolver`, and an `AnimationController` collaborator, with `NPC` reduced to a thin coordinator over its own state.
 3. ☑ The web build's HTML/CSS patching in `build.py` is a pile of fragile exact-string `.replace()` calls with no test coverage — it will silently stop working the moment Pygbag's upstream template changes. **Fixed**: `apply_web_html_patches` now raises a clear `RuntimeError` when an expected substring is missing instead of silently no-op'ing, with unit tests covering both the happy path and the failure path.
 4. ☑ `settings.py` remains a flat, unvalidated module of constants, and there are now **two independent definitions** of "where is the project root" (`settings.py` and `infrastructure/assets.py`) that must be kept in sync by hand. **Fixed** (the duplication): `infrastructure/assets.py` now imports `BASE_DIR` from `settings.py` instead of recomputing it. `settings.py` itself is still a flat, unvalidated module — that part of this finding remains open (see M9).
-5. ☑ Per-round setup still rebuilds every subsystem (including, on the web build, re-embedding every sound file as a fresh base64 `<audio>` element) rather than separating long-lived services from per-round state. **Fixed**: `Game.new_game()` now builds the sound backend once per `Game` instance (theme never changes across restarts) instead of every round, with a regression test asserting the backend identity is preserved across `new_game()` calls.
+5. ☑ Per-round setup rebuilt the sound backend and re-embedded browser audio. **Fixed**: `Game.new_game()` now builds the sound backend once per `Game` instance (theme never changes across restarts) instead of every round, with a regression test asserting the backend identity is preserved across `new_game()` calls. Per-round gameplay objects are still intentionally rebuilt.
+
+6. ☑ Theme asset quality and structure were not previously audited uniformly. **Fixed for the current asset gate**: `audit_themes.py` and `tools/audit_themes.py` inspect all five resource themes for required files, dimensions, blank images, clipping, animation folders, and duplicate frames; `tools/pixel_harmony_compare.py` provides Pixel-Harmony-compatible comparison metrics. CI runs the audit with `--check`.
 
 The recommended path is still a modular-monolith-first approach: harden the existing layered engine, make content and platform differences data-driven instead of scattered `getattr(..., 'browser_mode', False)` checks, and keep the option open to swap rendering technology later without touching gameplay rules.
 
@@ -31,6 +33,7 @@ Reviewed the current source tree (root gameplay modules, `application/`, `domain
 - [infrastructure/assets.py](../infrastructure/assets.py), [infrastructure/audio.py](../infrastructure/audio.py), [infrastructure/scores.py](../infrastructure/scores.py), [infrastructure/input.py](../infrastructure/input.py)
 - [presentation/renderer.py](../presentation/renderer.py), [presentation/input.py](../presentation/input.py)
 - [tests/test_smoke.py](../tests/test_smoke.py), [requirements.txt](../requirements.txt)
+- [audit_themes.py](../audit_themes.py), [tools/audit_themes.py](../tools/audit_themes.py), [tools/pixel_harmony_compare.py](../tools/pixel_harmony_compare.py)
 
 Severity levels (unchanged from the original audit):
 
@@ -66,9 +69,7 @@ Credit where due — the following findings from the original audit are **resolv
 
 **Location:** `RayCasting.get_objects_to_render` (wall columns), `SpriteObject.get_sprite_projection` (sprites)
 
-For every ray (`NUM_RAYS`, currently `WIDTH // 2` = 800 at the default resolution), the renderer takes a texture `subsurface` and calls `pg.transform.scale()`. For every visible sprite, `pg.transform.scale()` runs again on the *original* source image. Neither is cached; both re-run unconditionally every frame regardless of whether the column/sprite's projected size changed since the last frame.
-
-**Recommendation:** cache scaled wall columns keyed by `(texture_id, offset_bucket, projected_height_bucket)`; cache sprite scale variants keyed by `(image_id, size_bucket)`; only recompute on a cache miss. This is the single highest-value performance fix remaining and was flagged in the original audit — it is still open.
+The renderer still processes up to `NUM_RAYS` (currently `WIDTH // 2` = 800 at the default resolution), but scaled wall columns and sprite variants are now cached on integer projection buckets. Occlusion masking remains per-frame because it depends on the depth buffer.
 
 #### H2 (new). Duplicated, hand-rolled DDA raycasting algorithm
 
@@ -94,9 +95,9 @@ Every alive NPC independently checks "am I visible, and is `player.shot` still `
 
 **Location:** `Game.new_game()`
 
-Every restart (win/loss countdown expiring, or pressing Escape in the browser build) reconstructs `ObjectRenderer`, `RayCasting`, `ObjectHandler`, `Weapon`, and the entire sound backend from scratch — this was flagged before (H6) and remains true. It is now *worse* on the web build specifically: `BrowserSound.__init__` re-reads every sound file from disk, re-base64-encodes it, and creates brand-new `<audio>` DOM elements on every single restart, which is pure waste since the theme (and therefore the audio content) hasn't changed.
+Every restart reconstructs per-round gameplay objects (`ObjectRenderer`, `RayCasting`, `ObjectHandler`, and `Weapon`), while the sound backend is created once per `Game` instance and reused. Browser audio files are therefore not re-embedded on each restart.
 
-**Recommendation:** separate "load once per theme" assets (textures, sprite frames, encoded audio data URIs) from "reset per round" state (player position, NPC list, weapon reload state). At minimum, cache `BrowserClip`'s data URIs at the theme level so restarting a round doesn't re-encode unchanged audio. (Note: `ObjectRenderer`/`RayCasting`/`ObjectHandler`/`Weapon` are still rebuilt every round — only the sound backend was addressed in this pass, since it was the specific case called out as worse on the web build.)
+**Remaining recommendation:** separate more load-once theme assets from per-round state so renderer, raycaster, object-handler, and weapon construction can also be reduced on restart. Sound backend reuse is implemented and covered by regression tests.
 
 ### Medium-Priority
 
@@ -178,15 +179,15 @@ Unchanged from the original audit's M6: `NPC` is responsible for line-of-sight r
 
 **Location:** `settings.py`
 
-Unchanged from the original audit's M9 — resolution, FOV, ray count, mouse sensitivities (now three: desktop/Linux/web) are all module-level constants with no validation and no grouping by concern (display vs. gameplay vs. input).
+Resolution, FOV, ray count, mouse sensitivities, and other derived values remain module-level constants without grouped typed configuration or startup validation.
 
-**Recommendation:** unchanged from before — group into small typed configs (`DisplayConfig`, `RaycastConfig`, `InputConfig`) and validate derived values (e.g. `SCALE = WIDTH // NUM_RAYS` should assert `NUM_RAYS > 0` and divides evenly) at startup rather than trusting hand-tuned constants forever.
+**Recommendation:** group settings into typed configs (`DisplayConfig`, `RaycastConfig`, `InputConfig`) and validate derived values at startup rather than trusting hand-tuned constants.
 
 #### M10. Dependencies remain unpinned
 
 **Location:** `requirements.txt`
 
-Still `pygame` / `pyinstaller` / `pygbag` / `imageio-ffmpeg` with no version constraints — unchanged from the original audit's M10, now with twice as many unpinned packages as before.
+`requirements.txt` now also declares `Pillow`, `opencv-python`, and `scikit-image` for theme auditing, but all dependencies remain unpinned.
 
 **Recommendation:** unchanged — pin or constrain for release builds; separate a dev-tools requirements file (linter, type checker, test runner) from the runtime/build set.
 
@@ -221,7 +222,7 @@ Both are one-line compatibility shims left over from the migration to the layere
 The prior audit's cost-center analysis is still accurate and still mostly unaddressed:
 
 - ~800 rays at the default 1600px width, two grid traversals per ray, per frame.
-- A texture crop + scale per wall column, and a full-image scale per visible sprite, per frame, uncached (H1 above).
+- Cached wall-column and sprite scaling variants, with per-frame depth-dependent occlusion masking (H1 above).
 - A full depth sort of the combined wall+sprite render list every frame.
 - Per-NPC line-of-sight raycast and pathfinding BFS request every frame, with no distance-based update-frequency tiering.
 

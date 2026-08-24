@@ -3,7 +3,7 @@ import random
 from pathlib import Path
 
 from application.ports import GameContext
-from npc import CacoDemonNPC, CyberDemonNPC, SoldierNPC
+from npc import CacoDemonNPC, CyberDemonNPC, HuntingBearNPC, SoldierNPC
 from sprite_object import AnimatedSprite
 
 CONTENT_DIR = Path(__file__).resolve().parent / 'content' / 'levels'
@@ -66,6 +66,8 @@ class ObjectHandler:
 
         for x, y in self.rng.sample(valid_positions, self.enemies):
             npc_type = self.rng.choices(self.npc_types, self.weights)[0]
+            if self.game.theme.key == 'hunting' and npc_type is CyberDemonNPC:
+                npc_type = HuntingBearNPC
             self.add_npc(npc_type(self.game, pos=(x + 0.5, y + 0.5)))
 
     def check_win(self):

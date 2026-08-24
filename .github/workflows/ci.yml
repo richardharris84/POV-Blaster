@@ -24,3 +24,5 @@ jobs:
       - name: Validate theme assets
         shell: pwsh
         run: ./generate_themes.ps1 -ValidateOnly
+      - name: Audit theme image assets
+        run: python tools/audit_themes.py --check
