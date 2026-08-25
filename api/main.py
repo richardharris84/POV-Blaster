@@ -18,6 +18,7 @@ from pydantic import BaseModel, Field
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_DB_PATH = PROJECT_ROOT / "data" / "pov_blaster.sqlite3"
 DB_PATH = Path(os.environ.get("DB_PATH", str(DEFAULT_DB_PATH)))
+DATABASE_URL = os.environ.get("DATABASE_URL", "")
 GEOLOCATION_URL = "https://ipapi.co/{}/json/"
 
 app = FastAPI(title="POV-Blaster Score API", version="1.0.0")
@@ -55,7 +56,12 @@ class WebSessionRecord(WebSessionSubmission):
     created_at: str
 
 
-def _connect() -> sqlite3.Connection:
+def _connect():
+    if DATABASE_URL:
+        import psycopg
+        from psycopg.rows import dict_row
+
+        return psycopg.connect(DATABASE_URL, row_factory=dict_row)
     DB_PATH.parent.mkdir(parents=True, exist_ok=True)
     connection = sqlite3.connect(DB_PATH)
     connection.row_factory = sqlite3.Row
@@ -65,30 +71,20 @@ def _connect() -> sqlite3.Connection:
 def _initialize_database() -> None:
     with closing(_connect()) as connection:
         with connection:
-            connection.execute(
-                """
+            id_column = "BIGSERIAL PRIMARY KEY" if DATABASE_URL else "INTEGER PRIMARY KEY AUTOINCREMENT"
+            connection.execute(f"""
                 CREATE TABLE IF NOT EXISTS scores (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    player_name TEXT NOT NULL,
-                    kills INTEGER NOT NULL CHECK (kills >= 0),
-                    city TEXT,
-                    country TEXT,
-                    created_at TEXT NOT NULL
+                    id {id_column}, player_name TEXT NOT NULL,
+                    kills INTEGER NOT NULL CHECK (kills >= 0), city TEXT,
+                    country TEXT, created_at TEXT NOT NULL
                 )
-                """
-            )
-            connection.execute(
-                """
+                """)
+            connection.execute(f"""
                 CREATE TABLE IF NOT EXISTS web_sessions (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    player_name TEXT NOT NULL,
-                    ip_address TEXT,
-                    city TEXT,
-                    country TEXT,
-                    created_at TEXT NOT NULL
+                    id {id_column}, player_name TEXT NOT NULL, ip_address TEXT,
+                    city TEXT, country TEXT, created_at TEXT NOT NULL
                 )
-                """
-            )
+                """)
 
 
 def _client_ip(request: FastAPIRequest) -> str | None:
@@ -112,8 +108,15 @@ def _locate_ip(ip_address: str | None) -> tuple[str | None, str | None]:
         return None, None
 
 
-def _record_from_row(row: sqlite3.Row) -> dict:
+def _record_from_row(row) -> dict:
     return dict(row)
+
+
+def _insert_record(connection, insert_query: str, select_query: str, values: tuple) -> dict:
+    if DATABASE_URL:
+        return connection.execute(insert_query.replace("?", "%s") + " RETURNING *", values).fetchone()
+    cursor = connection.execute(insert_query, values)
+    return connection.execute(select_query, (cursor.lastrowid,)).fetchone()
 
 
 @app.on_event("startup")
@@ -146,14 +149,12 @@ def create_score(submission: ScoreSubmission, request: FastAPIRequest) -> dict:
     created_at = datetime.now(timezone.utc).isoformat()
     with closing(_connect()) as connection:
         with connection:
-            cursor = connection.execute(
+            row = _insert_record(
+                connection,
                 "INSERT INTO scores (player_name, kills, city, country, created_at) VALUES (?, ?, ?, ?, ?)",
+                "SELECT id, player_name, kills, city, country, created_at FROM scores WHERE id = ?",
                 (player_name, submission.kills, city, country, created_at),
             )
-            row = connection.execute(
-                "SELECT id, player_name, kills, city, country, created_at FROM scores WHERE id = ?",
-                (cursor.lastrowid,),
-            ).fetchone()
     return _record_from_row(row)
 
 
@@ -168,14 +169,12 @@ def create_session(submission: WebSessionSubmission, request: FastAPIRequest) ->
     created_at = datetime.now(timezone.utc).isoformat()
     with closing(_connect()) as connection:
         with connection:
-            cursor = connection.execute(
+            row = _insert_record(
+                connection,
                 "INSERT INTO web_sessions (player_name, ip_address, city, country, created_at) VALUES (?, ?, ?, ?, ?)",
+                "SELECT id, player_name, ip_address, city, country, created_at FROM web_sessions WHERE id = ?",
                 (player_name, ip_address, city, country, created_at),
             )
-            row = connection.execute(
-                "SELECT id, player_name, ip_address, city, country, created_at FROM web_sessions WHERE id = ?",
-                (cursor.lastrowid,),
-            ).fetchone()
     return _record_from_row(row)
 
 
