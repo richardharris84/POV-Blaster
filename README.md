@@ -35,6 +35,8 @@ The game uses a 2D grid map to produce a pseudo-3D view. It supports textured wa
   - [Browser build](#browser-build)
   - [Deploying to GitHub Pages](#deploying-to-github-pages)
   - [GitHub Actions](#github-actions)
+- [Hosted API and Database](#hosted-api-and-database)
+- [Deployment Settings](#deployment-settings)
 - [Project Structure](#project-structure)
 - [How the Game Works](#how-the-game-works)
 - [Development Walkthrough](#development-walkthrough)
@@ -42,13 +44,21 @@ The game uses a 2D grid map to produce a pseudo-3D view. It supports textured wa
 - [Development Notes](#development-notes)
 - [Project Lineage](#project-lineage)
 
-## Shared Scores API
+## Hosted API and Database
 
-The desktop build keeps its local XML leaderboard. The browser build uses localStorage immediately for offline play and submits scores in the background to the optional FastAPI service. The hosted service stores shared records in SQLite, including the player name, kills, UTC submission time, and city/country inferred from the request IP; raw IP addresses are not stored.
+The desktop build keeps its local XML leaderboard. The browser build uses localStorage for immediate offline play and submits scores in the background to the optional FastAPI service. The browser also records a web session when a player starts a game.
 
-The API exposes `GET /scores` for the complete public record list, `POST /scores` for submissions, and `GET /health` for Render health checks. `render.yaml` provisions `pov-blaster-api` with a persistent disk at `/var/data`, which is required because Render's normal filesystem is ephemeral.
+The FastAPI application in `api/main.py` exposes:
 
-To connect GitHub Pages after deploying the API, set the `POV_BLASTER_API_URL` environment variable while running `py build.py --web` (for example, `https://pov-blaster-api.onrender.com`). The GitHub Pages workflow should provide that value from a repository variable before its build step. The browser name-entry screen links to [privacy.html](privacy.html), which explains the location data use and deletion request process.
+- `GET /health`: Render health check.
+- `GET /scores`: public scores ordered by kills.
+- `POST /scores`: validates and stores a player name and kill count.
+- `GET /sessions`: lists recorded web sessions.
+- `POST /sessions`: records a player name, request IP, UTC timestamp, and best-effort city/country lookup.
+
+Production uses Neon Postgres through the `DATABASE_URL` environment variable. The API creates the `scores` and `web_sessions` tables on startup and uses Psycopg for Postgres connections. Raw IP addresses are not stored with score records; session records retain the request IP for session analytics. Local development and tests use SQLite automatically when `DATABASE_URL` is absent. The browser name-entry screen links to [privacy.html](privacy.html), which explains the location data use and deletion request process.
+
+Render hosts the `pov-blaster-api` Free web service. Its `render.yaml` uses `requirements-api.txt`, which deliberately excludes Pygame and other desktop/web build dependencies, and starts the service with Uvicorn.
 
 ## See Also
 
@@ -196,10 +206,39 @@ The `build.py` script rejects builds requested from the wrong operating system, 
 
 #### GitHub Actions
 
-The repository has two GitHub Actions workflows:
+The repository has three GitHub Actions workflows:
 
-- [x] `.github/workflows/ci.yml` runs on every push and pull request. It checks out the repo on a Windows runner, installs `requirements.txt`, compiles all Python modules, runs the full `unittest` suite, validates theme animation assets with `tools/generate_themes.ps1 -ValidateOnly`, and audits theme images with `python tools/audit_themes.py --check`. On successful pushes to `main`, it also sends a CI success email using the configured SMTP secrets.
-- [x] `.github/workflows/deploy-pages.yml` runs on every push to `main` and can also be started manually. It checks out the repo on Ubuntu, installs dependencies, runs `python build.py --web`, uploads `build/web` as a GitHub Pages artifact, deploys it to the `github-pages` environment, and sends a deployment-complete email with the Pages URL.
+- `.github/workflows/ci.yml` runs on every push and pull request. It uses `actions/checkout@v4` and `actions/setup-python@v5` on Windows, installs `requirements.txt`, compiles Python modules, runs the full test suite, validates theme assets, and audits theme images. On successful pushes to `main`, it uses `dawidd6/action-send-mail@v3` for an optional CI email.
+- `.github/workflows/deploy-pages.yml` runs on every push to `main` or manually. It uses `actions/checkout@v4`, `actions/setup-python@v5`, `actions/upload-pages-artifact@v3`, and `actions/deploy-pages@v4` to build and publish `build/web` to the `github-pages` environment. It reads the `POV_BLASTER_API_URL` repository variable during the build and optionally sends a completion email.
+- `.github/workflows/deploy-render.yml` runs when API/deployment files change on `main` or manually. If configured, it calls the Render deploy hook with `curl`; without the hook it reports setup instructions and does not trigger a deployment. It can optionally send a deployment email.
+
+### GitHub Actions settings
+
+In repository **Settings → Pages**, set **Source** to **GitHub Actions**. In **Settings → Secrets and variables → Actions → Variables**, add:
+
+```text
+POV_BLASTER_API_URL=https://pov-blaster-api.onrender.com
+```
+
+The value must be the Render service URL without a trailing slash. Do not put the Neon connection string in GitHub because it is only needed by Render.
+
+Optional email notifications use these repository **Actions secrets**: `SMTP_SERVER`, `SMTP_PORT`, `SMTP_USERNAME`, and `SMTP_PASSWORD`. The Render workflow also accepts the optional `RENDER_DEPLOY_HOOK` secret.
+
+## Deployment Settings
+
+### Render
+
+Create the web service from the repository Blueprint using [render.yaml](render.yaml), branch `main`, and the Free plan. Set `DATABASE_URL` in the Render service environment to the Neon connection string, including `sslmode=require`. Keep the value secret. The Blueprint sets `CORS_ORIGINS` to `https://richardharris84.github.io`; this is the origin only and intentionally does not include `/POV-Blaster/`.
+
+The Render build command is `pip install -r requirements-api.txt`, and the start command is `uvicorn api.main:app --host 0.0.0.0 --port $PORT`. Verify the deployment at `https://pov-blaster-api.onrender.com/health`. Render Free services can sleep after inactivity, so the first request may be delayed.
+
+### Neon
+
+Create a free Neon Postgres project and copy its pooled or direct connection string into Render's `DATABASE_URL` environment variable. Neon Auth is not required. Never commit the connection string to the repository or expose it in logs.
+
+### GitHub Pages
+
+After `POV_BLASTER_API_URL` is configured, run **Actions → Deploy web build to GitHub Pages → Run workflow** on `main`. The published game URL is `https://richardharris84.github.io/POV-Blaster/`.
 
 <div align="right"><a href="#table-of-contents">^ TOC</a></div>
 
