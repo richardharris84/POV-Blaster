@@ -269,7 +269,26 @@ py build.py -b
 # or: py build.py --web
 ```
 
-This creates the browser build under `build/web`. To run it locally, start Pygbag's runtime-aware server against the staged web source:
+This creates the browser build under `build/web`.
+
+### Deploy to GitHub Pages
+
+Use the build script to publish the browser artifact directly to the `gh-pages` branch for GitHub Pages:
+
+```bash
+py build.py -d
+```
+
+This deploys the pre-built `build/web` output to GitHub Pages. If you want the script to build the browser bundle first and then deploy it in one step, use:
+
+```bash
+py build.py -bd
+# or: py build.py --web --deploy
+```
+
+The `-bd` flow is the one-step browser build + deploy command. The `-d` flow assumes `build/web` already exists and only publishes it.
+
+To run it locally, start Pygbag's runtime-aware server against the staged web source:
 
 ```bash
 py -m pygbag build/web-source

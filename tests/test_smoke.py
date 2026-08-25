@@ -17,6 +17,7 @@ if str(SRC_DIR) not in sys.path:
 
 import pygame as pg
 
+import build
 from main import Game, choose_player_name
 from application.map import DEFAULT_MAP_NAME, load_map
 from application.theme import THEMES, choose_theme
@@ -32,6 +33,25 @@ from infrastructure.windowing import set_game_icon
 from application.npc_systems import npc_can_see_player
 from presentation.touch import TouchController
 from infrastructure.settings import HALF_WIDTH, NUM_RAYS
+
+
+class BuildScriptTests(unittest.TestCase):
+    def test_deploy_flag_allows_deploy_only_mode(self):
+        with patch.object(sys, 'argv', ['build.py', '-d']):
+            args = build.parse_args()
+
+        self.assertTrue(args.deploy)
+        self.assertFalse(args.windows)
+        self.assertFalse(args.linux)
+        self.assertFalse(args.macos)
+        self.assertFalse(args.web)
+
+    def test_browser_deploy_flag_combines_web_build_and_deploy(self):
+        with patch.object(sys, 'argv', ['build.py', '-bd']):
+            args = build.parse_args()
+
+        self.assertTrue(args.web)
+        self.assertTrue(args.deploy)
 
 
 class HealthTests(unittest.TestCase):

@@ -7,6 +7,7 @@ import os
 import shutil
 import subprocess
 import sys
+import tempfile
 from urllib.request import urlretrieve
 from pathlib import Path
 
@@ -22,9 +23,9 @@ SPEC_DIR = BUILD_DIR / 'pyinstaller-spec'
 
 def parse_args():
     parser = argparse.ArgumentParser(
-        description='Build a POV-Blaster executable for the current platform.'
+        description='Build or deploy POV-Blaster for the current platform.'
     )
-    target = parser.add_mutually_exclusive_group(required=True)
+    target = parser.add_mutually_exclusive_group()
     target.add_argument(
         '-w',
         '--windows',
@@ -48,6 +49,12 @@ def parse_args():
         '--web',
         action='store_true',
         help='build the browser version with Pygbag in build/web',
+    )
+    parser.add_argument(
+        '-d',
+        '--deploy',
+        action='store_true',
+        help='deploy the browser build to the GitHub Pages gh-pages branch',
     )
     return parser.parse_args()
 
@@ -298,15 +305,77 @@ def build_web():
     print('Serve with: python -m pygbag build/web-source')
 
 
+def deploy_to_github_pages(source_dir: Path | None = None):
+    source_dir = source_dir or (BUILD_DIR / 'web')
+    if not source_dir.exists():
+        raise FileNotFoundError(
+            'No browser build was found at build/web. Run "py build.py -bd" to build and deploy it.'
+        )
+
+    git_root = subprocess.run(
+        ['git', 'rev-parse', '--show-toplevel'],
+        cwd=PROJECT_ROOT,
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout.strip()
+    repo_root = Path(git_root)
+
+    branch = 'gh-pages'
+    remote = 'origin'
+
+    try:
+        subprocess.run(['git', 'rev-parse', '--verify', branch], cwd=repo_root, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        subprocess.run(['git', 'checkout', branch], cwd=repo_root, check=True)
+    except subprocess.CalledProcessError:
+        subprocess.run(['git', 'checkout', '--orphan', branch], cwd=repo_root, check=True)
+        subprocess.run(['git', 'rm', '-rf', '--cached', '.'], cwd=repo_root, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+
+    for child in repo_root.iterdir():
+        if child.name == '.git':
+            continue
+        if child.is_dir():
+            shutil.rmtree(child)
+        else:
+            child.unlink()
+
+    for child in source_dir.iterdir():
+        destination = repo_root / child.name
+        if child.is_dir():
+            shutil.copytree(child, destination, dirs_exist_ok=True)
+        else:
+            shutil.copy2(child, destination)
+
+    (repo_root / '.nojekyll').write_text('', encoding='utf-8')
+    subprocess.run(['git', 'add', '.'], cwd=repo_root, check=True)
+    status = subprocess.run(['git', 'status', '--short'], cwd=repo_root, check=True, capture_output=True, text=True).stdout.strip()
+    if status:
+        subprocess.run(
+            ['git', 'commit', '-m', 'Deploy GitHub Pages'],
+            cwd=repo_root,
+            check=True,
+        )
+    subprocess.run(['git', 'push', '--force', remote, branch], cwd=repo_root, check=True)
+    print(f'Published {source_dir} to GitHub Pages via the {branch} branch.')
+
+
 def main():
     args = parse_args()
-    target = (
-        'windows' if args.windows else
-        'linux' if args.linux else
-        'macos' if args.macos else
-        'web'
-    )
-    build(target)
+    if not any([args.windows, args.linux, args.macos, args.web]) and not args.deploy:
+        raise SystemExit('No build target specified. Use -w, -l, -m, -b, or -d.')
+
+    if args.web:
+        build('web')
+
+    if args.deploy:
+        deploy_to_github_pages(BUILD_DIR / 'web' if (BUILD_DIR / 'web').exists() else None)
+
+    if args.windows:
+        build('windows')
+    elif args.linux:
+        build('linux')
+    elif args.macos:
+        build('macos')
 
 
 if __name__ == '__main__':
