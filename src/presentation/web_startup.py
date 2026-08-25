@@ -19,6 +19,7 @@ MUTED = (158, 175, 181)
 ACCENT = (255, 196, 76)
 DANGER = (255, 112, 105)
 BORDER = (72, 95, 105)
+FOOTER_Y = HEIGHT - 28
 
 
 def _font(size, bold=False):
@@ -32,6 +33,10 @@ def _draw_centered(surface, text, font, color, y):
 
 def _draw_text(surface, text, font, color, position):
     surface.blit(font.render(text, True, color), position)
+
+
+def _draw_footer(surface):
+    _draw_centered(surface, "Built by: Richard Harris", _font(17, bold=True), MUTED, FOOTER_Y)
 
 
 def _button(surface, rect, label, selected=False):
@@ -202,6 +207,7 @@ async def choose_startup():
                     rect = pg.Rect(WIDTH // 2 - 300, 195 + index * 76, 600, 60)
                     _button(surface, rect, f"{number}  {theme.label}", selected=index == selected_theme)
                 _draw_centered(surface, "Game controls: W/A/S/D move  |  Mouse look  |  Left click fire  |  Caps Lock toggles mini-map  |  Esc exit", _font(17), MUTED, 650)
+            _draw_footer(surface)
             pg.display.flip()
             clock.tick(60)
             await asyncio.sleep(0)

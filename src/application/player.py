@@ -6,7 +6,7 @@ from infrastructure.settings import (HALF_HEIGHT, HALF_WIDTH, HEIGHT, LINUX_MOUS
                       MOUSE_BORDER_LEFT, MOUSE_BORDER_RIGHT, MOUSE_MAX_REL,
                       MOUSE_SENSITIVITY, PLAYER_ANGLE, PLAYER_MAX_HEALTH,
                       PLAYER_POS, PLAYER_ROT_SPEED, PLAYER_SIZE_SCALE,
-                      PLAYER_SPEED, WEB_MOUSE_SENSITIVITY, WIDTH)
+                      PLAYER_SPEED, WEB_MOUSE_SENSITIVITY, MOBILE_TOUCH_SENSITIVITY, WIDTH)
 from domain.health import Health
 from domain.movement import movement_delta
 from application.ports import GameContext
@@ -121,7 +121,7 @@ class Player:
         touch_controller = getattr(self.game, 'touch_controller', None)
         if touch_controller is not None:
             _, _, turn_x = touch_controller.axes()
-            sensitivity = WEB_MOUSE_SENSITIVITY if getattr(self.game, 'browser_mode', False) else MOUSE_SENSITIVITY
+            sensitivity = MOBILE_TOUCH_SENSITIVITY if getattr(self.game, 'browser_mode', False) else MOUSE_SENSITIVITY
             self.rel = turn_x * MOUSE_MAX_REL
             self.angle += self.rel * sensitivity
             return
