@@ -22,7 +22,7 @@ The recommended path is still a modular-monolith-first approach: harden the exis
 
 ## Audit Scope and Rating Model
 
-Reviewed the current source tree (`src/application/`, `src/domain/`, `src/infrastructure/`, `src/presentation/`, `build.py`, `tests/`, `.github/workflows/`) against the walkthrough in [CodeBase.md](CodeBase.md):
+Reviewed the current source tree (`api/`, `src/application/`, `src/domain/`, `src/infrastructure/`, `src/presentation/`, `build.py`, `tests/`, `.github/workflows/`, `render.yaml`, and `requirements-api.txt`) against the walkthrough in [CodeBase.md](CodeBase.md):
 
 - [main.py](../main.py), [src/application/web_main.py](../src/application/web_main.py), [build.py](../build.py)
 - [src/infrastructure/settings.py](../src/infrastructure/settings.py), [src/application/theme.py](../src/application/theme.py), [src/application/map.py](../src/application/map.py)
@@ -31,6 +31,7 @@ Reviewed the current source tree (`src/application/`, `src/domain/`, `src/infras
 - [src/application/game.py](../src/application/game.py), [src/application/ports.py](../src/application/ports.py), [src/application/snapshot.py](../src/application/snapshot.py)
 - [src/domain/health.py](../src/domain/health.py), [src/domain/combat.py](../src/domain/combat.py), [src/domain/movement.py](../src/domain/movement.py), [src/domain/game_state.py](../src/domain/game_state.py)
 - [src/infrastructure/assets.py](../src/infrastructure/assets.py), [src/infrastructure/audio.py](../src/infrastructure/audio.py), [src/infrastructure/scores.py](../src/infrastructure/scores.py), [src/infrastructure/input.py](../src/infrastructure/input.py)
+- [api/main.py](../api/main.py), [render.yaml](../render.yaml), [requirements-api.txt](../requirements-api.txt)
 - [src/presentation/renderer.py](../src/presentation/renderer.py), [src/presentation/input.py](../src/presentation/input.py)
 - [tests/test_smoke.py](../tests/test_smoke.py), [requirements.txt](../requirements.txt)
 - [tools/audit_themes.py](../tools/audit_themes.py), [tools/pixel_harmony_compare.py](../tools/pixel_harmony_compare.py)
@@ -294,9 +295,10 @@ The project now uses a `src/` layout with `application/`, `domain/`, `infrastruc
 ```text
 POV-Blaster/
 ├── main.py                     # desktop entry point (thin)
+├── api/                        # FastAPI score/session service
 ├── build.py                    # split per refactoring plan below
 ├── assets/                     # themes, maps, and level spawn/scenery data
-├── data/                       # mutable desktop runtime data
+├── data/                       # mutable local runtime data (ignored SQLite scores)
 │
 ├── src/
 │   ├── application/
@@ -324,7 +326,8 @@ POV-Blaster/
 │       ├── renderer.py
 │       └── input.py
 │
-├── tests/, tools/, docs/, .github/                       # unchanged root support areas
+├── tests/, tools/, docs/, .github/                       # root support areas
+├── requirements-api.txt, render.yaml                     # API deployment configuration
 └── build/                                                 # unchanged (gitignored output)
 ```
 

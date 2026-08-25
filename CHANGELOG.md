@@ -1,10 +1,4 @@
-# POV Blaster: A cross-platform, retro FPS game engine built in Python with pseudo-3D graphics (raycasting - based on Wolfenstein 3D)
 
-Control: 'WASD' + mouse <span style="float: right;"><a href="#step-46-game-icon">see last revision</a></span>
-
-![doom](/screenshots/0.jpg)
-
-<div align="right"><a href="#step-46-game-icon">see last revision</a></div>
 
 ## Step 1. Create the Repository
 
@@ -24,6 +18,8 @@ Completed end-to-end.
 	- [x] `upstream`: `https://github.com/StanislavPetrovV/DOOM-style-Game.git`
 
 Repository: https://github.com/richardharris84/POV-Blaster
+
+<COMPLETE>
 
 ## Step 2. How-To create the Code Base
 
@@ -54,6 +50,8 @@ Validation completed:
 - [x] Markdown diagnostics reported no errors.
 - [x] Python 3.13 compile check passed.
 - [x] Only `CodeBase.md` was added before this README update.
+
+<COMPLETE>
 
 ## Step 3. Audit the Code
 
@@ -87,6 +85,8 @@ Validation completed:
 
 - [x] Markdown diagnostics reported no errors.
 - [x] `git diff --check` reported no formatting errors.
+
+<COMPLETE>
 
 ## Step 4. Compare existing clone
 
@@ -124,6 +124,40 @@ Validation completed:
 - [x] Markdown diagnostics reported no errors.
 - [x] Both comparison projects remained unmodified.
 
+
+### Earlier Proof-of-Concept comparison
+
+### Prompt
+
+> Task:
+> - Compare my earlier Proof-of-Concept (`C:\Users\Richard\Dropbox\Workspace\Code\Python\DOOM-3D-FPS-Shooting-Game_KidCopy`) to `C:\Users\Richard\Dropbox\Workspace\Code\Python\DOOM-3D-FPS-Shooting-Game`. Create a report in docs called POCFeatures.md. Outline what the main changes I did to _KidCopy and what packages I installed to implement them.
+
+### Output
+
+Created the detailed POC comparison report in [docs/archive/POCFeatures.md](docs/archive/POCFeatures.md).
+
+The report covers:
+
+- [x] Confirmed runtime/build packages: `pygame` and `PyInstaller`.
+- [x] PyInstaller executable build support.
+- [x] Mouse activation and Pygame event filtering.
+- [x] Image caching, fallback graphics, and silent audio handling.
+- [x] Theme selection and theme-specific asset routing.
+- [x] Generatee themed content and asset tooling.
+- [ ] Damage-based NPC scaling and themed enemy behavior.
+- [ ] Documentation, planned web/multiplayer work, and production limitations.
+- [ ] PowerShell/.NET `System.Drawing` tooling and Python standard-library usage.
+- [ ] Packages not confirmed as KidCopy dependencies, including Pillow, Flask, FastAPI, Requests, NumPy, and OpenGL.
+- [ ] Recommended architecture and migration steps for POV-Blaster.
+
+Validation completed:
+
+- [x] Markdown diagnostics reported no errors.
+- [x] Report references were checked and misleading workspace-relative links were removed.
+- [x] No source code was changed in POV-Blaster for this documentation task.
+
+<WORK IN PROGRESS>
+
 ## Step 5. Organize Docs
 
 ### Prompt
@@ -151,6 +185,8 @@ Validation completed:
 - [x] All documentation diagnostics reported no errors.
 - [x] All expected documentation and screenshot paths exist.
 - [x] No stale active links or `sreenshots` references remain.
+
+<COMPLETE>
 
 ## Step 6. Tweak README.md
 
@@ -187,6 +223,8 @@ Validation completed:
 - [x] All README image references resolve to existing files.
 - [x] Markdown diagnostics reported no errors.
 - [x] `git diff --check` reported no formatting errors.
+
+<COMPLETE>
 
 ## Step 7. Patch #1
 
@@ -230,6 +268,8 @@ Validation completed:
 
 The interactive game loop was not left running during validation because it is intentionally an infinite desktop application loop. Non-fatal PNG color-profile warnings were observed while loading existing assets.
 
+<COMPLETE>
+
 ## Step 8. Patch #1.1
 
 ### Prompt
@@ -256,36 +296,7 @@ Validation completed:
 - [x] Editor diagnostics passed.
 - [x] Fresh runtime output reported no `libpng` warnings.
 
-## Recommended architecture and migration steps for POV-Blaster.
-
-### Prompt
-
-> Task:
-> - Compare my earlier Proof-of-Concept (`C:\Users\Richard\Dropbox\Workspace\Code\Python\DOOM-3D-FPS-Shooting-Game_KidCopy`) to `C:\Users\Richard\Dropbox\Workspace\Code\Python\DOOM-3D-FPS-Shooting-Game`. Create a report in docs called POCFeatures.md. Outline what the main changes I did to _KidCopy and what packages I installed to implement them.
-
-### Output
-
-Created the detailed POC comparison report in [docs/archive/POCFeatures.md](docs/archive/POCFeatures.md).
-
-The report covers:
-
-- [x] Confirmed runtime/build packages: `pygame` and `PyInstaller`.
-- [x] PyInstaller executable build support.
-- [x] Mouse activation and Pygame event filtering.
-- [x] Image caching, fallback graphics, and silent audio handling.
-- [x] Theme selection and theme-specific asset routing.
-- [x] Generatee themed content and asset tooling.
-- [ ] Damage-based NPC scaling and themed enemy behavior.
-- [ ] Documentation, planned web/multiplayer work, and production limitations.
-- [ ] PowerShell/.NET `System.Drawing` tooling and Python standard-library usage.
-- [ ] Packages not confirmed as KidCopy dependencies, including Pillow, Flask, FastAPI, Requests, NumPy, and OpenGL.
-- [ ] Recommended architecture and migration steps for POV-Blaster.
-
-Validation completed:
-
-- [x] Markdown diagnostics reported no errors.
-- [x] Report references were checked and misleading workspace-relative links were removed.
-- [x] No source code was changed in POV-Blaster for this documentation task.
+<COMPLETE>
 
 ## Step 9. Recommended architecture and migration steps
 
@@ -293,6 +304,8 @@ Validation completed:
 
 - [x] Documented the recommended architecture and migration steps in `docs/archive/POCFeatures.md`.
 - [x] Deferred implementation details to the later architecture and upgrade steps.
+
+<COMPLETE>
 
 ## Step 10. Executable
 
@@ -361,6 +374,8 @@ Validation completed:
 
 Known platform limitation: PyInstaller produces native binaries for the host operating system. A Linux build must be created on Linux or WSL, and a Windows build must be created on Windows. WSLg or VcXsrv must be running for a Linux graphical window to appear.
 
+<COMPLETE>
+
 ## Step 11. Linux Mouse Fix
 
 ### Prompt History
@@ -425,6 +440,8 @@ Validation completed:
 
 Known environment requirement: when using VcXsrv, it must be running with X11 access enabled. WSLg and VcXsrv are alternative display providers; the game now prefers reachable VcXsrv under WSL and falls back to Wayland when appropriate.
 
+<COMPLETE>
+
 ## Step 12. Game Window Focus
 
 ### Prompt
@@ -445,6 +462,8 @@ Validation completed:
 - [x] Fresh Python compilation passed for `main.py`, `player.py`, and `settings.py`.
 - [x] The input changes were kept compatible with the existing display backend logic.
 - [x] The game continued to run cleanly after the focus-handling update.
+
+<COMPLETE>
 
 ## Step 13. Asset Caching and Fallback Graphics
 
@@ -467,6 +486,8 @@ Validation completed:
 - [x] Cached images load without repeated disk reads.
 - [x] Fallback graphics allow the game to continue when an image asset is unavailable.
 - [x] Headless startup and rendering smoke tests passed.
+
+<COMPLETE>
 
 ## Step 14. Theme Selection and Theme-Specific Asset Routing
 
@@ -493,6 +514,8 @@ Validation completed:
 - [x] Startup menu selection and Exit behavior passed.
 - [x] Headless startup smoke test passed.
 
+<COMPLETE>
+
 ## Step 15. Themed Content and Asset Tooling
 
 ### Prompt
@@ -517,6 +540,8 @@ Validation completed:
 - [x] Every generated NPC has six distinct death frames and unique regular animation frames.
 - [x] Default, Candy Kingdom, Space, and Graveyard headless startup and rendering passed.
 
+<COMPLETE>
+
 ## Step 16. Candy Kingdom Asset Refresh
 
 ### Prompt
@@ -535,6 +560,8 @@ Validation completed:
 - [x] Candy-specific weapon and audio assets resolved successfully.
 - [x] Duplicate nested asset directories were removed.
 
+<COMPLETE>
+
 ## Step 17. Candy Kingdom Weapon Sound
 
 ### Prompt
@@ -549,6 +576,8 @@ Validation completed:
 
 - [x] The configured MP3 exists in the Candy Kingdom sound assets.
 - [x] Candy Kingdom headless startup and audio loading passed.
+
+<COMPLETE>
 
 ## Step 18. Animation Validation and Repair
 
@@ -565,6 +594,8 @@ Validation completed:
 - [x] Duplicate Candy Kingdom idle and walk frames were detected; repairs are now opt-in so imported artwork is not silently replaced.
 - [x] Attack, pain, walk, and death validation passed for all generated themes.
 - [x] Candy Kingdom headless startup and rendering remained successful after repairs.
+
+<COMPLETE>
 
 ## Step 19. Candy Kingdom Asset Restoration
 
@@ -583,6 +614,8 @@ Validation completed:
 - [x] Candy Kingdom assets match the specified source files byte-for-byte.
 - [x] Candy Kingdom startup and rendering passed.
 - [x] Read-only animation validation completed without modifying artwork.
+
+<COMPLETE>
 
 ## Step 20. Health Percent
 
@@ -607,6 +640,8 @@ Validation completed:
 - [x] Candy Kingdom, Space, and Graveyard percent textures have distinct content from the DOOM/default texture.
 - [x] Menu option 4 selects the `DOOM` theme successfully.
 - [x] `git diff --check` passed.
+
+<COMPLETE>
 
 ## Step 21. Architecture
 
@@ -637,6 +672,8 @@ Validation completed:
 - [x] `git diff --check` passed.
 - [x] Multiplayer services remain intentionally deferred until the local single-player engine is stable.
 
+<COMPLETE>
+
 ## Step 22. Exit
 
 ### Prompt
@@ -656,6 +693,8 @@ Validation completed:
 - [x] Full test suite passed with 10 tests.
 - [x] Python compilation passed.
 - [x] `git diff --check` passed.
+
+<COMPLETE>
 
 ## Step 23. Player Name
 
@@ -678,6 +717,8 @@ Validation completed:
 - [x] Full test suite passed with 11 tests.
 - [x] Python compilation passed.
 - [x] `git diff --check` passed.
+
+<COMPLETE>
 
 ## Step 24. High Score
 
@@ -711,6 +752,8 @@ Validation completed:
 - [x] Full test suite passed with 13 tests.
 - [x] Python compilation and `git diff --check` passed.
 
+<COMPLETE>
+
 ## Step 25. Mac Build
 
 ### Prompt
@@ -730,6 +773,8 @@ Validation completed:
 - [x] `build.py --help` exposes the macOS target.
 - [x] The macOS host guard rejects `-m` on Windows.
 - [x] `build.py` compilation and `git diff --check` passed.
+
+<COMPLETE>
 
 ## Step 26. Web Build and Pygbag
 
@@ -779,6 +824,8 @@ Additional Pygbag validation completed:
 - [x] Verified in a real browser session that the game loads past "Loading", renders correctly, and plays sound/music without errors or overlaps.
 - [x] Confirmed rapid-fire weapon sounds stay in sync using pooled browser audio elements.
 
+<COMPLETE>
+
 ## Step 27. Map File
 
 ### Prompt
@@ -803,6 +850,8 @@ Validation completed:
 - [x] Focused map tests and full regression tests passed.
 - [x] Python compilation and `git diff --check` passed.
 
+<COMPLETE>
+
 ## Step 28. PROD Deploy
 
 ### Prompt
@@ -818,6 +867,8 @@ Validation completed:
 Validation completed:
 
 - [x] Diagnosed a failed workflow run via the shared Actions log output, identified the missing-parent-directory error, fixed it, and pushed; the workflow re-triggers automatically on push to `main`.
+
+<COMPLETE>
 
 ## Step 29. Refactor the code
 
@@ -842,6 +893,8 @@ Validation completed:
 - [x] Scoped the requested deliverables to include a target folder structure and clean architecture breakdown.
 - [x] Scoped the requested deliverables to include a file-by-file refactor list and summary of suggested changes.
 
+<COMPLETE>
+
 ## Step 30. Upgrade the code
 
 ### Prompt
@@ -854,6 +907,8 @@ Validation completed:
 
 - [x] Converted the upgrade direction into an execution-focused step centered on `docs/CodeAudit.md`'s highest-priority remaining items.
 - [x] Established iterative delivery with progress updates as each item is implemented and validated.
+
+<COMPLETE>
 
 ## Step 31. Web Build Touch-up
 
@@ -881,6 +936,8 @@ Auto Commits after last known manual commit `2f142e1`:
 - [x] https://github.com/richardharris84/POV-Blaster/commit/5155ba1d880cc79653e35fc8e306ec6ea2f151e4 - fix web theme audio startup retries and set browser title.
 - [x] https://github.com/richardharris84/POV-Blaster/commit/d7622e175baa897cf40a80c9e67972b419ad6d64 - fix CI web HTML patch tests for minimal templates.
 - [x] https://github.com/richardharris84/POV-Blaster/commit/735fc5ee4eac6fd1b29d869ae1c8834b2ab7033e - lock title, add top brand label, and improve music start retry.
+
+<COMPLETE>
 
 ## Step 32. New Hunting Theme
 
@@ -931,6 +988,8 @@ Validation completed:
 - [x] Theme generator Python syntax validation passed.
 - [x] Full regression suite passed with 27 tests.
 
+<WORK IN PROGRESS>
+
 ## Step 33. Graphics Upgrade
 
 ### Prompt
@@ -973,6 +1032,8 @@ Auto Commits after last known manual commit `2f142e1`:
 - [ ] The generated artwork has not been verified as equal to or better than Quake or Counter-Strike 1.6.
 - [ ] A professional high-detail art pass, full interactive playtest, and complete screenshot review remain required before final graphics approval.
 
+<WORK IN PROGRESS>
+
 ## Step 34. Name Curse Word Validation
 
 ### Prompt
@@ -986,6 +1047,8 @@ Auto Commits after last known manual commit `2f142e1`:
 - [x] Web name entry uses the same validator.
 - [x] Added regression coverage for rejection and reprompt behavior.
 - [x] Full regression suite passes with 29 tests at the latest checkpoint.
+
+<COMPLETE>
 
 ## Step 35. Web Menu
 
@@ -1009,6 +1072,8 @@ Auto Commits after last known manual commit `2f142e1`:
 - [x] Pygbag packaging and local serving were exercised; BrowserFS staging was corrected for the served source directory.
 - [ ] Linux and macOS native builds cannot be produced on the Windows host and require their respective operating systems.
 
+<WORK IN PROGRESS>
+
 ## Step 36. Hunting Weapon
 
 ### Prompt
@@ -1027,6 +1092,8 @@ Validation completed:
 - [x] Hunting weapon asset lookup resolves without missing-file or path errors.
 - [x] Hunting theme initialization and headless render smoke tests passed.
 - [x] No remaining duplicate Hunting weapon directory structure remained in the repo.
+
+<COMPLETE>
 
 ## Step 37. Theme adjustment
 
@@ -1059,6 +1126,8 @@ Validation completed:
 - [x] Space theme loads successfully without missing asset errors.
 - [x] Visual review confirms the forward-facing deer composition, themed bear/hunter silhouettes, and sci-fi space look are aligned with the requested mood and structure.
 
+<COMPLETE>
+
 ## Step 38. Production Graphics Gate
 
 ### Output
@@ -1069,6 +1138,8 @@ Validation completed:
 - [x] Confirmed all themes are ready for automated play testing: Candy Kingdom, Space, Hunting, Graveyard, and Doom.
 - [ ] A professional art-direction review against Quake or Counter-Strike 1.6 remains outside automated validation.
 
+<WORK IN PROGRESS>
+
 ## Step 39. Gameplay HUD and Minimap
 
 ### Output
@@ -1078,6 +1149,8 @@ Validation completed:
 - [x] Added Caps Lock minimap toggling during gameplay.
 - [x] Added regression coverage for kill persistence and minimap toggling.
 
+<COMPLETE>
+
 ## Step 40. Default Theme Selection
 
 ### Output
@@ -1085,6 +1158,8 @@ Validation completed:
 - [x] Kept Doom as menu option 5 and preselected it in the console and web theme menus.
 - [x] Required Enter to confirm the preselected theme.
 - [x] Covered the shared selection behavior with startup tests.
+
+<COMPLETE>
 
 ## Step 41. Mobile Controls
 
@@ -1105,6 +1180,8 @@ Validation completed:
 - [x] Desktop name entry, Doom selection, Enter confirmation, and gameplay were exercised on GitHub Pages.
 - [ ] Physical-device touch play testing remains required; browser emulation does not replace a real phone or tablet test.
 
+<WORK IN PROGRESS>
+
 ## Step 42. Clean Architecture Refactor
 
 ### Output
@@ -1117,6 +1194,8 @@ Validation completed:
 Auto Commits after last known manual commit `2f142e1`:
 
 - [x] https://github.com/richardharris84/POV-Blaster/commit/21e68aa2a1829661fd563389409c028565173510 - mobile startup touch fix, workflow email notification, and architecture file relocation.
+
+<COMPLETE>
 
 ## Step 43. Release Documentation and Deployment
 
@@ -1139,6 +1218,8 @@ Auto Commits after last known manual commit `2f142e1`:
 - [x] https://github.com/richardharris84/POV-Blaster/commit/ff80fd376516c5339eaf45cd5cd7df265e0305a0 - normalize changelog steps and fix SMTP TLS.
 
 Final release status: automated graphics and gameplay gates pass; production art approval and physical mobile play testing remain open before declaring gold-code complete.
+
+<WORK IN PROGRESS>
 
 ## Step 44. Workspace Root Cleanup
 
@@ -1210,6 +1291,8 @@ Validation completed:
 - [x] Workspace diagnostics reported no errors.
 - [x] `git diff --check` passed; Git only warned that `build.py` line endings may normalize from LF to CRLF next time Git touches it.
 
+<COMPLETE>
+
 ## Step 45. Theme Assets Folder
 
 ### Prompt
@@ -1234,6 +1317,8 @@ Validation completed:
 - [x] No stale direct `assets/<theme>` references remain.
 - [x] Workspace diagnostics and `git diff --check` passed.
 
+<COMPLETE>
+
 ## Step 46. Game Icon
 
 ### Prompt
@@ -1255,3 +1340,5 @@ Validation completed:
 - [x] Browser build completed successfully.
 - [x] Web output contains `favicon.png` and references it from `index.html`.
 - [x] Touched-file diagnostics and `git diff --check` passed.
+
+<COMPLETE>

@@ -98,13 +98,14 @@ src/infrastructure/     Adapters to the outside world (files, audio devices, bro
   settings.py             Screen, movement, raycasting, and mouse-sensitivity constants
   assets.py               AssetLoader: cached image loading with drawn fallback sprites
   audio.py                Sound (desktop, pg.mixer) and BrowserSound/BrowserClip (web, native <audio>)
-  scores.py               HighScores (scores.xml) and BrowserHighScores (browser localStorage)
+  scores.py               HighScores (local SQLite + push/pull sync) and BrowserHighScores (browser localStorage/API)
   input.py                Re-exports InputAdapter for the presentation layer
 
 src/presentation/       Pygame-facing adapters behind the application layer's ports
   input.py                InputAdapter: wraps pg.event.get()
   renderer.py             ObjectRenderer: background/sky, walls, sprites, HUD, end screens
 
+api/                    FastAPI score/session service with SQLite fallback or Neon Postgres
 assets/maps/            Plain-text maps ('.' = empty, digit = wall texture id)
 assets/levels/          Data-driven scenery placement and NPC spawn tables, keyed by map name
 assets/themes/<theme>/  Per-theme textures, sprites, and sound (default/candy_kingdom/graveyard/hunting/space)
@@ -114,7 +115,9 @@ tools/generate_themes.ps1  Procedural theme and animation asset generator/valida
 tools/pixel_harmony_compare.py  Pixel-Harmony-compatible image comparison metrics
 tools/profile_game.py   Headless cProfile harness for update()/draw()
 docs/                   Design/audit/reconstruction documentation
-.github/workflows/      CI (tests) and GitHub Pages deployment (web build)
+.github/workflows/      CI, GitHub Pages, and Render deployment workflows
+requirements-api.txt    API-only Render dependencies
+render.yaml             Render Free service configuration
 build/                  Build outputs (gitignored): platform executables and the web bundle
 ```
 
