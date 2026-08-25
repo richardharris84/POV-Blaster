@@ -46,7 +46,7 @@ The game uses a 2D grid map to produce a pseudo-3D view. It supports textured wa
 
 ## Hosted API and Database
 
-The desktop build keeps its local XML leaderboard. The browser build uses localStorage for immediate offline play and submits scores in the background to the optional FastAPI service. The browser also records a web session when a player starts a game.
+The desktop build keeps a local SQLite leaderboard at `data/scores.sqlite3`. The browser build uses localStorage for immediate offline play and submits scores in the background to the optional FastAPI service. The browser also records a web session when a player starts a game.
 
 The FastAPI application in `api/main.py` exposes:
 
@@ -56,7 +56,7 @@ The FastAPI application in `api/main.py` exposes:
 - `GET /sessions`: lists recorded web sessions.
 - `POST /sessions`: records a player name, request IP, UTC timestamp, and best-effort city/country lookup.
 
-Production uses Neon Postgres through the `DATABASE_URL` environment variable. The API creates the `scores` and `web_sessions` tables on startup and uses Psycopg for Postgres connections. Raw IP addresses are not stored with score records; session records retain the request IP for session analytics. Local development and tests use SQLite automatically when `DATABASE_URL` is absent. The browser name-entry screen links to [privacy.html](privacy.html), which explains the location data use and deletion request process.
+Production uses Neon Postgres through the `DATABASE_URL` environment variable. The API creates the `scores` and `web_sessions` tables on startup and uses Psycopg for Postgres connections. Raw IP addresses are not stored with score records; session records retain the request IP for session analytics. Local development and tests use SQLite automatically when `DATABASE_URL` is absent. `HighScores.sync(api_url, direction='push')` uploads the local SQLite leaderboard to the API, while `direction='pull'` replaces the local leaderboard with the remote scores. The browser name-entry screen links to [privacy.html](privacy.html), which explains the location data use and deletion request process.
 
 Render hosts the `pov-blaster-api` Free web service. Its `render.yaml` uses `requirements-api.txt`, which deliberately excludes Pygame and other desktop/web build dependencies, and starts the service with Uvicorn.
 

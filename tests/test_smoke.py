@@ -167,7 +167,7 @@ class WindowIconTests(unittest.TestCase):
 class HighScoreTests(unittest.TestCase):
     def test_score_file_is_created_and_keeps_top_ten(self):
         with tempfile.TemporaryDirectory() as directory:
-            path = Path(directory) / 'scores.xml'
+            path = Path(directory) / 'scores.sqlite3'
             scores = HighScores(path)
 
             self.assertTrue(path.exists())

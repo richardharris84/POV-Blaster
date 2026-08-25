@@ -326,7 +326,7 @@ Maps are plain UTF-8 text files under `assets/maps/`, one row per line, using `.
 
 ## 14. High Scores: Local and Hosted Backends
 
-`HighScores` (desktop) persists a sorted, capped list of `Score(player_name, kills)` to `data/scores.xml`. `BrowserHighScores` (web) writes to localStorage immediately and submits each score in the background to the optional `api/` FastAPI service, falling back to local memory when browser storage or the API is unavailable. The service stores SQLite records with player name, kills, UTC timestamp, and derived city/country. Raw IP addresses are deliberately not stored. `GET /scores` returns the complete public record list; `POST /scores` accepts new submissions. See [privacy.html](../privacy.html) for the browser disclosure.
+`HighScores` (desktop) persists a sorted, capped list of `Score(player_name, kills)` to the local SQLite database `data/scores.sqlite3`. Its `sync(api_url, direction='push'|'pull')` method uploads local scores or replaces them from the remote API. `BrowserHighScores` (web) writes to localStorage immediately and submits each score in the background to the optional `api/` FastAPI service, falling back to local memory when browser storage or the API is unavailable. The service uses Neon Postgres in production and SQLite when `DATABASE_URL` is absent. See [privacy.html](../privacy.html) for the browser disclosure.
 
 ## 15. Multi-Platform Builds (`build.py`)
 

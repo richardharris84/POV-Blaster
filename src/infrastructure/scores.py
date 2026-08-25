@@ -1,12 +1,14 @@
+from contextlib import closing
 from dataclasses import dataclass
 import json
 import os
+import sqlite3
 from pathlib import Path
+from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
-from xml.etree import ElementTree
 
 
-DEFAULT_SCORE_PATH = Path(__file__).resolve().parents[2] / 'data' / 'scores.xml'
+DEFAULT_SCORE_PATH = Path(__file__).resolve().parents[2] / 'data' / 'scores.sqlite3'
 
 
 @dataclass(frozen=True)
@@ -19,43 +21,82 @@ class HighScores:
     def __init__(self, path=DEFAULT_SCORE_PATH, limit=10):
         self.path = Path(path)
         self.limit = limit
-        if not self.path.exists():
-            self._save([])
+        self._initialize()
 
     def load(self):
-        if not self.path.exists():
-            return []
-        try:
-            root = ElementTree.parse(self.path).getroot()
-        except (ElementTree.ParseError, OSError):
-            return []
-
-        scores = []
-        for entry in root.findall('score'):
-            name = entry.get('name', '').strip()
-            try:
-                kills = int(entry.get('kills', '0'))
-            except ValueError:
-                continue
-            if name and kills >= 0:
-                scores.append(Score(name, kills))
-        return self._sort(scores)
+        with closing(sqlite3.connect(self.path)) as connection:
+            rows = connection.execute(
+                'SELECT player_name, kills FROM scores ORDER BY kills DESC, player_name COLLATE NOCASE ASC, id ASC'
+            ).fetchall()
+        return [Score(name, kills) for name, kills in rows]
 
     def add(self, player_name, kills):
-        scores = self.load()
-        scores.append(Score(player_name.strip() or 'Player', max(0, int(kills))))
-        scores = self._sort(scores)[:self.limit]
-        self._save(scores)
-        return scores
+        score = Score(player_name.strip() or 'Player', max(0, int(kills)))
+        with closing(sqlite3.connect(self.path)) as connection:
+            with connection:
+                connection.execute(
+                    'INSERT INTO scores (player_name, kills) VALUES (?, ?)',
+                    (score.player_name, score.kills),
+                )
+                connection.execute(
+                    'DELETE FROM scores WHERE id NOT IN ('
+                    'SELECT id FROM scores ORDER BY kills DESC, player_name COLLATE NOCASE ASC, id ASC LIMIT ?)',
+                    (self.limit,),
+                )
+        return self.load()
+
+    def sync(self, api_url, direction='push'):
+        """Synchronize local scores with the API in the requested direction."""
+        api_url = api_url.rstrip('/')
+        if direction == 'push':
+            for score in self.load():
+                self._post_remote(api_url, score)
+            return self.load()
+        if direction == 'pull':
+            remote_scores = self._get_remote(api_url)
+            with closing(sqlite3.connect(self.path)) as connection:
+                with connection:
+                    connection.execute('DELETE FROM scores')
+                    connection.executemany(
+                        'INSERT INTO scores (player_name, kills) VALUES (?, ?)',
+                        [(score.player_name, score.kills) for score in remote_scores[:self.limit]],
+                    )
+            return self.load()
+        raise ValueError("direction must be 'push' or 'pull'")
 
     def _sort(self, scores):
         return sorted(scores, key=lambda score: (-score.kills, score.player_name.casefold()))
-    def _save(self, scores):
-        root = ElementTree.Element('scores')
-        for score in scores:
-            ElementTree.SubElement(root, 'score', name=score.player_name, kills=str(score.kills))
+
+    def _initialize(self):
         self.path.parent.mkdir(parents=True, exist_ok=True)
-        ElementTree.ElementTree(root).write(self.path, encoding='utf-8', xml_declaration=True)
+        with closing(sqlite3.connect(self.path)) as connection:
+            with connection:
+                connection.execute(
+                    'CREATE TABLE IF NOT EXISTS scores ('
+                    'id INTEGER PRIMARY KEY AUTOINCREMENT, '
+                    'player_name TEXT NOT NULL, kills INTEGER NOT NULL CHECK (kills >= 0))'
+                )
+
+    def _get_remote(self, api_url):
+        request = Request(f'{api_url}/scores', headers={'User-Agent': 'POV-Blaster/1.0'})
+        try:
+            with urlopen(request, timeout=3) as response:
+                data = json.loads(response.read().decode('utf-8'))
+        except (HTTPError, URLError, OSError, json.JSONDecodeError, KeyError, TypeError, ValueError) as error:
+            raise RuntimeError('Unable to pull scores from the remote API.') from error
+        return self._sort([Score(item['player_name'], int(item['kills'])) for item in data])
+
+    def _post_remote(self, api_url, score):
+        payload = json.dumps(score.__dict__).encode('utf-8')
+        request = Request(
+            f'{api_url}/scores', data=payload,
+            headers={'Content-Type': 'application/json'}, method='POST',
+        )
+        try:
+            with urlopen(request, timeout=3):
+                pass
+        except (HTTPError, URLError, OSError) as error:
+            raise RuntimeError('Unable to push scores to the remote API.') from error
 
     def display(self, output_func=print):
         scores = self.load()

@@ -2,6 +2,7 @@
 import json
 import sys
 import os
+import tempfile
 from pathlib import Path
 from unittest.mock import patch, MagicMock
 
@@ -12,7 +13,7 @@ SRC_DIR = Path(__file__).resolve().parent.parent / 'src'
 if str(SRC_DIR) not in sys.path:
     sys.path.insert(0, str(SRC_DIR))
 
-from infrastructure.scores import BrowserHighScores
+from infrastructure.scores import BrowserHighScores, HighScores
 
 
 def test_browser_high_scores_with_api():
@@ -97,6 +98,39 @@ def test_web_session_recording():
         submitted_data = json.loads(request_obj.data.decode('utf-8'))
         assert submitted_data['player_name'] == "TestPlayer"
         print("✓ Web session recorded via API")
+
+
+def test_local_scores_sync_to_remote_api():
+    with tempfile.TemporaryDirectory() as directory:
+        scores = HighScores(Path(directory) / 'scores.sqlite3')
+        scores.add('Alice', 25)
+        scores.add('Bob', 10)
+
+        with patch('infrastructure.scores.urlopen') as mock_urlopen:
+            mock_urlopen.return_value.__enter__.return_value = MagicMock()
+            scores.sync('http://api.example.com', direction='push')
+
+        assert mock_urlopen.call_count == 2
+        submitted = [json.loads(call.args[0].data.decode('utf-8')) for call in mock_urlopen.call_args_list]
+        assert submitted == [
+            {'player_name': 'Alice', 'kills': 25},
+            {'player_name': 'Bob', 'kills': 10},
+        ]
+
+
+def test_remote_scores_sync_to_local_database():
+    with tempfile.TemporaryDirectory() as directory:
+        scores = HighScores(Path(directory) / 'scores.sqlite3')
+        scores.add('Old score', 1)
+        remote = [{'player_name': 'Alice', 'kills': 25}, {'player_name': 'Bob', 'kills': 10}]
+
+        with patch('infrastructure.scores.urlopen') as mock_urlopen:
+            response = MagicMock()
+            response.read.return_value = json.dumps(remote).encode('utf-8')
+            mock_urlopen.return_value.__enter__.return_value = response
+            result = scores.sync('http://api.example.com', direction='pull')
+
+        assert [(score.player_name, score.kills) for score in result] == [('Alice', 25), ('Bob', 10)]
 
 
 if __name__ == '__main__':
