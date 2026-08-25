@@ -1,5 +1,7 @@
 # POV-Blaster Code Audit and Architecture Refactoring Plan (Re-Audit)
 
+**Audit snapshot:** 2026-08-25, `main` after the mobile startup and touch-control fixes. This audit covers the layered `src/` architecture, five themes, native builds, Pygbag browser delivery, FastAPI/SQLite/Postgres scoring, and GitHub Pages deployment.
+
 > This report supersedes the original `CodeAudit.md`. The codebase has since undergone a substantial refactor (a `src/domain`, `src/application`, `src/infrastructure`, and `src/presentation` split, a plain-text map format, a dual-backend audio/high-score system, an `assets/` content tree, and an entire second platform target — a Pygbag/WASM browser build). This re-audit credits what was fixed, re-flags what remains open, and adds new findings specific to the current architecture, including the browser build. For a full narrative walkthrough of the current implementation, see `docs/CodeBase.md` (the original walkthrough is archived at `docs/archive/CodeBase-Orig.md` and is now out of date).
 
 ## Executive Summary
@@ -22,7 +24,7 @@ The recommended path is still a modular-monolith-first approach: harden the exis
 
 ## Audit Scope and Rating Model
 
-Reviewed the current source tree (`api/`, `src/application/`, `src/domain/`, `src/infrastructure/`, `src/presentation/`, `build.py`, `tests/`, `.github/workflows/`, `render.yaml`, and `requirements-api.txt`) against the walkthrough in [CodeBase.md](CodeBase.md):
+Reviewed the current source tree (`api/`, `src/application/`, `src/domain/`, `src/infrastructure/`, `src/presentation/`, `build.py`, `tests/`, `.github/workflows/`, `api/render.yaml`, and `requirements-api.txt`) against the walkthrough in [CodeBase.md](CodeBase.md):
 
 - [main.py](../main.py), [src/application/web_main.py](../src/application/web_main.py), [build.py](../build.py)
 - [src/infrastructure/settings.py](../src/infrastructure/settings.py), [src/application/theme.py](../src/application/theme.py), [src/application/map.py](../src/application/map.py)
@@ -31,7 +33,7 @@ Reviewed the current source tree (`api/`, `src/application/`, `src/domain/`, `sr
 - [src/application/game.py](../src/application/game.py), [src/application/ports.py](../src/application/ports.py), [src/application/snapshot.py](../src/application/snapshot.py)
 - [src/domain/health.py](../src/domain/health.py), [src/domain/combat.py](../src/domain/combat.py), [src/domain/movement.py](../src/domain/movement.py), [src/domain/game_state.py](../src/domain/game_state.py)
 - [src/infrastructure/assets.py](../src/infrastructure/assets.py), [src/infrastructure/audio.py](../src/infrastructure/audio.py), [src/infrastructure/scores.py](../src/infrastructure/scores.py), [src/infrastructure/input.py](../src/infrastructure/input.py)
-- [api/main.py](../api/main.py), [render.yaml](../render.yaml), [requirements-api.txt](../requirements-api.txt)
+- [api/main.py](../api/main.py), [api/render.yaml](../api/render.yaml), [requirements-api.txt](../requirements-api.txt)
 - [src/presentation/renderer.py](../src/presentation/renderer.py), [src/presentation/input.py](../src/presentation/input.py)
 - [tests/test_smoke.py](../tests/test_smoke.py), [requirements.txt](../requirements.txt)
 - [tools/audit_themes.py](../tools/audit_themes.py), [tools/pixel_harmony_compare.py](../tools/pixel_harmony_compare.py)
@@ -327,7 +329,8 @@ POV-Blaster/
 │       └── input.py
 │
 ├── tests/, tools/, docs/, .github/                       # root support areas
-├── requirements-api.txt, render.yaml                     # API deployment configuration
+├── requirements-api.txt                                   # API dependencies
+├── api/render.yaml                                        # API deployment configuration
 └── build/                                                 # unchanged (gitignored output)
 ```
 

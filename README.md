@@ -9,6 +9,7 @@ The game uses a 2D grid map to produce a pseudo-3D view. It supports textured wa
 - `W`, `A`, `S`, `D`: move
 - Mouse: look around
 - Left click: fire
+- Mobile: left joystick moves, right joystick looks, and tapping the right joystick fires
 - `Caps Lock`: toggle the mini-map in the top-left during gameplay
 - `Esc`: exit to the startup menu
 
@@ -37,7 +38,7 @@ The game uses a 2D grid map to produce a pseudo-3D view. It supports textured wa
   - [GitHub Actions](#github-actions)
 - [Hosted API and Database](#hosted-api-and-database)
 - [Deployment Settings](#deployment-settings)
-- [Git Commit History](#git-commit-history)
+- [Development History](#development-history)
 - [Project Structure](#project-structure)
 - [How the Game Works](#how-the-game-works)
 - [Development Walkthrough](#development-walkthrough)
@@ -59,7 +60,7 @@ The FastAPI application in `api/main.py` exposes:
 
 Production uses Neon Postgres through the `DATABASE_URL` environment variable. The API creates the `scores` and `web_sessions` tables on startup and uses Psycopg for Postgres connections. Raw IP addresses are not stored with score records; session records retain the request IP for session analytics. Local development and tests use SQLite automatically when `DATABASE_URL` is absent. `HighScores.sync(api_url, direction='push')` uploads the local SQLite leaderboard to the API, while `direction='pull'` replaces the local leaderboard with the remote scores. The browser name-entry screen links to [privacy.html](privacy.html), which explains the location data use and deletion request process.
 
-Render hosts the `pov-blaster-api` Free web service. Its `render.yaml` uses `requirements-api.txt`, which deliberately excludes Pygame and other desktop/web build dependencies, and starts the service with Uvicorn.
+Render hosts the `pov-blaster-api` Free web service. Its [api/render.yaml](api/render.yaml) Blueprint uses `requirements-api.txt`, which deliberately excludes Pygame and other desktop/web build dependencies, and starts the service with Uvicorn.
 
 ## See Also
 
@@ -68,66 +69,9 @@ Render hosts the `pov-blaster-api` Free web service. Its `render.yaml` uses `req
 - [CodeBase.md](docs/CodeBase.md): up-to-date reconstruction guide and codebase walkthrough (the original, now superseded, walkthrough is archived at [docs/archive/CodeBase-Orig.md](docs/archive/CodeBase-Orig.md))
 - [docs/archive/CloneCompare.md](docs/archive/CloneCompare.md): comparison of the related game projects and first-patch recommendations
 
-## Git Commit History
+## Development History
 
-All commits currently reachable in this repository are listed below. Commits begin under `Richard:` by default so they can be moved to `AI:` during later review without losing the complete history.
-
-### Richard:
-
-- `2b6e182` Replace XML scores with local SQLite and sync support
-- `3423fbe` Refine web startup footer and mobile turning
-- `0bfe769` Document API database and deployment configuration
-- `fe813b7` Update Psycopg for Python 3.14
-- `9458493` Use API-only dependencies on Render
-- `31b9777` Use free Render service with external Postgres
-- `2efe030` Use Render Postgres for hosted score storage
-- `d676d1b` Gold Code: Complete API integration with database, web session tracking, and deployment pipelines
-- `9c33c07` Richard's Architecture - Themes
-- `b33e246` Richard's New Architecture
-- `ff80fd3` docs: normalize changelog steps and fix smtp tls
-- `7bd3ca6` feat: support mobile browser name entry
-- `9a06c86` fix: keep hunting hunter sprites connected
-- `4d1ca93` fix: use black web letterboxing
-- `720c835` ci: make notification step non-blocking
-- `67b4373` ci: skip notify job when SMTP secrets are missing
-- `e92da93` fix: set explicit sender for deploy email notification
-- `e70e25a` fix: fallback sender for deploy notification email
-- `21e68aa` release: mobile startup touch fix, workflow email notify, and architecture file relocation
-- `242fa6d` release: gold-code theme pass with minimap and HUD
-- `58e5cc5` PRODUCTION-READY GRAPHICS UPGRADE - FINAL STATUS REPORT
-- `a567b63` PRODUCTION-READY GRAPHICS UPGRADE - FINAL STATUS REPORT
-- `133d968` chore(graphics): gold code - production-ready theme graphics upgrade
-- `37122dd` graphics: production-ready theme upgrade - all 5 themes regenerated & standardized
-- `735fc5e` Web: lock title, add top brand label, improve music start retry
-- `d7622e1` Fix CI web HTML patch tests for minimal templates
-- `5155ba1` Fix web theme audio startup retries and set browser title
-- `11b8c86` web: boost mouse, fix browser theme start, pin footer right
-- `f7c1159` web: increase mouse sensitivity and add built-by footer
-- `e097fd6` chore: trigger GitHub Pages deploy
-- `2f142e1` Refactor Codebase
-- `3fae707` Updated docs
-- `af99c9d` Updated docs
-- `6a7d5b8` Updated docs
-- `bce3e24` Updated primary docs
-- `ac356f2` Fix build.py --web failing on fresh checkout (missing build/ dir)
-- `263fb74` Add GitHub Pages deployment workflow for web build
-- `a39e83d` Web build (pygbag)
-- `f1f533f` Map Files
-- `d7d16b4` Map Files
-- `505105d` Mac Build
-- `834a054` High Score
-- `65d89be` Player Name
-- `b26c64b` New Architecture
-- `d0ded42` Checked off completed POC port tasks
-- `e16a7b7` New Theme Health Percent
-- `99cc77a` Minor content change
-- `b178fbe` Candy Kingdom
-- `01fb99e` Candy Kingdom
-- `5f93594` Added Themes
-- `b818e70` Image caching & fallback graphics
-- `6cac8cf` Event Filtering
-- `a8313c4` POC Feat. Review
-- `fe2f064` Graphics Upgrade Rollback
+See [CHANGELOG.md](CHANGELOG.md) for the complete step-by-step history and full commit ledger. The raw history is available with `git log --all --oneline`.
 - `c279441` On main: WIP graphics upgrades before rollback
 - `8c684eb` index on main: cf45b24 Windows Mouse Fix
 - `c20bd6c` untracked files on main: cf45b24 Windows Mouse Fix
@@ -332,7 +276,7 @@ Optional email notifications use these repository **Actions secrets**: `SMTP_SER
 
 ### Render
 
-Create the web service from the repository Blueprint using [render.yaml](render.yaml), branch `main`, and the Free plan. Set `DATABASE_URL` in the Render service environment to the Neon connection string, including `sslmode=require`. Keep the value secret. The Blueprint sets `CORS_ORIGINS` to `https://richardharris84.github.io`; this is the origin only and intentionally does not include `/POV-Blaster/`.
+Create the web service from the repository Blueprint using [api/render.yaml](api/render.yaml), branch `main`, and the Free plan. Set `DATABASE_URL` in the Render service environment to the Neon connection string, including `sslmode=require`. Keep the value secret. The Blueprint sets `CORS_ORIGINS` to `https://richardharris84.github.io`; this is the origin only and intentionally does not include `/POV-Blaster/`.
 
 The Render build command is `pip install -r requirements-api.txt`, and the start command is `uvicorn api.main:app --host 0.0.0.0 --port $PORT`. Verify the deployment at `https://pov-blaster-api.onrender.com/health`. Render Free services can sleep after inactivity, so the first request may be delayed.
 
@@ -354,7 +298,7 @@ After `POV_BLASTER_API_URL` is configured, run **Actions → Deploy web build to
 main.py                Desktop/CLI entry point (theme + name prompt, then Game.run())
 build.py               Multi-target build script: Windows/Linux/macOS executables + browser build
 api/                   FastAPI service for health, scores, and web-session endpoints
-src/ (Standard Choice) Primary Python code parent folder; a universal standard across Python and general software development, so anyone opening the repository immediately knows where runnable Python code lives
+src/ (Standard Choice) Primary Python code parent folder. `src` is a universal standard across Python and general software development, so anyone opening the repository immediately knows where the runnable Python code lives.
 src/application/       Game actors, gameplay systems, startup flow, and orchestration
 src/domain/            Pure game-rule logic with no Pygame/IO dependency
 src/infrastructure/    Filesystem, audio, input, settings, scores, and platform adapters
@@ -371,7 +315,7 @@ tools/profile_game.py  Headless cProfile harness for update()/draw()
 docs/                  Design/audit/reconstruction documentation
 .github/workflows/     CI, GitHub Pages, and Render deployment workflows
 requirements-api.txt   API-only dependencies used by Render
-render.yaml            Render Free web-service and Neon DATABASE_URL configuration
+api/render.yaml        Render Free web-service and Neon DATABASE_URL configuration
 build/                 Build outputs (gitignored): platform executables and the web bundle
 logs/                  Local generated logs (gitignored)
 screenshots/           Project screenshots

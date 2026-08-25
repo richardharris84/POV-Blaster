@@ -1,5 +1,7 @@
 # POV-Blaster: Codebase Reconstruction Guide (Updated)
 
+**Current snapshot:** 2026-08-25; reflects `main` through the current browser/mobile input work.
+
 > This document reflects the **current** state of the project, which has evolved substantially since the original `docs/CodeBase.md`: the code is now organized under `src/` into layered `application/`, `domain/`, `infrastructure/`, and `presentation/` packages, themes select entire enemy/asset sets, maps live in plain-text files under `assets/maps/`, and the game ships as native desktop executables (Windows/Linux/macOS via PyInstaller) **and** as a browser build (via Pygbag/WASM) deployed automatically to GitHub Pages.
 
 ## 1. What You Are Building
@@ -14,6 +16,8 @@ POV-Blaster is a first-person shooter written in Python with Pygame. It recreate
 - Five selectable **themes** (Doom, Candy Kingdom, Space, Graveyard, Hunting) swap enemy sprites, weapon art, textures, and music/sound without touching any game logic.
 - The player wins when every living NPC has been defeated; losing all health ends the run.
 - The exact same game logic runs three ways: as a desktop console-driven app, as standalone platform executables, and as an asynchronous browser build.
+
+For the quality, architecture, deployment, and remaining-risk review, see [CodeAudit.md](CodeAudit.md). For the step-by-step implementation record, see [CHANGELOG.md](../CHANGELOG.md).
 
 This document explains the current implementation, then gives a practical, ordered plan for recreating it from scratch. It assumes the reader knows basic Python but is new to Pygame, layered architecture, and building for the browser.
 
@@ -103,6 +107,8 @@ src/infrastructure/     Adapters to the outside world (files, audio devices, bro
 
 src/presentation/       Pygame-facing adapters behind the application layer's ports
   input.py                InputAdapter: wraps pg.event.get()
+  touch.py                Mobile detection, dual joystick state, and right-joystick shooting
+  web_startup.py          Touch-friendly browser name and theme selection menu
   renderer.py             ObjectRenderer: background/sky, walls, sprites, HUD, end screens
 
 api/                    FastAPI score/session service with SQLite fallback or Neon Postgres
@@ -117,7 +123,7 @@ tools/profile_game.py   Headless cProfile harness for update()/draw()
 docs/                   Design/audit/reconstruction documentation
 .github/workflows/      CI, GitHub Pages, and Render deployment workflows
 requirements-api.txt    API-only Render dependencies
-render.yaml             Render Free service configuration
+api/render.yaml         Render Free service configuration
 build/                  Build outputs (gitignored): platform executables and the web bundle
 ```
 

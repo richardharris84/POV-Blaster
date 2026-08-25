@@ -124,13 +124,25 @@ class TouchControllerTests(unittest.TestCase):
         finally:
             pg.quit()
 
-    def test_tap_outside_joystick_zones_queues_shot(self):
+    def test_tap_outside_joystick_zones_does_not_shoot(self):
         pg.init()
         try:
             touch = TouchController(1600, 900)
             finger_id = 33
             touch.handle_event(pg.event.Event(pg.FINGERDOWN, finger_id=finger_id, x=0.50, y=0.20, dx=0.0, dy=0.0, touch_id=0))
             touch.handle_event(pg.event.Event(pg.FINGERUP, finger_id=finger_id, x=0.50, y=0.20, dx=0.0, dy=0.0, touch_id=0))
+
+            self.assertFalse(touch.consume_shoot())
+        finally:
+            pg.quit()
+
+    def test_tap_on_right_joystick_queues_shot(self):
+        pg.init()
+        try:
+            touch = TouchController(1600, 900)
+            finger_id = 44
+            touch.handle_event(pg.event.Event(pg.FINGERDOWN, finger_id=finger_id, x=0.85, y=0.85, dx=0.0, dy=0.0, touch_id=0))
+            touch.handle_event(pg.event.Event(pg.FINGERUP, finger_id=finger_id, x=0.85, y=0.85, dx=0.0, dy=0.0, touch_id=0))
 
             self.assertTrue(touch.consume_shoot())
             self.assertFalse(touch.consume_shoot())
@@ -237,7 +249,7 @@ class ThemeSelectionTests(unittest.TestCase):
             pg.event.post(pg.event.Event(pg.KEYDOWN, key=pg.K_RETURN))
             player_name, selected_theme = asyncio.run(choose_startup())
             self.assertEqual(player_name, 'Alice')
-            self.assertEqual(selected_theme, THEMES[-1])
+            self.assertEqual(selected_theme, THEMES[0])
         finally:
             pg.quit()
 

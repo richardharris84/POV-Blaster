@@ -312,50 +312,46 @@ def deploy_to_github_pages(source_dir: Path | None = None):
             'No browser build was found at build/web. Run "py build.py -bd" to build and deploy it.'
         )
 
-    git_root = subprocess.run(
-        ['git', 'rev-parse', '--show-toplevel'],
+    remote_url = subprocess.run(
+        ['git', 'remote', 'get-url', 'origin'],
         cwd=PROJECT_ROOT,
         check=True,
         capture_output=True,
         text=True,
     ).stdout.strip()
-    repo_root = Path(git_root)
-
     branch = 'gh-pages'
-    remote = 'origin'
 
-    try:
-        subprocess.run(['git', 'rev-parse', '--verify', branch], cwd=repo_root, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-        subprocess.run(['git', 'checkout', branch], cwd=repo_root, check=True)
-    except subprocess.CalledProcessError:
-        subprocess.run(['git', 'checkout', '--orphan', branch], cwd=repo_root, check=True)
-        subprocess.run(['git', 'rm', '-rf', '--cached', '.'], cwd=repo_root, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-
-    for child in repo_root.iterdir():
-        if child.name == '.git':
-            continue
-        if child.is_dir():
-            shutil.rmtree(child)
-        else:
-            child.unlink()
-
-    for child in source_dir.iterdir():
-        destination = repo_root / child.name
-        if child.is_dir():
-            shutil.copytree(child, destination, dirs_exist_ok=True)
-        else:
-            shutil.copy2(child, destination)
-
-    (repo_root / '.nojekyll').write_text('', encoding='utf-8')
-    subprocess.run(['git', 'add', '.'], cwd=repo_root, check=True)
-    status = subprocess.run(['git', 'status', '--short'], cwd=repo_root, check=True, capture_output=True, text=True).stdout.strip()
-    if status:
-        subprocess.run(
-            ['git', 'commit', '-m', 'Deploy GitHub Pages'],
-            cwd=repo_root,
-            check=True,
+    with tempfile.TemporaryDirectory(prefix='pov-blaster-pages-') as temporary_dir:
+        deploy_dir = Path(temporary_dir) / 'site'
+        clone = subprocess.run(
+            ['git', 'clone', '--quiet', '--branch', branch, remote_url, str(deploy_dir)],
+            cwd=PROJECT_ROOT,
+            capture_output=True,
+            text=True,
         )
-    subprocess.run(['git', 'push', '--force', remote, branch], cwd=repo_root, check=True)
+        if clone.returncode != 0:
+            subprocess.run(['git', 'clone', '--quiet', remote_url, str(deploy_dir)], cwd=PROJECT_ROOT, check=True)
+            subprocess.run(['git', 'switch', '--orphan', branch], cwd=deploy_dir, check=True, stdout=subprocess.DEVNULL)
+
+        for child in deploy_dir.iterdir():
+            if child.name == '.git':
+                continue
+            if child.is_dir():
+                shutil.rmtree(child)
+            else:
+                child.unlink()
+
+        for child in source_dir.iterdir():
+            destination = deploy_dir / child.name
+            if child.is_dir():
+                shutil.copytree(child, destination)
+            else:
+                shutil.copy2(child, destination)
+
+        (deploy_dir / '.nojekyll').write_text('', encoding='utf-8')
+        subprocess.run(['git', 'add', '--all'], cwd=deploy_dir, check=True)
+        subprocess.run(['git', 'commit', '-m', 'Deploy GitHub Pages'], cwd=deploy_dir, check=True)
+        subprocess.run(['git', 'push', '--force', 'origin', branch], cwd=deploy_dir, check=True)
     print(f'Published {source_dir} to GitHub Pages via the {branch} branch.')
 
 

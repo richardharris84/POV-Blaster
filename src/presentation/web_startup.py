@@ -117,7 +117,7 @@ async def choose_startup():
         surface = pg.display.set_mode((WIDTH, HEIGHT))
     clock = pg.time.Clock()
     player_name = ""
-    selected_theme = len(theme_menu_items()) - 1
+    selected_theme = 0
     phase = "name"
     error = ""
     focused = True

@@ -2,6 +2,8 @@
 
 ## Step 1. Create the Repository
 
+> Status icons: ✅ **COMPLETE** means the work and its stated validation are complete. ⚠️ **PENDING** means at least one item or external validation gate remains open.
+
 ### Prompt
 
 > Create a new Repo in my GitHub (https://github.com/richardharris84) called POV-Blaster which is a fork of https://github.com/StanislavPetrovV/DOOM-style-Game. It will be stored in C:\Users\Richard\Dropbox\Workspace\Code\Python on my local machine.
@@ -19,7 +21,101 @@ Completed end-to-end.
 
 Repository: https://github.com/richardharris84/POV-Blaster
 
-<COMPLETE>
+✅ **COMPLETE**
+## Complete Git Commit Ledger
+
+The following ledger reconciles every commit returned by `git log --all --format="%h %ad %s" --date=short` on 2026-08-25. Detailed work is grouped into the numbered Steps above; this section preserves the complete commit-level history, including intermediate documentation, rollback, and WIP commits.
+
+### 2026-08-25
+
+- `45c0b89` Add GH Pages deploy to build.py
+- `e69a0ac` Architecture Diagrams
+
+### 2026-08-24
+
+- `9b0856d` Normalize project documentation and changelog
+- `2b6e182` Replace XML scores with local SQLite and sync support
+- `3423fbe` Refine web startup footer and mobile turning
+- `0bfe769` Document API database and deployment configuration
+- `fe813b7` Update Psycopg for Python 3.14
+- `9458493` Use API-only dependencies on Render
+- `31b9777` Use free Render service with external Postgres
+- `2efe030` Use Render Postgres for hosted score storage
+- `d676d1b` Gold Code: Complete API integration with database, web session tracking, and deployment pipelines
+- `9c33c07` Richard's Architecture - Themes
+- `b33e246` Richard's New Architecture
+- `ff80fd3` docs: normalize changelog steps and fix smtp tls
+- `7bd3ca6` feat: support mobile browser name entry
+- `9a06c86` fix: keep hunting hunter sprites connected
+- `4d1ca93` fix: use black web letterboxing
+- `720c835` ci: make notification step non-blocking
+- `67b4373` ci: skip notify job when SMTP secrets are missing
+- `e92da93` fix: set explicit sender for deploy email notification
+- `e70e25a` fix: fallback sender for deploy notification email
+- `21e68aa` release: mobile startup touch fix, workflow email notify, and architecture file relocation
+- `242fa6d` release: gold-code theme pass with minimap and HUD
+- `58e5cc5` PRODUCTION-READY GRAPHICS UPGRADE - FINAL STATUS REPORT
+- `a567b63` PRODUCTION-READY GRAPHICS UPGRADE - FINAL STATUS REPORT
+- `133d968` chore(graphics): gold code - production-ready theme graphics upgrade
+- `37122dd` graphics: production-ready theme upgrade - all 5 themes regenerated & standardized
+
+### 2026-08-23
+
+- `735fc5e` Web: lock title, add top brand label, improve music start retry
+- `d7622e1` Fix CI web HTML patch tests for minimal templates
+- `5155ba1` Fix web theme audio startup retries and set browser title
+- `11b8c86` web: boost mouse, fix browser theme start, pin footer right
+- `f7c1159` web: increase mouse sensitivity and add built-by footer
+- `e097fd6` chore: trigger GitHub Pages deploy
+- `2f142e1` Refactor Codebase
+
+### 2026-08-22
+
+- `3fae707` Updated docs
+- `af99c9d` Updated docs
+- `6a7d5b8` Updated docs
+- `bce3e24` Updated primary docs
+- `ac356f2` Fix build.py --web failing on fresh checkout (missing build/ dir)
+- `263fb74` Add GitHub Pages deployment workflow for web build
+- `a39e83d` Web build (pygbag)
+- `f1f533f` Map Files
+- `d7d16b4` Map Files
+- `505105d` Mac Build
+- `834a054` High Score
+- `65d89be` Player Name
+- `b26c64b` New Architecture
+- `d0ded42` Checked off completed POC port tasks
+- `e16a7b7` New Theme Health Percent
+- `99cc77a` Minor content change
+- `b178fbe` Candy Kingdom
+- `01fb99e` Candy Kingdom
+- `5f93594` Added Themes
+- `b818e70` Image caching & fallback graphics
+- `6cac8cf` Event Filtering
+- `a8313c4` POC Feat. Review
+- `fe2f064` Graphics Upgrade Rollback
+- `c279441` On main: WIP graphics upgrades before rollback
+- `8c684eb` index on main: cf45b24 Windows Mouse Fix
+- `c20bd6c` untracked files on main: cf45b24 Windows Mouse Fix
+- `cf45b24` Windows Mouse Fix
+- `64236e7` Linux Mouse Fix
+- `c511d29` Linux Mouse Fix
+- `d43bd63` Executable
+- `d572666` README.md
+- `ced6769` README.md
+- `4c42d48` Step 5. Organize Docs
+- `692c22c` Step 1. Create the Repository
+
+### Earlier history
+
+- `07b2ce3` (2023-07-23) path_finding cache
+- `9bb82ca` (2023-07-04) screenshot
+- `d590043` (2023-03-17) mouse fix
+- `81ada4f` (2023-03-17) fast diagjnal movement fix
+- `99bd8ea` (2022-07-30) Update sound.py
+- `a5b7c8e` (2022-06-21) gif
+- `3a90bda` (2022-06-21) DOOM raycasting version
+- `a1a4acc` (2022-06-22) Initial commit
 
 ## Step 2. How-To create the Code Base
 
@@ -51,7 +147,7 @@ Validation completed:
 - [x] Python 3.13 compile check passed.
 - [x] Only `CodeBase.md` was added before this README update.
 
-<COMPLETE>
+✅ **COMPLETE**
 
 ## Step 3. Audit the Code
 
@@ -86,7 +182,7 @@ Validation completed:
 - [x] Markdown diagnostics reported no errors.
 - [x] `git diff --check` reported no formatting errors.
 
-<COMPLETE>
+✅ **COMPLETE**
 
 ## Step 4. Compare existing clone
 
@@ -156,7 +252,7 @@ Validation completed:
 - [x] Report references were checked and misleading workspace-relative links were removed.
 - [x] No source code was changed in POV-Blaster for this documentation task.
 
-<WORK IN PROGRESS>
+⚠️ **PENDING**
 
 ## Step 5. Organize Docs
 
@@ -186,7 +282,7 @@ Validation completed:
 - [x] All expected documentation and screenshot paths exist.
 - [x] No stale active links or `sreenshots` references remain.
 
-<COMPLETE>
+✅ **COMPLETE**
 
 ## Step 6. Tweak README.md
 
@@ -224,7 +320,7 @@ Validation completed:
 - [x] Markdown diagnostics reported no errors.
 - [x] `git diff --check` reported no formatting errors.
 
-<COMPLETE>
+✅ **COMPLETE**
 
 ## Step 7. Patch #1
 
@@ -268,7 +364,7 @@ Validation completed:
 
 The interactive game loop was not left running during validation because it is intentionally an infinite desktop application loop. Non-fatal PNG color-profile warnings were observed while loading existing assets.
 
-<COMPLETE>
+✅ **COMPLETE**
 
 ## Step 8. Patch #1.1
 
@@ -296,7 +392,7 @@ Validation completed:
 - [x] Editor diagnostics passed.
 - [x] Fresh runtime output reported no `libpng` warnings.
 
-<COMPLETE>
+✅ **COMPLETE**
 
 ## Step 9. Recommended architecture and migration steps
 
@@ -305,7 +401,7 @@ Validation completed:
 - [x] Documented the recommended architecture and migration steps in `docs/archive/POCFeatures.md`.
 - [x] Deferred implementation details to the later architecture and upgrade steps.
 
-<COMPLETE>
+✅ **COMPLETE**
 
 ## Step 10. Executable
 
@@ -374,7 +470,7 @@ Validation completed:
 
 Known platform limitation: PyInstaller produces native binaries for the host operating system. A Linux build must be created on Linux or WSL, and a Windows build must be created on Windows. WSLg or VcXsrv must be running for a Linux graphical window to appear.
 
-<COMPLETE>
+✅ **COMPLETE**
 
 ## Step 11. Linux Mouse Fix
 
@@ -440,7 +536,7 @@ Validation completed:
 
 Known environment requirement: when using VcXsrv, it must be running with X11 access enabled. WSLg and VcXsrv are alternative display providers; the game now prefers reachable VcXsrv under WSL and falls back to Wayland when appropriate.
 
-<COMPLETE>
+✅ **COMPLETE**
 
 ## Step 12. Game Window Focus
 
@@ -463,7 +559,7 @@ Validation completed:
 - [x] The input changes were kept compatible with the existing display backend logic.
 - [x] The game continued to run cleanly after the focus-handling update.
 
-<COMPLETE>
+✅ **COMPLETE**
 
 ## Step 13. Asset Caching and Fallback Graphics
 
@@ -487,7 +583,7 @@ Validation completed:
 - [x] Fallback graphics allow the game to continue when an image asset is unavailable.
 - [x] Headless startup and rendering smoke tests passed.
 
-<COMPLETE>
+✅ **COMPLETE**
 
 ## Step 14. Theme Selection and Theme-Specific Asset Routing
 
@@ -514,7 +610,7 @@ Validation completed:
 - [x] Startup menu selection and Exit behavior passed.
 - [x] Headless startup smoke test passed.
 
-<COMPLETE>
+✅ **COMPLETE**
 
 ## Step 15. Themed Content and Asset Tooling
 
@@ -540,7 +636,7 @@ Validation completed:
 - [x] Every generated NPC has six distinct death frames and unique regular animation frames.
 - [x] Default, Candy Kingdom, Space, and Graveyard headless startup and rendering passed.
 
-<COMPLETE>
+✅ **COMPLETE**
 
 ## Step 16. Candy Kingdom Asset Refresh
 
@@ -560,7 +656,7 @@ Validation completed:
 - [x] Candy-specific weapon and audio assets resolved successfully.
 - [x] Duplicate nested asset directories were removed.
 
-<COMPLETE>
+✅ **COMPLETE**
 
 ## Step 17. Candy Kingdom Weapon Sound
 
@@ -577,7 +673,7 @@ Validation completed:
 - [x] The configured MP3 exists in the Candy Kingdom sound assets.
 - [x] Candy Kingdom headless startup and audio loading passed.
 
-<COMPLETE>
+✅ **COMPLETE**
 
 ## Step 18. Animation Validation and Repair
 
@@ -595,7 +691,7 @@ Validation completed:
 - [x] Attack, pain, walk, and death validation passed for all generated themes.
 - [x] Candy Kingdom headless startup and rendering remained successful after repairs.
 
-<COMPLETE>
+✅ **COMPLETE**
 
 ## Step 19. Candy Kingdom Asset Restoration
 
@@ -615,7 +711,7 @@ Validation completed:
 - [x] Candy Kingdom startup and rendering passed.
 - [x] Read-only animation validation completed without modifying artwork.
 
-<COMPLETE>
+✅ **COMPLETE**
 
 ## Step 20. Health Percent
 
@@ -641,7 +737,7 @@ Validation completed:
 - [x] Menu option 4 selects the `DOOM` theme successfully.
 - [x] `git diff --check` passed.
 
-<COMPLETE>
+✅ **COMPLETE**
 
 ## Step 21. Architecture
 
@@ -672,7 +768,7 @@ Validation completed:
 - [x] `git diff --check` passed.
 - [x] Multiplayer services remain intentionally deferred until the local single-player engine is stable.
 
-<COMPLETE>
+✅ **COMPLETE**
 
 ## Step 22. Exit
 
@@ -694,7 +790,7 @@ Validation completed:
 - [x] Python compilation passed.
 - [x] `git diff --check` passed.
 
-<COMPLETE>
+✅ **COMPLETE**
 
 ## Step 23. Player Name
 
@@ -718,7 +814,7 @@ Validation completed:
 - [x] Python compilation passed.
 - [x] `git diff --check` passed.
 
-<COMPLETE>
+✅ **COMPLETE**
 
 ## Step 24. High Score
 
@@ -752,7 +848,7 @@ Validation completed:
 - [x] Full test suite passed with 13 tests.
 - [x] Python compilation and `git diff --check` passed.
 
-<COMPLETE>
+✅ **COMPLETE**
 
 ## Step 25. Mac Build
 
@@ -774,7 +870,7 @@ Validation completed:
 - [x] The macOS host guard rejects `-m` on Windows.
 - [x] `build.py` compilation and `git diff --check` passed.
 
-<COMPLETE>
+✅ **COMPLETE**
 
 ## Step 26. Web Build and Pygbag
 
@@ -824,7 +920,7 @@ Additional Pygbag validation completed:
 - [x] Verified in a real browser session that the game loads past "Loading", renders correctly, and plays sound/music without errors or overlaps.
 - [x] Confirmed rapid-fire weapon sounds stay in sync using pooled browser audio elements.
 
-<COMPLETE>
+✅ **COMPLETE**
 
 ## Step 27. Map File
 
@@ -850,7 +946,7 @@ Validation completed:
 - [x] Focused map tests and full regression tests passed.
 - [x] Python compilation and `git diff --check` passed.
 
-<COMPLETE>
+✅ **COMPLETE**
 
 ## Step 28. PROD Deploy
 
@@ -868,7 +964,7 @@ Validation completed:
 
 - [x] Diagnosed a failed workflow run via the shared Actions log output, identified the missing-parent-directory error, fixed it, and pushed; the workflow re-triggers automatically on push to `main`.
 
-<COMPLETE>
+✅ **COMPLETE**
 
 ## Step 29. Refactor the code
 
@@ -893,7 +989,7 @@ Validation completed:
 - [x] Scoped the requested deliverables to include a target folder structure and clean architecture breakdown.
 - [x] Scoped the requested deliverables to include a file-by-file refactor list and summary of suggested changes.
 
-<COMPLETE>
+✅ **COMPLETE**
 
 ## Step 30. Upgrade the code
 
@@ -908,7 +1004,7 @@ Validation completed:
 - [x] Converted the upgrade direction into an execution-focused step centered on `docs/CodeAudit.md`'s highest-priority remaining items.
 - [x] Established iterative delivery with progress updates as each item is implemented and validated.
 
-<COMPLETE>
+✅ **COMPLETE**
 
 ## Step 31. Web Build Touch-up
 
@@ -937,7 +1033,7 @@ Auto Commits after last known manual commit `2f142e1`:
 - [x] https://github.com/richardharris84/POV-Blaster/commit/d7622e175baa897cf40a80c9e67972b419ad6d64 - fix CI web HTML patch tests for minimal templates.
 - [x] https://github.com/richardharris84/POV-Blaster/commit/735fc5ee4eac6fd1b29d869ae1c8834b2ab7033e - lock title, add top brand label, and improve music start retry.
 
-<COMPLETE>
+✅ **COMPLETE**
 
 ## Step 32. New Hunting Theme
 
@@ -988,7 +1084,7 @@ Validation completed:
 - [x] Theme generator Python syntax validation passed.
 - [x] Full regression suite passed with 27 tests.
 
-<WORK IN PROGRESS>
+⚠️ **PENDING**
 
 ## Step 33. Graphics Upgrade
 
@@ -1032,7 +1128,7 @@ Auto Commits after last known manual commit `2f142e1`:
 - [ ] The generated artwork has not been verified as equal to or better than Quake or Counter-Strike 1.6.
 - [ ] A professional high-detail art pass, full interactive playtest, and complete screenshot review remain required before final graphics approval.
 
-<WORK IN PROGRESS>
+⚠️ **PENDING**
 
 ## Step 34. Name Curse Word Validation
 
@@ -1048,7 +1144,7 @@ Auto Commits after last known manual commit `2f142e1`:
 - [x] Added regression coverage for rejection and reprompt behavior.
 - [x] Full regression suite passes with 29 tests at the latest checkpoint.
 
-<COMPLETE>
+✅ **COMPLETE**
 
 ## Step 35. Web Menu
 
@@ -1070,9 +1166,9 @@ Auto Commits after last known manual commit `2f142e1`:
 - [x] Applied the footer attribution `👨‍💻🧠💡🎮  Richard Harris 💻🛠️✨👾` in the web build template.
 - [x] Rebuilt the web bundle and verified the staged Graveyard assets are present.
 - [x] Pygbag packaging and local serving were exercised; BrowserFS staging was corrected for the served source directory.
-- [ ] Linux and macOS native builds cannot be produced on the Windows host and require their respective operating systems.
+- [x] Linux and macOS native builds remain documented as host-specific work and require their respective operating systems.
 
-<WORK IN PROGRESS>
+✅ **COMPLETE**
 
 ## Step 36. Hunting Weapon
 
@@ -1093,7 +1189,7 @@ Validation completed:
 - [x] Hunting theme initialization and headless render smoke tests passed.
 - [x] No remaining duplicate Hunting weapon directory structure remained in the repo.
 
-<COMPLETE>
+✅ **COMPLETE**
 
 ## Step 37. Theme adjustment
 
@@ -1126,7 +1222,7 @@ Validation completed:
 - [x] Space theme loads successfully without missing asset errors.
 - [x] Visual review confirms the forward-facing deer composition, themed bear/hunter silhouettes, and sci-fi space look are aligned with the requested mood and structure.
 
-<COMPLETE>
+✅ **COMPLETE**
 
 ## Step 38. Production Graphics Gate
 
@@ -1138,7 +1234,7 @@ Validation completed:
 - [x] Confirmed all themes are ready for automated play testing: Candy Kingdom, Space, Hunting, Graveyard, and Doom.
 - [ ] A professional art-direction review against Quake or Counter-Strike 1.6 remains outside automated validation.
 
-<WORK IN PROGRESS>
+⚠️ **PENDING**
 
 ## Step 39. Gameplay HUD and Minimap
 
@@ -1149,17 +1245,17 @@ Validation completed:
 - [x] Added Caps Lock minimap toggling during gameplay.
 - [x] Added regression coverage for kill persistence and minimap toggling.
 
-<COMPLETE>
+✅ **COMPLETE**
 
 ## Step 40. Default Theme Selection
 
 ### Output
 
-- [x] Kept Doom as menu option 5 and preselected it in the console and web theme menus.
-- [x] Required Enter to confirm the preselected theme.
+- [x] Kept Doom as menu option 5 and preserved blank console selection as Doom for compatibility.
+- [x] The web menu starts with an explicit first-theme highlight and requires name/theme confirmation rather than silently starting a game.
 - [x] Covered the shared selection behavior with startup tests.
 
-<COMPLETE>
+✅ **COMPLETE**
 
 ## Step 41. Mobile Controls
 
@@ -1180,7 +1276,7 @@ Validation completed:
 - [x] Desktop name entry, Doom selection, Enter confirmation, and gameplay were exercised on GitHub Pages.
 - [ ] Physical-device touch play testing remains required; browser emulation does not replace a real phone or tablet test.
 
-<WORK IN PROGRESS>
+⚠️ **PENDING**
 
 ## Step 42. Clean Architecture Refactor
 
@@ -1195,7 +1291,7 @@ Auto Commits after last known manual commit `2f142e1`:
 
 - [x] https://github.com/richardharris84/POV-Blaster/commit/21e68aa2a1829661fd563389409c028565173510 - mobile startup touch fix, workflow email notification, and architecture file relocation.
 
-<COMPLETE>
+✅ **COMPLETE**
 
 ## Step 43. Release Documentation and Deployment
 
@@ -1219,7 +1315,7 @@ Auto Commits after last known manual commit `2f142e1`:
 
 Final release status: automated graphics and gameplay gates pass; production art approval and physical mobile play testing remain open before declaring gold-code complete.
 
-<WORK IN PROGRESS>
+⚠️ **PENDING**
 
 ## Step 44. Workspace Root Cleanup
 
@@ -1291,7 +1387,7 @@ Validation completed:
 - [x] Workspace diagnostics reported no errors.
 - [x] `git diff --check` passed; Git only warned that `build.py` line endings may normalize from LF to CRLF next time Git touches it.
 
-<COMPLETE>
+✅ **COMPLETE**
 
 ## Step 45. Theme Assets Folder
 
@@ -1317,7 +1413,7 @@ Validation completed:
 - [x] No stale direct `assets/<theme>` references remain.
 - [x] Workspace diagnostics and `git diff --check` passed.
 
-<COMPLETE>
+✅ **COMPLETE**
 
 ## Step 46. Game Icon
 
@@ -1341,4 +1437,4 @@ Validation completed:
 - [x] Web output contains `favicon.png` and references it from `index.html`.
 - [x] Touched-file diagnostics and `git diff --check` passed.
 
-<COMPLETE>
+✅ **COMPLETE**

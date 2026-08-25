@@ -6,7 +6,7 @@ on:
     paths:
       - 'api/**'
       - 'requirements.txt'
-      - 'render.yaml'
+      - 'api/render.yaml'
       - '.github/workflows/deploy-render.yml'
   workflow_dispatch:
 

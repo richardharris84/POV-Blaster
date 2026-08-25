@@ -133,15 +133,14 @@ class TouchController:
             self.left_finger = None
             return
         if finger_id == self.right_finger_id and self.right_finger is not None:
+            state = self.right_finger
             self.right_finger_id = None
             self.right_finger = None
+            duration = now - state.started_ms
+            if duration <= self.tap_ms_threshold and not state.moved:
+                self._shoot_queued = True
             return
-        state = self.other_touches.pop(finger_id, None)
-        if state is None:
-            return
-        duration = now - state.started_ms
-        if duration <= self.tap_ms_threshold and not state.moved:
-            self._shoot_queued = True
+        self.other_touches.pop(finger_id, None)
 
     def _update_finger_state(self, state: FingerState, position: tuple[float, float]) -> None:
         state.position = position
