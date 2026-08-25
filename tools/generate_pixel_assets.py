@@ -15,7 +15,7 @@ from pathlib import Path
 from PIL import Image, ImageDraw, ImageFont
 
 ROOT = Path(__file__).resolve().parents[1]
-DEFAULT = ROOT / "resources" / "default"
+DEFAULT = ROOT / "assets" / "default"
 THEMES = {
     "candy_kingdom": {"bg": (255, 240, 195), "deep": (82, 35, 67), "mid": (238, 78, 143), "light": (255, 207, 91), "roles": {"marshmallow_man": "marshmallow", "springfield_doughnut": "doughnut", "gingerbread_golem": "gingerbread"}},
     "graveyard": {"bg": (25, 30, 47), "deep": (42, 20, 56), "mid": (113, 53, 94), "light": (151, 221, 193), "roles": {"ghost": "ghost", "vampire": "vampire", "werewolf": "werewolf"}},
@@ -388,7 +388,7 @@ def scenery(spec, size, name, frame):
 
 
 def generate(theme_name, theme):
-    root = ROOT / "resources" / theme_name
+    root = ROOT / "assets" / theme_name
     textures = root / "textures"; sprites = root / "sprites"
     textures.mkdir(parents=True, exist_ok=True)
     seed = int.from_bytes(hashlib.sha256(theme_name.encode("ascii")).digest()[:4], "big")

@@ -3,6 +3,9 @@ from pathlib import Path
 from xml.etree import ElementTree
 
 
+DEFAULT_SCORE_PATH = Path(__file__).resolve().parents[2] / 'data' / 'scores.xml'
+
+
 @dataclass(frozen=True)
 class Score:
     player_name: str
@@ -10,7 +13,7 @@ class Score:
 
 
 class HighScores:
-    def __init__(self, path='scores.xml', limit=10):
+    def __init__(self, path=DEFAULT_SCORE_PATH, limit=10):
         self.path = Path(path)
         self.limit = limit
         if not self.path.exists():

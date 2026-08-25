@@ -23,7 +23,7 @@ jobs:
         run: python -m unittest discover -s tests -p 'test_*.py' -v
       - name: Validate theme assets
         shell: pwsh
-        run: ./generate_themes.ps1 -ValidateOnly
+        run: ./tools/generate_themes.ps1 -ValidateOnly
       - name: Audit theme image assets
         run: python tools/audit_themes.py --check
 

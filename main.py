@@ -1,6 +1,11 @@
 import sys
 import asyncio
 import platform
+from pathlib import Path
+
+SRC_DIR = Path(__file__).resolve().parent / 'src'
+if str(SRC_DIR) not in sys.path:
+    sys.path.insert(0, str(SRC_DIR))
 
 from application.game import Game
 from application.startup import validate_player_name

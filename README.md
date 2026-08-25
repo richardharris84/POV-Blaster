@@ -188,56 +188,24 @@ The `build.py` script rejects builds requested from the wrong operating system, 
 
 ```text
 main.py                Desktop/CLI entry point (theme + name prompt, then Game.run())
-web_main.py            Async browser entry point (viewport startup menu, Game.run_async())
 build.py               Multi-target build script: Windows/Linux/macOS executables + browser build
-settings.py            Screen, movement, raycasting, and mouse-sensitivity constants
-theme.py               Theme definitions (enemies, asset paths, weapon, fire sound) + CLI picker
-map.py                 Plain-text map loading and wall lookup table (Map)
-player.py              Player state, input, movement, health, and shooting
-raycasting.py          First-person wall raycasting and wall-column projection
-sprite_object.py       Static/animated sprite projection with depth-buffer occlusion
-object_handler.py      NPC/sprite registration, content-driven spawning, and victory check
-npc.py                 NPC base class + SoldierNPC/CacoDemonNPC/CyberDemonNPC/HuntingBearNPC
-npc_systems.py         NPC visibility raycast, AnimationController, and CombatResolver
-pathfinding.py         Grid graph + breadth-first NPC navigation
-weapon.py              Weapon animation, reload state, and damage value
-sound.py               Thin re-export shim: `from infrastructure.audio import Sound`
-
-application/           Composition root and cross-cutting contracts
-  game.py                Game: owns pygame lifecycle, the frame loop, and object wiring
-  ports.py               Protocol definitions (GameContext, Renderer, AudioOutput, ...)
-  renderer.py            Re-exports Renderer protocol for presentation layer
-  snapshot.py            RenderSnapshot: immutable per-frame render data
-
-domain/                Pure game-rule logic with no Pygame/IO dependency
-  health.py              Health value object (damage/recover/depleted)
-  combat.py              Combatant value object (health + damage + accuracy)
-  movement.py            movement_delta(): WASD -> (dx, dy), diagonal-normalized
-  game_state.py          GameState: playing/game_over/victory + countdown timer
-
-infrastructure/        Adapters to the outside world (files, audio devices, browser APIs, OS windowing)
-  assets.py              AssetLoader: cached image loading with drawn fallback sprites
-  audio.py               Sound (desktop, pg.mixer) and BrowserSound/BrowserClip (web, native <audio>)
-  scores.py              HighScores (scores.xml) and BrowserHighScores (browser localStorage)
-  input.py               Re-exports InputAdapter for the presentation layer
-  windowing.py           Windows-only: positions/focuses the game window relative to the console
-
-presentation/          Pygame-facing adapters behind the application layer's ports
-  input.py               InputAdapter: wraps pg.event.get()
-  renderer.py            ObjectRenderer: background/sky, walls, sprites, HUD, end screens
-
-content/levels/        Data-driven scenery placement and NPC spawn tables, keyed by map name
-maps/                  Plain-text maps ('.' = empty, digit = wall texture id)
-resources/<theme>/     Per-theme textures, sprites, and sound (default/candy_kingdom/graveyard/hunting/space)
+src/application/       Game actors, gameplay systems, startup flow, and orchestration
+src/domain/            Pure game-rule logic with no Pygame/IO dependency
+src/infrastructure/    Filesystem, audio, input, settings, scores, and platform adapters
+src/presentation/      Pygame-facing rendering, input, touch, and web menu adapters
+assets/<theme>/        Per-theme textures, sprites, and sound (default/candy_kingdom/graveyard/hunting/space)
+assets/maps/           Plain-text maps ('.' = empty, digit = wall texture id)
+assets/levels/         Data-driven scenery placement and NPC spawn tables, keyed by map name
+data/                  Mutable desktop runtime data, including scores.xml
 tests/                 unittest suite (domain, map, audio, scores, NPC systems, assets, web patches)
-audit_themes.py        Repository-root entry point for the production asset audit
 tools/audit_themes.py  Required asset, image quality, clipping, and animation audit implementation
+tools/generate_themes.ps1  Procedural theme and animation asset generator/validator
 tools/pixel_harmony_compare.py  Pixel-Harmony-compatible image comparison metrics
 tools/profile_game.py  Headless cProfile harness for update()/draw()
 docs/                  Design/audit/reconstruction documentation
 .github/workflows/     CI (tests) and GitHub Pages deployment (web build)
 build/                 Build outputs (gitignored): platform executables and the web bundle
-generate_themes.ps1    Procedural theme and animation asset generator/validator
+logs/                  Local generated logs (gitignored)
 screenshots/           Project screenshots
 ```
 
@@ -272,16 +240,16 @@ The startup menu provides four content choices:
 - Space: Alien Drone, Alien Warrior, Alien Overlord
 - Graveyard: Ghost, Vampire, Werewolf
 
-Theme assets live under `resources/<theme>/`. To regenerate the themed textures and NPC animation frames on Windows, run:
+Theme assets live under `assets/<theme>/`. To regenerate the themed textures and NPC animation frames on Windows, run:
 
 ```powershell
-.\generate_themes.ps1
+.\tools\generate_themes.ps1
 ```
 
 To validate existing animation folders without changing artwork, run:
 
 ```powershell
-.\generate_themes.ps1 -ValidateOnly
+.\tools\generate_themes.ps1 -ValidateOnly
 ```
 
 To explicitly generate replacements for missing or duplicate numbered frames, add `-RepairFrames`.
@@ -291,7 +259,7 @@ production pixel renderer:
 
 ```powershell
 & "$env:LOCALAPPDATA\Programs\Python\Python313\python.exe" tools\generate_pixel_assets.py
-& "$env:LOCALAPPDATA\Programs\Python\Python313\python.exe" audit_themes.py --check
+& "$env:LOCALAPPDATA\Programs\Python\Python313\python.exe" tools\audit_themes.py --check
 ```
 
 The installed Pixel Agents, OpenGame, Unity, Hootbu Pixel Agent, and Copilot Pixel
@@ -401,21 +369,20 @@ The complete gameplay loop combines movement, mouse-look, raycast rendering, tex
 
 ## Assets
 
-Runtime assets are stored under `resources/`:
+Runtime assets are stored under `assets/`:
 
 ```text
-resources/
-├── sound/
-├── sprites/
-│   ├── animated_sprites/
-│   ├── npc/
-│   ├── static_sprites/
-│   └── weapon/
-└── textures/
-    └── digits/
+assets/
+├── default/
+├── candy_kingdom/
+├── graveyard/
+├── hunting/
+├── space/
+├── maps/
+└── levels/
 ```
 
-Keep asset paths relative to the project resource root. The asset-loading and packaging strategy is scheduled for improvement as part of the production refactoring plan.
+Keep asset paths relative to the project asset root. Mutable runtime data belongs in `data/`, not under `assets/`.
 
 <div align="right"><a href="#table-of-contents">^ TOC</a></div>
 
@@ -444,20 +411,20 @@ POV-Blaster is a direct fork of [StanislavPetrovV/DOOM-style-Game](https://githu
 
 **POV-Blaster vs. `DOOM-style-Game` — ~35–40% similar**
 
-POV-Blaster started as a literal fork, so the *conceptual lineage* of the core engine is still clearly traceable: the DDA raycasting math in `raycasting.py`, the sprite-projection formula in `sprite_object.py`, the NPC line-of-sight check in `npc.py`, and the BFS pathfinding in `pathfinding.py` are essentially unchanged algorithms. But almost nothing is byte-identical anymore, because POV-Blaster has since:
+POV-Blaster started as a literal fork, so the *conceptual lineage* of the core engine is still clearly traceable: the DDA raycasting math in `src/application/raycasting.py`, the sprite-projection formula in `src/application/sprite_object.py`, the NPC line-of-sight check in `src/application/npc.py`, and the BFS pathfinding in `src/application/pathfinding.py` are essentially unchanged algorithms. But almost nothing is byte-identical anymore, because POV-Blaster has since:
 
-- Split the original ~12 flat modules into a layered `application/` / `domain/` / `infrastructure/` / `presentation/` architecture (health, combat, movement, and game-state logic extracted into pure, dependency-free `domain/` classes).
+- Split the original ~12 flat modules into a layered `src/application/` / `src/domain/` / `src/infrastructure/` / `src/presentation/` architecture (health, combat, movement, and game-state logic extracted into pure, dependency-free `src/domain/` classes).
 - Added a 5-theme system (Doom/Candy Kingdom/Space/Graveyard/Hunting) that swaps enemies, art, weapon, and sound per theme — the original has exactly one fixed asset set.
 - Added an entire second platform target: a browser build (Pygbag/WASM), with its own audio backend (`BrowserSound`), high-score backend (`BrowserHighScores`), and HTML/CSS patching pipeline — none of this exists upstream.
 - Added a `tests/` suite, CI, GitHub Pages deployment, plain-text map files (vs. a hardcoded grid), multi-platform PyInstaller builds, and reproducible theme asset tooling.
-- Added `audit_themes.py` and `tools/audit_themes.py`, which compare every theme with the Default baseline and check required assets, dimensions, blank images, clipping, animation folders, and duplicate frames. Pixel-Harmony-compatible comparison metrics are available through `tools/pixel_harmony_compare.py`.
+- Added `tools/audit_themes.py`, which compares every theme with the Default baseline and checks required assets, dimensions, blank images, clipping, animation folders, and duplicate frames. Pixel-Harmony-compatible comparison metrics are available through `tools/pixel_harmony_compare.py`.
 - Added theme-specific NPC animation and audio behavior, including Candy Kingdom melt/crumble deaths, Hunting Bear roar/spit attacks, and custom Hunting forest-cabin artwork. These are project-owned adaptations rather than replacements with unverified third-party assets.
 
 The current POV-Blaster workspace is substantially larger than the original because it includes layered application code, five theme resource trees, browser packaging, automated tests, CI, and asset QA. The majority of that growth is net-new platform, content, and validation work rather than changes to the original raycasting algorithm.
 
 **POV-Blaster vs. `DOOM-3D-FPS-Shooting-Game` — ~30–35% similar**
 
-Slightly lower than above. Per `CloneCompare.md`, `DOOM-3D-FPS-Shooting-Game` is itself an almost-unmodified copy of `DOOM-style-Game`, with a handful of small intentional deviations — it *removed* the diagonal-movement correction and mouse-grab call that `DOOM-style-Game` has. POV-Blaster explicitly *kept* the diagonal correction (now `domain/movement.py`'s `movement_delta()`) and kept mouse-grab handling (now with an X11/browser-aware branch), so on those specific points POV-Blaster tracks closer to `DOOM-style-Game` than to `DOOM-3D-FPS-Shooting-Game`'s variant — pushing its similarity to the latter slightly lower.
+Slightly lower than above. Per `CloneCompare.md`, `DOOM-3D-FPS-Shooting-Game` is itself an almost-unmodified copy of `DOOM-style-Game`, with a handful of small intentional deviations — it *removed* the diagonal-movement correction and mouse-grab call that `DOOM-style-Game` has. POV-Blaster explicitly *kept* the diagonal correction (now `src/domain/movement.py`'s `movement_delta()`) and kept mouse-grab handling (now with an X11/browser-aware branch), so on those specific points POV-Blaster tracks closer to `DOOM-style-Game` than to `DOOM-3D-FPS-Shooting-Game`'s variant — pushing its similarity to the latter slightly lower.
 
 **`DOOM-style-Game` vs. `DOOM-3D-FPS-Shooting-Game` — ~95–98% similar**
 

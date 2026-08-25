@@ -5,9 +5,14 @@ import tempfile
 from collections import deque
 import unittest
 from pathlib import Path
+import sys
 
 os.environ.setdefault('SDL_VIDEODRIVER', 'dummy')
 os.environ.setdefault('SDL_AUDIODRIVER', 'dummy')
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+SRC_DIR = PROJECT_ROOT / 'src'
+if str(SRC_DIR) not in sys.path:
+    sys.path.insert(0, str(SRC_DIR))
 
 import pygame as pg
 
@@ -137,8 +142,8 @@ class AssetCacheTests(unittest.TestCase):
         pg.display.set_mode((1, 1))
         loader = AssetLoader()
         try:
-            first = loader.load_image('resources/default/textures/digits/10.png', (64, 64))
-            second = loader.load_image('resources/default/textures/digits/10.png', (64, 64))
+            first = loader.load_image('assets/default/textures/digits/10.png', (64, 64))
+            second = loader.load_image('assets/default/textures/digits/10.png', (64, 64))
             self.assertIs(first, second)
         finally:
             pg.quit()
@@ -443,7 +448,7 @@ class WebHtmlPatchTests(unittest.TestCase):
 
 class AssetIntegrityTests(unittest.TestCase):
     def test_every_theme_loads_without_falling_back_to_a_placeholder(self):
-        # regression test: content/levels/*.json scenery paths must not duplicate the
+        # regression test: assets/levels/*.json scenery paths must not duplicate the
         # 'sprites/animated_sprites/' prefix that object_handler.py already applies,
         # or the resulting path 404s and silently renders a placeholder instead.
         import infrastructure.assets as assets_module
@@ -478,7 +483,7 @@ class AssetIntegrityTests(unittest.TestCase):
     def test_hunting_hunter_has_no_detached_upper_sprite_chunks(self):
         # regression test: hunter face/hat layers must not float as detached chunks
         # above the main sprite body.
-        hunter_root = Path(__file__).parents[1] / 'resources' / 'hunting' / 'sprites' / 'npc' / 'hunter'
+        hunter_root = Path(__file__).parents[1] / 'assets' / 'hunting' / 'sprites' / 'npc' / 'hunter'
         phases = ('idle', 'walk', 'attack', 'pain', 'death')
 
         def connected_components(image):

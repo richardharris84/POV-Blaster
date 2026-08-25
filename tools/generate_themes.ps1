@@ -1,5 +1,5 @@
 param(
-    [string]$ProjectRoot = $PSScriptRoot,
+    [string]$ProjectRoot = (Split-Path -Parent $PSScriptRoot),
     [switch]$ValidateOnly,
     [switch]$RepairFrames,
     [switch]$RegenerateThemeDigits,
@@ -8,8 +8,8 @@ param(
 
 Add-Type -AssemblyName System.Drawing
 
-$defaultRoot = Join-Path $ProjectRoot 'resources/default'
-$themesRoot = Join-Path $ProjectRoot 'resources'
+$defaultRoot = Join-Path $ProjectRoot 'assets/default'
+$themesRoot = Join-Path $ProjectRoot 'assets'
 $themeSpecs = @(
     @{ Key = 'candy_kingdom'; Wall = [Drawing.Color]::FromArgb(255, 245, 190); Sky = [Drawing.Color]::FromArgb(255, 182, 220); Accent = [Drawing.Color]::FromArgb(235, 92, 145); Enemies = @(
         @{ Name = 'marshmallow_man'; Primary = [Drawing.Color]::White; Secondary = [Drawing.Color]::FromArgb(235, 170, 190); Death = 'melt' },

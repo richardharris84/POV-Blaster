@@ -1,39 +1,39 @@
 # POV-Blaster Code Audit and Architecture Refactoring Plan (Re-Audit)
 
-> This report supersedes the original `CodeAudit.md`. The codebase has since undergone a substantial refactor (a `domain/application/infrastructure/presentation` split, a plain-text map format, a dual-backend audio/high-score system, and an entire second platform target — a Pygbag/WASM browser build). This re-audit credits what was fixed, re-flags what remains open, and adds new findings specific to the current architecture, including the browser build. For a full narrative walkthrough of the current implementation, see `docs/CodeBase.md` (the original walkthrough is archived at `docs/archive/CodeBase-Orig.md` and is now out of date).
+> This report supersedes the original `CodeAudit.md`. The codebase has since undergone a substantial refactor (a `src/domain`, `src/application`, `src/infrastructure`, and `src/presentation` split, a plain-text map format, a dual-backend audio/high-score system, an `assets/` content tree, and an entire second platform target — a Pygbag/WASM browser build). This re-audit credits what was fixed, re-flags what remains open, and adds new findings specific to the current architecture, including the browser build. For a full narrative walkthrough of the current implementation, see `docs/CodeBase.md` (the original walkthrough is archived at `docs/archive/CodeBase-Orig.md` and is now out of date).
 
 ## Executive Summary
 
-POV-Blaster has matured from a single-file-per-concern prototype into a genuinely layered application: pure `domain/` rules, `application/` composition, `infrastructure/` adapters (Pygame audio/scores/assets *and* browser-native equivalents), and a `presentation/` renderer — all wired behind `Protocol`-based ports in `application/ports.py`. It now ships as native Windows/Linux/macOS executables **and** as a browser build deployed via GitHub Actions to GitHub Pages, backed by a test suite and CI.
+POV-Blaster has matured from a single-file-per-concern prototype into a genuinely layered application under `src/`: pure `src/domain/` rules, `src/application/` composition, `src/infrastructure/` adapters (Pygame audio/scores/assets *and* browser-native equivalents), and a `src/presentation/` renderer — all wired behind `Protocol`-based ports in `src/application/ports.py`. It now ships as native Windows/Linux/macOS executables **and** as a browser build deployed via GitHub Actions to GitHub Pages, backed by a test suite and CI.
 
 That said, "millions of users" is still primarily a **client-performance and static-distribution** problem for this project — POV-Blaster is a local, single-player simulation with no server, so scale means: the client must run smoothly on a wide range of hardware/browsers, the web bundle must be small and cheap to serve from a CDN, and the codebase must be safe for many contributors to extend without regressions.
 
 The highest-priority remaining items are:
 
-1. ☑ The renderer re-scaled every wall column and visible sprite from scratch, every frame. **Fixed**: `ObjectRenderer` now owns bounded wall-column/sprite scale caches (`presentation/renderer.py`), used by `raycasting.py` and `sprite_object.py`. Measured ~33% faster over 300 profiled frames (17.0s → 11.4s), with `get_objects_to_render` ~67% faster and `pygame.transform.scale` no longer in the top 10 cost centers.
-2. ☑ `NPC` still mixes AI decision-making, animation, combat resolution, and audio side effects in one class; `ObjectHandler` still hardcodes scenery/spawn tables in Python. **Fixed**: scenery/spawn data moved out of `object_handler.py` into `content/levels/<map_name>.json` (validated, fails loudly if missing); `PyInstaller` builds now bundle `content/` alongside `resources/`/`maps/`. `NPC` was further decomposed into `VisibilityService`, `CombatResolver`, and an `AnimationController` collaborator, with `NPC` reduced to a thin coordinator over its own state.
+1. ☑ The renderer re-scaled every wall column and visible sprite from scratch, every frame. **Fixed**: `ObjectRenderer` now owns bounded wall-column/sprite scale caches (`src/presentation/renderer.py`), used by `src/application/raycasting.py` and `src/application/sprite_object.py`. Measured ~33% faster over 300 profiled frames (17.0s → 11.4s), with `get_objects_to_render` ~67% faster and `pygame.transform.scale` no longer in the top 10 cost centers.
+2. ☑ `NPC` still mixes AI decision-making, animation, combat resolution, and audio side effects in one class; `ObjectHandler` still hardcodes scenery/spawn tables in Python. **Fixed**: scenery/spawn data moved out of `object_handler.py` into `assets/levels/<map_name>.json` (validated, fails loudly if missing); `PyInstaller` builds now bundle `assets/`. `NPC` was further decomposed into `VisibilityService`, `CombatResolver`, and an `AnimationController` collaborator, with `NPC` reduced to a thin coordinator over its own state.
 3. ☑ The web build's HTML/CSS patching in `build.py` is a pile of fragile exact-string `.replace()` calls with no test coverage — it will silently stop working the moment Pygbag's upstream template changes. **Fixed**: `apply_web_html_patches` now raises a clear `RuntimeError` when an expected substring is missing instead of silently no-op'ing, with unit tests covering both the happy path and the failure path.
-4. ☑ `settings.py` remains a flat, unvalidated module of constants, and there are now **two independent definitions** of "where is the project root" (`settings.py` and `infrastructure/assets.py`) that must be kept in sync by hand. **Fixed** (the duplication): `infrastructure/assets.py` now imports `BASE_DIR` from `settings.py` instead of recomputing it. `settings.py` itself is still a flat, unvalidated module — that part of this finding remains open (see M9).
+4. ☑ `src/infrastructure/settings.py` remains a flat, unvalidated module of constants, and there were previously **two independent definitions** of "where is the project root" (`settings.py` and `infrastructure/assets.py`) that had to be kept in sync by hand. **Fixed** (the duplication): `src/infrastructure/assets.py` now imports `BASE_DIR` from `src/infrastructure/settings.py` instead of recomputing it. The settings module itself is still flat and unvalidated — that part of this finding remains open (see M9).
 5. ☑ Per-round setup rebuilt the sound backend and re-embedded browser audio. **Fixed**: `Game.new_game()` now builds the sound backend once per `Game` instance (theme never changes across restarts) instead of every round, with a regression test asserting the backend identity is preserved across `new_game()` calls. Per-round gameplay objects are still intentionally rebuilt.
 
-6. ☑ Theme asset quality and structure were not previously audited uniformly. **Fixed for the current asset gate**: `audit_themes.py` and `tools/audit_themes.py` inspect all five resource themes for required files, dimensions, blank images, clipping, animation folders, and duplicate frames; `tools/pixel_harmony_compare.py` provides Pixel-Harmony-compatible comparison metrics. CI runs the audit with `--check`.
+6. ☑ Theme asset quality and structure were not previously audited uniformly. **Fixed for the current asset gate**: `tools/audit_themes.py` inspects all five asset themes for required files, dimensions, blank images, clipping, animation folders, and duplicate frames; `tools/pixel_harmony_compare.py` provides Pixel-Harmony-compatible comparison metrics. CI runs the audit with `--check`.
 
 The recommended path is still a modular-monolith-first approach: harden the existing layered engine, make content and platform differences data-driven instead of scattered `getattr(..., 'browser_mode', False)` checks, and keep the option open to swap rendering technology later without touching gameplay rules.
 
 ## Audit Scope and Rating Model
 
-Reviewed the current source tree (root gameplay modules, `application/`, `domain/`, `infrastructure/`, `presentation/`, `build.py`, `tests/`, `.github/workflows/`) against the walkthrough in [CodeBase.md](CodeBase.md):
+Reviewed the current source tree (`src/application/`, `src/domain/`, `src/infrastructure/`, `src/presentation/`, `build.py`, `tests/`, `.github/workflows/`) against the walkthrough in [CodeBase.md](CodeBase.md):
 
-- [main.py](../main.py), [web_main.py](../web_main.py), [build.py](../build.py)
-- [settings.py](../settings.py), [theme.py](../theme.py), [map.py](../map.py)
-- [player.py](../player.py), [raycasting.py](../raycasting.py), [sprite_object.py](../sprite_object.py)
-- [object_handler.py](../object_handler.py), [npc.py](../npc.py), [pathfinding.py](../pathfinding.py), [weapon.py](../weapon.py)
-- [application/game.py](../application/game.py), [application/ports.py](../application/ports.py), [application/snapshot.py](../application/snapshot.py)
-- [domain/health.py](../domain/health.py), [domain/combat.py](../domain/combat.py), [domain/movement.py](../domain/movement.py), [domain/game_state.py](../domain/game_state.py)
-- [infrastructure/assets.py](../infrastructure/assets.py), [infrastructure/audio.py](../infrastructure/audio.py), [infrastructure/scores.py](../infrastructure/scores.py), [infrastructure/input.py](../infrastructure/input.py)
-- [presentation/renderer.py](../presentation/renderer.py), [presentation/input.py](../presentation/input.py)
+- [main.py](../main.py), [src/application/web_main.py](../src/application/web_main.py), [build.py](../build.py)
+- [src/infrastructure/settings.py](../src/infrastructure/settings.py), [src/application/theme.py](../src/application/theme.py), [src/application/map.py](../src/application/map.py)
+- [src/application/player.py](../src/application/player.py), [src/application/raycasting.py](../src/application/raycasting.py), [src/application/sprite_object.py](../src/application/sprite_object.py)
+- [src/application/object_handler.py](../src/application/object_handler.py), [src/application/npc.py](../src/application/npc.py), [src/application/pathfinding.py](../src/application/pathfinding.py), [src/application/weapon.py](../src/application/weapon.py)
+- [src/application/game.py](../src/application/game.py), [src/application/ports.py](../src/application/ports.py), [src/application/snapshot.py](../src/application/snapshot.py)
+- [src/domain/health.py](../src/domain/health.py), [src/domain/combat.py](../src/domain/combat.py), [src/domain/movement.py](../src/domain/movement.py), [src/domain/game_state.py](../src/domain/game_state.py)
+- [src/infrastructure/assets.py](../src/infrastructure/assets.py), [src/infrastructure/audio.py](../src/infrastructure/audio.py), [src/infrastructure/scores.py](../src/infrastructure/scores.py), [src/infrastructure/input.py](../src/infrastructure/input.py)
+- [src/presentation/renderer.py](../src/presentation/renderer.py), [src/presentation/input.py](../src/presentation/input.py)
 - [tests/test_smoke.py](../tests/test_smoke.py), [requirements.txt](../requirements.txt)
-- [audit_themes.py](../audit_themes.py), [tools/audit_themes.py](../tools/audit_themes.py), [tools/pixel_harmony_compare.py](../tools/pixel_harmony_compare.py)
+- [tools/audit_themes.py](../tools/audit_themes.py), [tools/pixel_harmony_compare.py](../tools/pixel_harmony_compare.py)
 
 Severity levels (unchanged from the original audit):
 
@@ -57,7 +57,7 @@ Credit where due — the following findings from the original audit are **resolv
 | M1: wildcard imports | **Fixed** | Every module now uses explicit `from module import (name, ...)` imports. |
 | M3: shared Pygame timer event drove animation pulses | **Fixed** (and for a good reason) | `pg.time.set_timer()` raises `NotImplementedError` under Pygbag/WASM; `Game.update_global_trigger()` now accumulates `delta_time` instead — one code path for desktop and browser. |
 | M4: animation frames loaded in non-deterministic OS order | **Fixed** | `AnimatedSprite.get_images()` sorts by a numeric suffix extracted from the filename (`frame_sort_key`). |
-| M5 (partial): map was a mutable Python literal | **Improved** | Maps are now plain-text files under `maps/`, loaded and validated (`load_map`: rectangular grid, valid cell characters, fallback to the default map). Still not a full `LevelDefinition` (no spawn markers/entity metadata in the format — see M5 below). |
+| M5 (partial): map was a mutable Python literal | **Improved** | Maps are now plain-text files under `assets/maps/`, loaded and validated (`load_map`: rectangular grid, valid cell characters, fallback to the default map). Still not a full `LevelDefinition` (no spawn markers/entity metadata in the format — see M5 below). |
 
 ## Findings
 
@@ -65,7 +65,7 @@ Credit where due — the following findings from the original audit are **resolv
 
 #### H1 (new). The renderer re-scales every wall column and sprite from scratch, every frame
 
-**Status: Fixed.** `ObjectRenderer` (`presentation/renderer.py`) now owns bounded `wall_column_cache`/`sprite_scale_cache` dicts with a shared `cached_scale()` helper. `raycasting.py`'s `get_objects_to_render` snaps the continuous offset/height values to integer pixel buckets and caches the scaled wall column per `(texture, position, size)` key; `sprite_object.py`'s `get_sprite_projection` caches the pre-occlusion scaled sprite per `(image_id, width, height)` key (occlusion masking still copies per-frame, since it's cheap and depth-dependent). Measured on `tools/profile_game.py` over 300 frames: total runtime 17.0s → 11.4s (~33% faster), `get_objects_to_render` cumulative time 3.61s → 1.19s (~67% faster), and `pygame.transform.scale` dropped out of the top-10 cost centers entirely.
+**Status: Fixed.** `ObjectRenderer` (`src/presentation/renderer.py`) now owns bounded `wall_column_cache`/`sprite_scale_cache` dicts with a shared `cached_scale()` helper. `src/application/raycasting.py`'s `get_objects_to_render` snaps the continuous offset/height values to integer pixel buckets and caches the scaled wall column per `(texture, position, size)` key; `src/application/sprite_object.py`'s `get_sprite_projection` caches the pre-occlusion scaled sprite per `(image_id, width, height)` key (occlusion masking still copies per-frame, since it's cheap and depth-dependent). Measured on `tools/profile_game.py` over 300 frames: total runtime 17.0s → 11.4s (~33% faster), `get_objects_to_render` cumulative time 3.61s → 1.19s (~67% faster), and `pygame.transform.scale` dropped out of the top-10 cost centers entirely.
 
 **Location:** `RayCasting.get_objects_to_render` (wall columns), `SpriteObject.get_sprite_projection` (sprites)
 
@@ -101,17 +101,17 @@ Every restart reconstructs per-round gameplay objects (`ObjectRenderer`, `RayCas
 
 ### Medium-Priority
 
-#### M1 (new). `infrastructure/audio.py` mixes four unrelated concerns in one file
+#### M1 (new). `src/infrastructure/audio.py` mixes four unrelated concerns in one file
 
-**Location:** `infrastructure/audio.py`
+**Location:** `src/infrastructure/audio.py`
 
 `SilentClip`, `Sound` (desktop/`pg.mixer`), `BrowserClip`, and `BrowserSound` (web/native `<audio>`) all live in a single ~140-line module. The two backends have essentially nothing in common beyond satisfying the same `AudioOutput` shape, and the browser-specific classes only make sense when running under Pygbag.
 
-**Recommendation:** split into `infrastructure/audio/desktop.py` (`Sound`, `SilentClip`) and `infrastructure/audio/browser.py` (`BrowserSound`, `BrowserClip`), re-exported from `infrastructure/audio/__init__.py` for backward compatibility with existing imports.
+**Recommendation:** split into `src/infrastructure/audio/desktop.py` (`Sound`, `SilentClip`) and `src/infrastructure/audio/browser.py` (`BrowserSound`, `BrowserClip`), re-exported from `src/infrastructure/audio/__init__.py` for backward compatibility with existing imports.
 
 #### M2 (new). Platform branching is scattered `getattr(..., 'browser_mode', False)` checks instead of one seam
 
-**Location:** `application/game.py` (`check_events`), `player.py` (`mouse_control`)
+**Location:** `src/application/game.py` (`check_events`), `src/application/player.py` (`mouse_control`)
 
 Two unrelated files independently probe `getattr(self.game, 'browser_mode', False)` (or the equivalent) to decide platform-specific behavior (Escape = quit vs. restart; mouse sensitivity). Each new platform-specific behavior risks becoming a third or fourth ad-hoc `getattr` check rather than going through one place.
 
@@ -129,19 +129,19 @@ Two unrelated files independently probe `getattr(self.game, 'browser_mode', Fals
 
 #### M4 (new). Two independent definitions of "project root"
 
-**Status: Fixed.** `infrastructure/assets.py` now imports `BASE_DIR` from `settings.py` instead of recomputing it independently. (The broader M9 finding — `settings.py` itself being a flat, unvalidated module — is unchanged and still open.)
+**Status: Fixed.** `src/infrastructure/assets.py` now imports `BASE_DIR` from `src/infrastructure/settings.py` instead of recomputing it independently. (The broader M9 finding — the settings module itself being flat and unvalidated — is unchanged and still open.)
 
-**Location:** `settings.py` (`BASE_DIR = Path(__file__).resolve().parent`) and `infrastructure/assets.py` (`BASE_DIR = Path(__file__).resolve().parent.parent`)
+**Location:** `src/infrastructure/settings.py` and `src/infrastructure/assets.py`
 
 Both resolve to the same directory today only because of where each file happens to live in the tree. Moving either file, or adding another path-resolution helper elsewhere, risks silent drift between the two.
 
-**Recommendation:** define `PROJECT_ROOT` once (e.g. in a small `paths.py` or in `settings.py`) and have `infrastructure/assets.py` import it rather than recomputing it.
+**Recommendation:** define `PROJECT_ROOT` once (e.g. in a small `paths.py` or in `src/infrastructure/settings.py`) and have `src/infrastructure/assets.py` import it rather than recomputing it.
 
 #### M5. Map format still doesn't carry entity/spawn metadata (partial carry-over from the original M5)
 
-**Status: Fixed**, via the sibling-manifest option explicitly allowed by the original recommendation. See M7 below — scenery/spawn tables now live in `content/levels/<map_name>.json`, keyed by the map's own name, rather than in `object_handler.py`.
+**Status: Fixed**, via the sibling-manifest option explicitly allowed by the original recommendation. See M7 below — scenery/spawn tables now live in `assets/levels/<map_name>.json`, keyed by the map's own name, rather than in `object_handler.py`.
 
-**Location:** `maps/*.txt`, `object_handler.py`
+**Location:** `assets/maps/*.txt`, `object_handler.py`
 
 Maps now validate rectangular shape and cell characters (an improvement), but NPC/scenery placement is still entirely separate, hardcoded Python (`ObjectHandler.__init__`'s `add_sprite(...)` calls and `spawn_npc`'s random sampling) rather than being expressed in the map/level data itself.
 
@@ -159,9 +159,9 @@ Unchanged from the original audit's M6: `NPC` is responsible for line-of-sight r
 
 #### M7. Scenery/spawn tables are still hardcoded Python
 
-**Status: Fixed.** Scenery placements and enemy spawn weights moved from hardcoded Python in `ObjectHandler.__init__` into `content/levels/<map_name>.json`, loaded by `load_spawn_config()` (which raises a clear `FileNotFoundError` if a map's config is missing, rather than silently falling back). This also surfaced and fixed a packaging gap: `build.py`'s PyInstaller targets now bundle `content/` alongside `resources/`/`maps/` (previously would have shipped executables that crashed on startup, since the config is now required at runtime).
+**Status: Fixed.** Scenery placements and enemy spawn weights moved from hardcoded Python in `ObjectHandler.__init__` into `assets/levels/<map_name>.json`, loaded by `load_spawn_config()` (which raises a clear `FileNotFoundError` if a map's config is missing, rather than silently falling back). This also surfaced and fixed a packaging gap: `build.py`'s PyInstaller targets now bundle `assets/` (previously would have shipped executables that crashed on startup, since the config is now required at runtime).
 
-**Location:** `ObjectHandler.__init__`, `content/levels/1_mini_map_default.json`
+**Location:** `ObjectHandler.__init__`, `assets/levels/1_mini_map_default.json`
 
 `self.enemies = 20`, `self.npc_types`/`self.weights`, `self.restricted_area`, and ~20 hardcoded `add_sprite(...)` calls with literal coordinates are unchanged from the original audit's M7.
 
@@ -169,7 +169,7 @@ Unchanged from the original audit's M6: `NPC` is responsible for line-of-sight r
 
 #### M8. Render list is still a shared mutable structure, now merely *wrapped* by a snapshot afterward
 
-**Location:** `RayCasting.objects_to_render`, `SpriteObject.get_sprite_projection`, `application/snapshot.py`
+**Location:** `RayCasting.objects_to_render`, `SpriteObject.get_sprite_projection`, `src/application/snapshot.py`
 
 `RenderSnapshot` was introduced (a genuine improvement — `Game.update()` now produces an immutable-looking snapshot each frame, and `ObjectRenderer.draw()` accepts either a snapshot or `None`), but the underlying mechanism is unchanged: `RayCasting` still initializes a shared list and `SpriteObject.get_sprite_projection` still `append()`s directly into `self.game.raycasting.objects_to_render` during each sprite's own `update()`. The snapshot is a copy taken *after* this mutation dance, not a replacement for it.
 
@@ -193,7 +193,7 @@ Resolution, FOV, ray count, mouse sensitivities, and other derived values remain
 
 #### M11 (new). No automated coverage for the browser-specific code paths
 
-**Location:** `infrastructure/audio.py`'s `BrowserSound`/`BrowserClip`, `build.py`'s HTML/audio patch functions
+**Location:** `src/infrastructure/audio.py`'s `BrowserSound`/`BrowserClip`, `build.py`'s HTML/audio patch functions
 
 `tests/test_smoke.py` covers domain rules, map loading, both high-score backends, and an async smoke test of `run_async()`'s restart behavior — good coverage for what it covers. But the entire browser-audio code path (which needed multiple rounds of manual debugging this session: wrong JS calling convention, cloning-vs-pooling, duplicate theme playback) and all of `build.py`'s web-specific logic have zero automated tests. These are exactly the areas most likely to silently regress.
 
@@ -209,9 +209,9 @@ Resolution, FOV, ray count, mouse sensitivities, and other derived values remain
 
 `ObjectHandler.update()` still uses `[sprite.update() for sprite in self.sprite_list]` purely for its side effects.
 
-#### L3 (new). `sound.py` and `application/renderer.py` are pure re-export shims
+#### L3 (new). `src/infrastructure/sound.py` and `src/application/renderer.py` are pure re-export shims
 
-**Location:** `sound.py` (`from infrastructure.audio import Sound`), `application/renderer.py` (`from application.ports import Renderer`)
+**Location:** `src/infrastructure/sound.py` (`from infrastructure.audio import Sound`), `src/application/renderer.py` (`from application.ports import Renderer`)
 
 Both are one-line compatibility shims left over from the migration to the layered structure. They're harmless but easy to mistake for real implementations when navigating the codebase (a new contributor opening `sound.py` expecting to find the audio logic will be confused).
 
@@ -285,56 +285,46 @@ The current dependency direction is already correct and should be preserved, not
                     +----------------------+
 ```
 
-The gap between this and the target is narrower than it was: `domain/` genuinely has zero Pygame/IO imports today. The remaining work is less about introducing layers (done) and more about **finishing the migration** — moving logic that's still sitting in root-level actor classes (`Player`, `NPC`, `ObjectHandler`) into the layers that already exist for it (M6, M7, M2 above).
+The gap between this and the target is narrower than it was: `src/domain/` genuinely has zero Pygame/IO imports today. The remaining work is less about introducing layers (done) and more about **finishing the migration** — moving logic that's still sitting in actor/system classes (`Player`, `NPC`, `ObjectHandler`) into the layers that already exist for it (M6, M7, M2 above).
 
 ## Suggested Folder Structure (Evolving the Current Layout, Not Replacing It)
 
-The project already adopted top-level `application/`, `domain/`, `infrastructure/`, `presentation/` packages rather than a `src/pov_blaster/` layout — that decision is sound (it matches the actual migration that happened) and should be kept. The suggested next step is to keep root-level gameplay modules moving *into* those packages rather than proposing a new layout:
+The project now uses a `src/` layout with `application/`, `domain/`, `infrastructure/`, and `presentation/` packages rather than a single `src/pov_blaster/` package. That decision is sound because it mirrors the actual layered architecture. The suggested next step is to keep refining responsibility boundaries inside those packages rather than proposing another layout:
 
 ```text
 POV-Blaster/
 ├── main.py                     # desktop entry point (thin)
-├── web_main.py                 # browser entry point (thin)
 ├── build.py                    # split per refactoring plan below
-├── settings.py                 # -> becomes infrastructure/config/settings.py long-term
-├── theme.py                    # -> becomes domain/content/theme.py + CLI picker split out
+├── assets/                     # themes, maps, and level spawn/scenery data
+├── data/                       # mutable desktop runtime data
 │
-├── application/
-│   ├── game.py
-│   ├── ports.py
-│   ├── snapshot.py
-│   └── platform.py             # NEW: Platform/PlatformConfig (M2)
+├── src/
+│   ├── application/
+│   │   ├── game.py
+│   │   ├── ports.py
+│   │   ├── snapshot.py
+│   │   ├── web_main.py
+│   │   └── platform.py         # NEW: Platform/PlatformConfig (M2)
 │
-├── domain/
-│   ├── health.py, combat.py, movement.py, game_state.py   # unchanged
-│   ├── map.py                  # NEW: map.load_map/Map move here (pure data + validation)
-│   ├── raycasting.py           # NEW: shared cast_ray() used by renderer and NPC visibility (H2)
-│   └── content/
-│       └── theme.py            # NEW: Theme dataclass + THEMES data
+│   ├── domain/
+│   │   ├── health.py, combat.py, movement.py, game_state.py   # unchanged
+│   │   ├── map.py              # POSSIBLE: map.load_map/Map move here (pure data + validation)
+│   │   ├── raycasting.py       # POSSIBLE: shared cast_ray() used by renderer and NPC visibility (H2)
+│   │   └── content/
+│   │       └── theme.py        # POSSIBLE: Theme dataclass + THEMES data
 │
-├── infrastructure/
-│   ├── assets.py, scores.py, input.py   # unchanged
-│   └── audio/                  # NEW: split per M1
-│       ├── __init__.py
-│       ├── desktop.py          # Sound, SilentClip
-│       └── browser.py          # BrowserSound, BrowserClip
+│   ├── infrastructure/
+│   │   ├── assets.py, scores.py, input.py, settings.py
+│   │   └── audio/              # NEW: split per M1
+│   │       ├── __init__.py
+│   │       ├── desktop.py      # Sound, SilentClip
+│   │       └── browser.py      # BrowserSound, BrowserClip
 │
-├── presentation/
-│   ├── renderer.py             # gains wall/sprite scale caches (H1)
-│   └── input.py                # unchanged
+│   └── presentation/
+│       ├── renderer.py
+│       └── input.py
 │
-├── gameplay/                   # NEW: actor coordinators that still need Pygame + domain together
-│   ├── player.py
-│   ├── npc.py                  # slimmed per M6, delegates to domain.raycasting + systems
-│   ├── object_handler.py       # spawn tables move to content/ data files (M7)
-│   ├── pathfinding.py
-│   ├── sprite_object.py
-│   └── weapon.py
-│
-├── content/                    # NEW: data-driven spawn tables, per M7 (format TBD: JSON/TOML)
-│   └── levels/
-│
-├── maps/, resources/, tests/, tools/, docs/, .github/    # unchanged
+├── tests/, tools/, docs/, .github/                       # unchanged root support areas
 └── build/                                                 # unchanged (gitignored output)
 ```
 
@@ -345,7 +335,7 @@ This keeps the already-correct dependency direction, avoids a disruptive full-re
 - ☑ **`raycasting.py` + `npc.py`/`npc_systems.py`**: NPC visibility was extracted into `npc_systems.npc_can_see_player` (M6). The shared DDA traversal itself is still duplicated against `RayCasting.ray_cast`, not yet unified into one `domain/raycasting.py` implementation (H2, still open).
 - ☑ **`presentation/renderer.py`**: added wall-column and sprite-scale caches (H1).
 - ☑ **`npc.py`**: split into a slim `NPC` coordinator plus `AnimationController`/`CombatResolver` collaborators and a standalone `npc_can_see_player()` function, all in `npc_systems.py` (M6). Hit resolution still claims the first NPC whose crosshair check passes rather than querying the nearest target via the depth buffer (H3, still open, out of scope for this pass).
-- ☑ **`object_handler.py`**: scenery positions and enemy weight tables moved into `content/levels/<map_name>.json`, validated (fails loudly if missing) (M7, extends M5).
+- ☑ **`object_handler.py`**: scenery positions and enemy weight tables moved into `assets/levels/<map_name>.json`, validated (fails loudly if missing) (M7, extends M5).
 - ☐ **`infrastructure/audio.py`**: still one file with all four classes; splitting into `infrastructure/audio/desktop.py` and `infrastructure/audio/browser.py` (M1) remains open. `BrowserClip`/theme-level data URI caching (H4's audio-specific angle) also remains open — H4 was addressed at the `Game.new_game()` level (not rebuilding the backend at all on restart) rather than by caching within `BrowserClip` itself.
 - ☐ **`application/game.py`**: still no `Platform`/`PlatformConfig` object; `getattr(..., 'browser_mode', False)` checks remain scattered (M2, open).
 - ☑ **`build.py`**: `apply_web_html_patches` now raises loudly on a missing substring instead of silently no-op'ing (M3), with unit tests for both the patch functions and the failure path. PyInstaller targets now also bundle `content/` (a gap surfaced by the M7 fix). Splitting `build.py` into separate desktop/web modules, and adding fakeable `BrowserSound`/`BrowserClip` tests (M11), remain open.
@@ -357,7 +347,7 @@ This keeps the already-correct dependency direction, avoids a disruptive full-re
 All five highest-priority items from the Executive Summary are now resolved:
 
 1. ☑ **Performance:** wall-column and sprite scale caching (H1) — measured ~33% faster over 300 profiled frames, ~67% faster specifically in `get_objects_to_render`.
-2. ☑ **`NPC` decomposition + hardcoded tables:** `NPC` now delegates to `AnimationController`/`CombatResolver`/`npc_can_see_player` (M6); scenery/spawn tables moved to `content/levels/*.json` (M7), with a packaging fix so PyInstaller builds still work.
+2. ☑ **`NPC` decomposition + hardcoded tables:** `NPC` now delegates to `AnimationController`/`CombatResolver`/`npc_can_see_player` (M6); scenery/spawn tables moved to `assets/levels/*.json` (M7), with a packaging fix so PyInstaller builds still work.
 3. ☑ **Web-build robustness:** `build.py`'s HTML patching now fails loudly instead of silently, with test coverage (M3).
 4. ☑ **Duplicate project-root definition:** `infrastructure/assets.py` now imports `BASE_DIR` from `settings.py` (M4).
 5. ☑ **Per-round rebuild waste:** the sound backend is now built once per `Game` instance instead of every restart (H4).

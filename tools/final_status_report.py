@@ -48,7 +48,7 @@ build_status = [
     ('☑️', 'GIT COMMIT', 'Commit 37122dd - graphics: production-ready theme upgrade'),
     ('☑️', 'REPOSITORY STATE', 'All 587 files changed, pushed to origin/main'),
     ('☑️', 'BUILD ARTIFACTS', 'Windows EXE (75.77 MB) | Linux Binary (71.41 MB) Ready'),
-    ('☑️', 'BUILD STATUS', 'PyInstaller 6.22.2 | Python 3.13.7 | All resources bundled'),
+    ('☑️', 'BUILD STATUS', 'PyInstaller 6.22.2 | Python 3.13.7 | All assets bundled'),
 ]
 
 for status, task, detail in build_status:
@@ -66,7 +66,7 @@ print('      └─ All assets: Appropriate for game objects and characters')
 
 print('\n  ☑️ GOLD CODE MILESTONE')
 print('      └─ All 5 themes validated and READY FOR PLAYTESTING')
-print('      └─ All resources bundled in build artifacts')
+print('      └─ All assets bundled in build artifacts')
 print('      └─ Repository synchronized with remote')
 
 print('\n  ☑️ DEPLOYMENT ARTIFACTS')

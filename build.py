@@ -12,7 +12,8 @@ from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).resolve().parent
 ENTRY_POINT = PROJECT_ROOT / 'main.py'
-WEB_ENTRY_POINT = PROJECT_ROOT / 'application' / 'web_main.py'
+SRC_DIR = PROJECT_ROOT / 'src'
+WEB_ENTRY_POINT = SRC_DIR / 'application' / 'web_main.py'
 BUILD_DIR = PROJECT_ROOT / 'build'
 WORK_DIR = BUILD_DIR / 'pyinstaller-work'
 SPEC_DIR = BUILD_DIR / 'pyinstaller-spec'
@@ -67,15 +68,9 @@ def build(target):
     if not ENTRY_POINT.is_file():
         raise FileNotFoundError(f'Entry point not found: {ENTRY_POINT}')
 
-    resources = PROJECT_ROOT / 'resources'
-    if not resources.is_dir():
-        raise FileNotFoundError(f'Resource directory not found: {resources}')
-    maps = PROJECT_ROOT / 'maps'
-    if not maps.is_dir():
-        raise FileNotFoundError(f'Map directory not found: {maps}')
-    content = PROJECT_ROOT / 'content'
-    if not content.is_dir():
-        raise FileNotFoundError(f'Content directory not found: {content}')
+    assets = PROJECT_ROOT / 'assets'
+    if not assets.is_dir():
+        raise FileNotFoundError(f'Asset directory not found: {assets}')
 
     BUILD_DIR.mkdir(exist_ok=True)
     target_names = {
@@ -102,9 +97,8 @@ def build(target):
         '--distpath', str(BUILD_DIR),
         '--workpath', str(WORK_DIR),
         '--specpath', str(SPEC_DIR),
-        '--add-data', f'{resources}{separator}resources',
-        '--add-data', f'{maps}{separator}maps',
-        '--add-data', f'{content}{separator}content',
+        '--paths', str(SRC_DIR),
+        '--add-data', f'{assets}{separator}assets',
     ])
 
     if target == 'windows':
@@ -249,8 +243,8 @@ def build_web():
 
     def ignore_web_files(directory, names):
         relative = Path(directory).relative_to(PROJECT_ROOT)
-        ignored = {'build', '.git', '.pytest_cache', '__pycache__', 'scores.xml',
-                   'docs', 'screenshots', 'tests', 'tools', 'generate_themes.ps1'}
+        ignored = {'build', '.git', '.pytest_cache', '__pycache__', 'data', 'logs',
+               'docs', 'screenshots', 'tests', 'tools'}
         return ignored.intersection(names)
 
     shutil.copytree(
@@ -262,7 +256,7 @@ def build_web():
     (web_source / 'main.py').write_text(
         # pygbag statically scans this file's text for 'import pygame' to know which
         # WASM packages to preload, so keep that import literal even though unused here.
-        "import asyncio\n\nimport pygame  # noqa: F401\n\nfrom application.web_main import main\n\nasyncio.run(main())\n",
+        "import asyncio\nimport sys\nfrom pathlib import Path\n\nimport pygame  # noqa: F401\n\nsrc = Path(__file__).resolve().parent / 'src'\nif str(src) not in sys.path:\n    sys.path.insert(0, str(src))\n\nfrom application.web_main import main\n\nasyncio.run(main())\n",
         encoding='utf-8',
     )
     subprocess.run([

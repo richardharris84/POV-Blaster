@@ -6,7 +6,7 @@ from application.ports import GameContext
 from application.npc import CacoDemonNPC, CyberDemonNPC, HuntingBearNPC, SoldierNPC
 from application.sprite_object import AnimatedSprite
 
-CONTENT_DIR = Path(__file__).resolve().parents[1] / 'content' / 'levels'
+CONTENT_DIR = Path(__file__).resolve().parents[2] / 'assets' / 'levels'
 NPC_TYPES_BY_NAME = {
     'SoldierNPC': SoldierNPC,
     'CacoDemonNPC': CacoDemonNPC,
@@ -15,7 +15,7 @@ NPC_TYPES_BY_NAME = {
 
 
 def load_spawn_config(map_name):
-    """Scenery placement and enemy spawn tables live in content/levels/<map_name>.json
+    """Scenery placement and enemy spawn tables live in assets/levels/<map_name>.json
     rather than hardcoded Python, so a new level's content doesn't require a code change."""
     config_path = CONTENT_DIR / f'{map_name}.json'
     if not config_path.is_file():
