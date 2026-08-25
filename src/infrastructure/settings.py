@@ -1,9 +1,11 @@
 import math
+import os
 from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parents[2]
 RESOURCE_DIR = BASE_DIR / 'assets'
 THEME_DIR = RESOURCE_DIR / 'themes'
+SCORE_API_URL = os.environ.get('POV_BLASTER_API_URL', '').rstrip('/')
 
 # game settings
 RES = WIDTH, HEIGHT = 1600, 900

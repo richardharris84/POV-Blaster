@@ -324,9 +324,9 @@ Maps are plain UTF-8 text files under `assets/maps/`, one row per line, using `.
 
 `Game.sound_factory` (defaulting to `Sound`) is how `src/application/web_main.py` swaps in `BrowserSound` without any other file needing to know which backend is active.
 
-## 14. High Scores: Two Backends Behind One Interface
+## 14. High Scores: Local and Hosted Backends
 
-Same pattern as audio: `HighScores` (desktop) persists a sorted, capped list of `Score(player_name, kills)` to `data/scores.xml` via `xml.etree.ElementTree`. `BrowserHighScores` (web) stores the same data as JSON in the browser's `localStorage` (key `pov-blaster-high-scores`), falling back to an in-memory list if `localStorage` is unavailable for any reason. Both implement `load()`/`add()`/`display()` with identical sorting (`-kills`, then case-insensitive name).
+`HighScores` (desktop) persists a sorted, capped list of `Score(player_name, kills)` to `data/scores.xml`. `BrowserHighScores` (web) writes to localStorage immediately and submits each score in the background to the optional `api/` FastAPI service, falling back to local memory when browser storage or the API is unavailable. The service stores SQLite records with player name, kills, UTC timestamp, and derived city/country. Raw IP addresses are deliberately not stored. `GET /scores` returns the complete public record list; `POST /scores` accepts new submissions. See [privacy.html](../privacy.html) for the browser disclosure.
 
 ## 15. Multi-Platform Builds (`build.py`)
 

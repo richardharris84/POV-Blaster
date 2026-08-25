@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import os
 import shutil
 import subprocess
 import sys
@@ -252,6 +253,14 @@ def build_web():
         web_source,
         ignore=ignore_web_files,
     )
+    web_settings = web_source / 'src' / 'infrastructure' / 'settings.py'
+    configured_api_url = repr(os.environ.get('POV_BLASTER_API_URL', '').rstrip('/'))
+    settings_text = web_settings.read_text(encoding='utf-8')
+    settings_text = settings_text.replace(
+        "SCORE_API_URL = os.environ.get('POV_BLASTER_API_URL', '').rstrip('/')",
+        f'SCORE_API_URL = {configured_api_url}',
+    )
+    web_settings.write_text(settings_text, encoding='utf-8')
     upgrade_web_audio(web_source)
     (web_source / 'main.py').write_text(
         # pygbag statically scans this file's text for 'import pygame' to know which
@@ -304,6 +313,7 @@ def build_web():
         )
     index_html = apply_web_html_patches(index_html)
     index.write_text(index_html, encoding='utf-8')
+    shutil.copy2(PROJECT_ROOT / 'privacy.html', web_dir / 'privacy.html')
     print(f'Created web build: {web_dir}')
     print('Serve with: python -m pygbag build/web-source')
 

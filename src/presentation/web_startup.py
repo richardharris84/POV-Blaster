@@ -49,6 +49,15 @@ def _event_position(event):
     return None
 
 
+def _open_privacy_notice():
+    if sys.platform != 'emscripten':
+        return
+    try:
+        platform.window.open('privacy.html', '_blank')
+    except (AttributeError, TypeError):
+        pass
+
+
 class _BrowserNameInput:
     """Bridge the canvas name field to the mobile browser keyboard."""
 
@@ -162,6 +171,8 @@ async def choose_startup():
                             error = validate_player_name(player_name) or ""
                             if not error:
                                 phase = "theme"
+                        elif pg.Rect(WIDTH // 2 - 120, 475, 240, 32).collidepoint(pos):
+                            _open_privacy_notice()
                     else:
                         for index, (_, theme) in enumerate(theme_menu_items()):
                             rect = pg.Rect(WIDTH // 2 - 300, 195 + index * 76, 600, 60)
@@ -182,7 +193,8 @@ async def choose_startup():
                 if error:
                     _draw_centered(surface, error, _font(20, bold=True), DANGER, 330)
                 _button(surface, pg.Rect(WIDTH // 2 - 150, 395, 300, 58), "CONTINUE", selected=True)
-                _draw_centered(surface, "Enter to continue  |  Esc to exit", _font(17), MUTED, 535)
+                _draw_centered(surface, "Privacy Notice", _font(18, bold=True), ACCENT, 490)
+                _draw_centered(surface, "Enter to continue  |  Esc to exit", _font(17), MUTED, 555)
             else:
                 _draw_centered(surface, f"WELCOME, {player_name.upper()}", _font(27, bold=True), TEXT, 105)
                 _draw_centered(surface, "CHOOSE YOUR THEME", _font(22, bold=True), MUTED, 150)

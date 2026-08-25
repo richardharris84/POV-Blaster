@@ -5,6 +5,7 @@ import pygame as pg
 from application.game import Game
 from infrastructure.audio import BrowserSound
 from infrastructure.scores import BrowserHighScores
+from infrastructure.settings import SCORE_API_URL
 from infrastructure.windowing import set_game_icon
 
 
@@ -19,7 +20,8 @@ async def main():
         pg.quit()
         return
     player_name, selected_theme = startup
-    scores = BrowserHighScores()
+    scores = BrowserHighScores(api_url=SCORE_API_URL)
+    scores.record_session(player_name)  # Record that this player started a web session
     game = Game(selected_theme, player_name=player_name, high_scores=scores, sound_factory=BrowserSound)
     await game.run_async(return_on_exit=False)
 

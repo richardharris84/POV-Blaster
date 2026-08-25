@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: pov-blaster-api
+    runtime: python
+    plan: starter
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn api.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health
+    envVars:
+      - key: DB_PATH
+        value: /var/data/pov_blaster.sqlite3
+      - key: CORS_ORIGINS
+        value: https://richardharris84.github.io
+    disk:
+      name: pov-blaster-data
+      mountPath: /var/data
+      sizeGB: 1

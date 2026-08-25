@@ -42,6 +42,14 @@ The game uses a 2D grid map to produce a pseudo-3D view. It supports textured wa
 - [Development Notes](#development-notes)
 - [Project Lineage](#project-lineage)
 
+## Shared Scores API
+
+The desktop build keeps its local XML leaderboard. The browser build uses localStorage immediately for offline play and submits scores in the background to the optional FastAPI service. The hosted service stores shared records in SQLite, including the player name, kills, UTC submission time, and city/country inferred from the request IP; raw IP addresses are not stored.
+
+The API exposes `GET /scores` for the complete public record list, `POST /scores` for submissions, and `GET /health` for Render health checks. `render.yaml` provisions `pov-blaster-api` with a persistent disk at `/var/data`, which is required because Render's normal filesystem is ephemeral.
+
+To connect GitHub Pages after deploying the API, set the `POV_BLASTER_API_URL` environment variable while running `py build.py --web` (for example, `https://pov-blaster-api.onrender.com`). The GitHub Pages workflow should provide that value from a repository variable before its build step. The browser name-entry screen links to [privacy.html](privacy.html), which explains the location data use and deletion request process.
+
 ## See Also
 
 - [CHANGELOG.md](CHANGELOG.md): project history and prior development prompts

@@ -1,0 +1,65 @@
+name: Deploy API to Render
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'api/**'
+      - 'requirements.txt'
+      - 'render.yaml'
+      - '.github/workflows/deploy-render.yml'
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Deploy to Render
+        env:
+          RENDER_DEPLOY_HOOK: ${{ secrets.RENDER_DEPLOY_HOOK }}
+        run: |
+          if [ -z "$RENDER_DEPLOY_HOOK" ]; then
+            echo "⚠️  RENDER_DEPLOY_HOOK secret not configured"
+            echo "To deploy API to Render:"
+            echo "1. Create a service on render.com from this repository"
+            echo "2. Get the deploy hook URL from Render dashboard"
+            echo "3. Add it as RENDER_DEPLOY_HOOK secret in GitHub"
+            echo "4. This workflow will automatically deploy on push"
+          else
+            curl "$RENDER_DEPLOY_HOOK"
+            echo "✓ Deployment triggered on Render"
+          fi
+
+  notify:
+    needs: deploy
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send deployment notification
+        continue-on-error: true
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: ${{ secrets.SMTP_SERVER }}
+          server_port: ${{ secrets.SMTP_PORT }}
+          secure: false
+          username: ${{ secrets.SMTP_USERNAME }}
+          password: ${{ secrets.SMTP_PASSWORD }}
+          subject: "POV-Blaster: API deployment completed"
+          to: "richardharris84@gmail.com"
+          from: "richardharris84@gmail.com"
+          body: |
+            API deployment workflow completed.
+
+            Service: pov-blaster-api
+            Render Dashboard: https://dashboard.render.com
+            
+            Repository: ${{ github.repository }}
+            Branch: ${{ github.ref_name }}
+            Commit: ${{ github.sha }}
+            Workflow: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+            
+            To configure automatic deployment:
+            1. Create a Render service from this repository
+            2. Copy the deploy hook URL from Render
+            3. Add it as RENDER_DEPLOY_HOOK secret in GitHub Settings
