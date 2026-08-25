@@ -107,7 +107,7 @@ src/presentation/       Pygame-facing adapters behind the application layer's po
 
 assets/maps/            Plain-text maps ('.' = empty, digit = wall texture id)
 assets/levels/          Data-driven scenery placement and NPC spawn tables, keyed by map name
-assets/<theme>/         Per-theme textures, sprites, and sound (default/candy_kingdom/graveyard/hunting/space)
+assets/themes/<theme>/  Per-theme textures, sprites, and sound (default/candy_kingdom/graveyard/hunting/space)
 tests/                  unittest suite (domain, map, audio, scores, NPC, assets, async loop)
 tools/audit_themes.py   Required asset, image quality, and animation audit implementation
 tools/generate_themes.ps1  Procedural theme and animation asset generator/validator
@@ -299,7 +299,7 @@ This means there's no real projectile or hitscan-vs-all-enemies loop — the cro
 
 ## 11. Themes and Asset Resolution
 
-`src/application/theme.py`'s `Theme` is a frozen dataclass: `key` (folder name under `assets/`), `label`, `enemies` (display names), `npc_assets` (sprite-folder names, index-matched to `SoldierNPC`/`CacoDemonNPC`/`CyberDemonNPC`), and optional `weapon_asset`/`fire_sound` overrides. `Theme.resource_dir` and `Theme.path(...)` are the *only* place theme-specific paths are constructed — every consumer (`ObjectRenderer`, `Weapon`, `Sound`, `SpriteObject`) calls `game.theme.path(...)` rather than hardcoding `assets/default/...`.
+`src/application/theme.py`'s `Theme` is a frozen dataclass: `key` (folder name under `assets/themes/`), `label`, `enemies` (display names), `npc_assets` (sprite-folder names, index-matched to `SoldierNPC`/`CacoDemonNPC`/`CyberDemonNPC`), and optional `weapon_asset`/`fire_sound` overrides. `Theme.resource_dir` and `Theme.path(...)` are the *only* place theme-specific paths are constructed — every consumer (`ObjectRenderer`, `Weapon`, `Sound`, `SpriteObject`) calls `game.theme.path(...)` rather than hardcoding `assets/themes/default/...`.
 
 `src/infrastructure/assets.py`'s `AssetLoader` caches every loaded `Surface` by `(path, size, alpha, fallback_label)`, and — critically — **never raises** on a missing file: `load_image()` catches `FileNotFoundError`/`OSError`/`pg.error` and returns a procedurally drawn placeholder (`create_fallback_surface`: a checkerboard with an X and a single-letter label) instead. This means an incomplete or mismatched theme folder degrades gracefully to placeholder art rather than crashing, which is especially useful while building out new themes incrementally.
 

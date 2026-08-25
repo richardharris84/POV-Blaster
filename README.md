@@ -29,6 +29,12 @@ The game uses a 2D grid map to produce a pseudo-3D view. It supports textured wa
 - [Requirements](#requirements)
 - [Running the Script](#running-the-script)
 - [Build Executables](#build-executables)
+  - [Windows build](#windows-build)
+  - [Linux build](#linux-build)
+  - [macOS build](#macos-build)
+  - [Browser build](#browser-build)
+  - [Deploying to GitHub Pages](#deploying-to-github-pages)
+  - [GitHub Actions](#github-actions)
 - [Project Structure](#project-structure)
 - [How the Game Works](#how-the-game-works)
 - [Development Walkthrough](#development-walkthrough)
@@ -166,7 +172,7 @@ This creates the browser build under `build/web`. To run it locally, start Pygba
 py -m pygbag build/web-source
 ```
 
-Then open `http://localhost:8000`. Pygbag's server provides the required `/cdn/` runtime route; a plain HTTP server is not sufficient. The web entry point uses an asynchronous game loop and <u>browser-local storage for high scores</u>. Desktop builds continue to use `scores.xml`. Pygbag's runtime may require a user click to unlock browser media before starting.
+Then open `http://localhost:8000`. Pygbag's server provides the required `/cdn/` runtime route; a plain HTTP server is not sufficient. The web entry point uses an asynchronous game loop and <u>browser-local storage for high scores</u>. Desktop builds continue to use `data/scores.xml`. Pygbag's runtime may require a user click to unlock browser media before starting.
 
 The Pygbag dev server re-packages the app fresh each time it starts, but not while running — so after any `py build.py --web` rebuild, you must stop and restart the dev server (Ctrl+C, then run `py -m pygbag build/web-source` again) for changes to actually take effect.
 
@@ -179,6 +185,13 @@ The `build.py` script rejects builds requested from the wrong operating system, 
 1. Go to [Settings → Pages](https://github.com/richardharris84/POV-Blaster/settings/pages) and set **Source** to **GitHub Actions**.
 2. Push to `main` (or run the workflow manually from the [Actions](https://github.com/richardharris84/POV-Blaster/actions) tab).
 3. Once the workflow finishes, the game is served at **https://richardharris84.github.io/POV-Blaster/**.
+
+#### GitHub Actions
+
+The repository has two GitHub Actions workflows:
+
+- [x] `.github/workflows/ci.yml` runs on every push and pull request. It checks out the repo on a Windows runner, installs `requirements.txt`, compiles all Python modules, runs the full `unittest` suite, validates theme animation assets with `tools/generate_themes.ps1 -ValidateOnly`, and audits theme images with `python tools/audit_themes.py --check`. On successful pushes to `main`, it also sends a CI success email using the configured SMTP secrets.
+- [x] `.github/workflows/deploy-pages.yml` runs on every push to `main` and can also be started manually. It checks out the repo on Ubuntu, installs dependencies, runs `python build.py --web`, uploads `build/web` as a GitHub Pages artifact, deploys it to the `github-pages` environment, and sends a deployment-complete email with the Pages URL.
 
 <div align="right"><a href="#table-of-contents">^ TOC</a></div>
 
@@ -193,7 +206,7 @@ src/application/       Game actors, gameplay systems, startup flow, and orchestr
 src/domain/            Pure game-rule logic with no Pygame/IO dependency
 src/infrastructure/    Filesystem, audio, input, settings, scores, and platform adapters
 src/presentation/      Pygame-facing rendering, input, touch, and web menu adapters
-assets/<theme>/        Per-theme textures, sprites, and sound (default/candy_kingdom/graveyard/hunting/space)
+assets/themes/<theme>/ Per-theme textures, sprites, and sound (default/candy_kingdom/graveyard/hunting/space)
 assets/maps/           Plain-text maps ('.' = empty, digit = wall texture id)
 assets/levels/         Data-driven scenery placement and NPC spawn tables, keyed by map name
 data/                  Mutable desktop runtime data, including scores.xml
@@ -233,14 +246,15 @@ Soldier, Cacodemon, and Cyberdemon enemies have different health, speed, attack 
 
 ### Themes
 
-The startup menu provides four content choices:
+The startup menu provides five content choices:
 
-- Default: Soldier, Caco Demon, Cyber Demon
 - Candy Kingdom: Marshmallow Man, Springfield Doughnut, Gingerbread Golem
 - Space: Alien Drone, Alien Warrior, Alien Overlord
+- Hunting: Hunter, Deer, Bear
 - Graveyard: Ghost, Vampire, Werewolf
+- Doom: Soldier, Caco Demon, Cyber Demon
 
-Theme assets live under `assets/<theme>/`. To regenerate the themed textures and NPC animation frames on Windows, run:
+Theme assets live under `assets/themes/<theme>/`. To regenerate the themed textures and NPC animation frames on Windows, run:
 
 ```powershell
 .\tools\generate_themes.ps1

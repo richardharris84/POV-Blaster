@@ -279,6 +279,7 @@ def build_web():
     generated_web_dir = web_source / 'build' / 'web'
     staged_browserfs = generated_web_dir / 'browserfs.min.js'
     urlretrieve('https://cdn.jsdelivr.net/npm/browserfs@1.4.3/dist/browserfs.min.js', staged_browserfs)
+    shutil.copy2(PROJECT_ROOT / 'assets' / 'icon.png', generated_web_dir / 'favicon.png')
     if generated_web_dir.exists() and generated_web_dir != web_dir:
         if web_dir.exists():
             shutil.rmtree(web_dir)

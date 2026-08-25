@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from pathlib import Path
 
-from infrastructure.settings import RESOURCE_DIR
+from infrastructure.settings import THEME_DIR
 
 
 @dataclass(frozen=True)
@@ -16,7 +16,7 @@ class Theme:
 
     @property
     def resource_dir(self):
-        return RESOURCE_DIR / self.key
+        return THEME_DIR / self.key
 
     def path(self, asset_path):
         return self.resource_dir / Path(asset_path)

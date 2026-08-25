@@ -246,7 +246,7 @@ Covered above (Performance and Rendering Strategy). The web build in particular 
 
 The web build is already served via GitHub Pages behind GitHub's CDN (`.github/workflows/deploy-pages.yml`), which is a reasonable starting point for a small game. As the asset set grows (more themes shipped to the browser, higher-resolution art):
 
-- Consider shipping only the default theme to the browser build (already done — `build.py`'s `ignore_web_files` excludes the other three theme folders) and evaluate whether the remaining themes should be lazy-loaded on selection rather than bundled at all if the browser build ever exposes theme choice.
+- Consider whether the browser build should keep bundling all themes from `assets/themes/` or lazy-load non-default themes on selection if the packaged download becomes too large.
 - Add cache-control/versioning awareness for the packaged `web-source.tar.gz`/`.apk` so returning users aren't forced to re-download an unchanged bundle, and new deploys aren't blocked by stale browser caches (a real issue hit during this session's manual testing).
 - Keep the OGG-transcoding step in `build.py` (already in place) rather than shipping uncompressed WAV — this was a deliberate, correct choice already made.
 

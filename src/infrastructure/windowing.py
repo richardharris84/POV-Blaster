@@ -6,9 +6,11 @@ No-ops on any other platform (Linux/macOS keep their existing behavior)."""
 import ctypes
 import os
 import sys
+from pathlib import Path
 
 _IS_WINDOWS = sys.platform == 'win32'
 _MONITOR_DEFAULTTONEAREST = 2
+_ICON_PATH = Path(__file__).resolve().parents[2] / 'assets' / 'icon.png'
 
 
 class _RECT(ctypes.Structure):
@@ -61,6 +63,16 @@ def focus_game_window():
         if hwnd:
             ctypes.windll.user32.SetForegroundWindow(hwnd)
     except (ImportError, OSError, KeyError):
+        pass
+
+
+def set_game_icon():
+    """Apply the shared game icon after the Pygame display has been created."""
+    try:
+        import pygame as pg
+        if _ICON_PATH.is_file():
+            pg.display.set_icon(pg.image.load(str(_ICON_PATH)))
+    except (ImportError, OSError, RuntimeError):
         pass
 
 

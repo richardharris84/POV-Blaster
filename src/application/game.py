@@ -13,7 +13,8 @@ from infrastructure.audio import Sound
 from infrastructure.assets import AssetLoader
 from infrastructure.scores import HighScores
 from infrastructure.windowing import (focus_console_window, focus_game_window,
-                                      position_game_window_on_console_monitor)
+                                      position_game_window_on_console_monitor,
+                                      set_game_icon)
 from presentation.input import InputAdapter
 from presentation.renderer import ObjectRenderer
 from presentation.touch import TouchController, is_mobile_touch_device
@@ -43,6 +44,7 @@ class Game:
             position_game_window_on_console_monitor(RES)
         pg.init()
         self.screen = pg.display.set_mode(RES)
+        set_game_icon()
         pg.display.set_caption('POV Blaster')
         self.touch_controller = TouchController(*RES) if is_mobile_touch_device() else None
         self.mobile_controls_enabled = self.touch_controller is not None

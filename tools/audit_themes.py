@@ -2,7 +2,7 @@
 
 Usage:
     py -3 tools/audit_themes.py
-    py -3 tools/audit_themes.py --themes-dir assets --output build/theme_audit.json
+    py -3 tools/audit_themes.py --themes-dir assets/themes --output build/theme_audit.json
 """
 
 from __future__ import annotations
@@ -200,7 +200,7 @@ def generate_report(themes_dir: Path, default_theme: str) -> dict:
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--themes-dir", type=Path, default=Path(__file__).resolve().parents[1] / "assets")
+    parser.add_argument("--themes-dir", type=Path, default=Path(__file__).resolve().parents[1] / "assets" / "themes")
     parser.add_argument("--default-theme", default=DEFAULT_THEME)
     parser.add_argument("--output", type=Path, default=Path(__file__).resolve().parents[1] / "build" / "theme_audit.json")
     parser.add_argument("--check", action="store_true", help="exit nonzero when blank assets or duplicate animation frames are found")

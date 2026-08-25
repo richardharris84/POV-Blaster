@@ -15,7 +15,8 @@ from pathlib import Path
 from PIL import Image, ImageDraw, ImageFont
 
 ROOT = Path(__file__).resolve().parents[1]
-DEFAULT = ROOT / "assets" / "default"
+THEMES_ROOT = ROOT / "assets" / "themes"
+DEFAULT = THEMES_ROOT / "default"
 THEMES = {
     "candy_kingdom": {"bg": (255, 240, 195), "deep": (82, 35, 67), "mid": (238, 78, 143), "light": (255, 207, 91), "roles": {"marshmallow_man": "marshmallow", "springfield_doughnut": "doughnut", "gingerbread_golem": "gingerbread"}},
     "graveyard": {"bg": (25, 30, 47), "deep": (42, 20, 56), "mid": (113, 53, 94), "light": (151, 221, 193), "roles": {"ghost": "ghost", "vampire": "vampire", "werewolf": "werewolf"}},
@@ -27,6 +28,37 @@ ANIMATIONS = {"idle": 8, "walk": 8, "attack": 6, "pain": 3, "death": 8}
 
 def canvas(size, color=(0, 0, 0, 0)):
     return Image.new("RGBA", size, color)
+
+
+def game_icon():
+    image = Image.new("RGBA", (64, 64), (10, 18, 16, 255))
+    draw = ImageDraw.Draw(image)
+    dark = (19, 30, 27, 255)
+    helmet = (61, 91, 72, 255)
+    helmet_light = (101, 132, 98, 255)
+    skin = (181, 111, 77, 255)
+    skin_light = (226, 157, 111, 255)
+    shadow = (91, 48, 42, 255)
+    eye = (224, 219, 171, 255)
+    black = (12, 15, 14, 255)
+    draw.rectangle((8, 7, 55, 17), fill=dark)
+    draw.polygon([(13, 16), (19, 10), (45, 10), (52, 17), (55, 32), (49, 47), (39, 56), (24, 56), (14, 47), (9, 31)], fill=helmet, outline=black, width=2)
+    draw.rectangle((18, 13, 45, 20), fill=helmet_light)
+    draw.rectangle((14, 20, 50, 27), fill=skin, outline=black, width=1)
+    draw.polygon([(15, 26), (49, 26), (47, 45), (39, 54), (24, 54), (16, 44)], fill=skin, outline=black)
+    draw.polygon([(16, 27), (29, 22), (47, 27), (43, 32), (31, 29), (20, 33)], fill=skin_light)
+    draw.polygon([(17, 30), (28, 27), (27, 31), (18, 35)], fill=shadow)
+    draw.polygon([(36, 27), (47, 30), (46, 35), (35, 31)], fill=shadow)
+    draw.rectangle((20, 34, 28, 39), fill=eye, outline=black)
+    draw.rectangle((36, 34, 44, 39), fill=eye, outline=black)
+    draw.rectangle((24, 35, 27, 39), fill=black)
+    draw.rectangle((37, 35, 40, 39), fill=black)
+    draw.polygon([(30, 34), (34, 34), (35, 45), (29, 45)], fill=shadow)
+    draw.rectangle((26, 46, 39, 49), fill=dark)
+    draw.rectangle((29, 49, 36, 51), fill=black)
+    draw.rectangle((11, 25, 16, 39), fill=helmet_light)
+    draw.rectangle((48, 25, 53, 39), fill=helmet_light)
+    return image
 
 
 def palette(spec):
@@ -388,7 +420,7 @@ def scenery(spec, size, name, frame):
 
 
 def generate(theme_name, theme):
-    root = ROOT / "assets" / theme_name
+    root = THEMES_ROOT / theme_name
     textures = root / "textures"; sprites = root / "sprites"
     textures.mkdir(parents=True, exist_ok=True)
     seed = int.from_bytes(hashlib.sha256(theme_name.encode("ascii")).digest()[:4], "big")
@@ -430,6 +462,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--themes", nargs="*", choices=sorted(THEMES), default=sorted(THEMES))
     args = parser.parse_args()
+    game_icon().save(ROOT / "assets" / "icon.png")
     for name in args.themes: generate(name, THEMES[name])
     print("Generated original pixel assets for: " + ", ".join(args.themes))
 

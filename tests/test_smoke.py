@@ -4,6 +4,7 @@ import asyncio
 import tempfile
 from collections import deque
 import unittest
+from unittest.mock import patch
 from pathlib import Path
 import sys
 
@@ -27,6 +28,7 @@ from domain.combat import Combatant
 from domain.movement import movement_delta
 from infrastructure.assets import AssetLoader
 from infrastructure.scores import BrowserHighScores, HighScores
+from infrastructure.windowing import set_game_icon
 from application.npc_systems import npc_can_see_player
 from presentation.touch import TouchController
 from infrastructure.settings import HALF_WIDTH, NUM_RAYS
@@ -142,9 +144,22 @@ class AssetCacheTests(unittest.TestCase):
         pg.display.set_mode((1, 1))
         loader = AssetLoader()
         try:
-            first = loader.load_image('assets/default/textures/digits/10.png', (64, 64))
-            second = loader.load_image('assets/default/textures/digits/10.png', (64, 64))
+            first = loader.load_image('assets/themes/default/textures/digits/10.png', (64, 64))
+            second = loader.load_image('assets/themes/default/textures/digits/10.png', (64, 64))
             self.assertIs(first, second)
+        finally:
+            pg.quit()
+
+
+class WindowIconTests(unittest.TestCase):
+    def test_game_icon_is_applied_to_display(self):
+        pg.init()
+        pg.display.set_mode((1, 1))
+        try:
+            with patch.object(pg.display, 'set_icon') as set_icon:
+                set_game_icon()
+            set_icon.assert_called_once()
+            self.assertEqual(set_icon.call_args.args[0].get_size(), (64, 64))
         finally:
             pg.quit()
 

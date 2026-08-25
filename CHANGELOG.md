@@ -1,10 +1,10 @@
 # POV Blaster: A cross-platform, retro FPS game engine built in Python with pseudo-3D graphics (raycasting - based on Wolfenstein 3D)
 
-Control: 'WASD' + mouse <span style="float: right;"><a href="#step-44-workspace-root-cleanup">see last revision</a></span>
+Control: 'WASD' + mouse <span style="float: right;"><a href="#step-46-game-icon">see last revision</a></span>
 
 ![doom](/screenshots/0.jpg)
 
-<div align="right"><a href="#step-44-workspace-root-cleanup">see last revision</a></div>
+<div align="right"><a href="#step-46-game-icon">see last revision</a></div>
 
 ## Step 1. Create the Repository
 
@@ -1164,7 +1164,7 @@ Final release status: automated graphics and gameplay gates pass; production art
 - [x] Created `src/` and moved the importable source packages under it: `application/`, `domain/`, `infrastructure/`, and `presentation/`.
 - [x] Kept `main.py` and `build.py` at the workspace root as thin entry/build points.
 - [x] Added root/bootstrap path handling so `main.py`, tests, tools, PyInstaller, and the Pygbag wrapper can import packages from `src/`.
-- [x] Renamed `resources/` to `assets/` and preserved all playable theme folders under `assets/<theme>/`.
+- [x] Renamed `resources/` to `assets/` and preserved all playable theme folders under `assets/themes/<theme>/`.
 - [x] Moved `maps/1_mini_map_default.txt` to `assets/maps/1_mini_map_default.txt`.
 - [x] Moved `content/levels/1_mini_map_default.json` to `assets/levels/1_mini_map_default.json`.
 - [x] Updated map loading and spawn-config loading to read from `assets/maps/` and `assets/levels/`.
@@ -1209,3 +1209,49 @@ Validation completed:
 - [x] Active stale-reference sweep passed for removed root paths.
 - [x] Workspace diagnostics reported no errors.
 - [x] `git diff --check` passed; Git only warned that `build.py` line endings may normalize from LF to CRLF next time Git touches it.
+
+## Step 45. Theme Assets Folder
+
+### Prompt
+
+> Move `candy_kingdom`, `default`, `graveyard`, `hunting`, and `space` into a new sub-folder called `themes`. Update source code to reflect the change.
+
+### Output
+
+- [x] Moved all five playable themes into `assets/themes/`.
+- [x] Kept shared map and level content in `assets/maps/` and `assets/levels/`.
+- [x] Added a dedicated `THEME_DIR` setting and updated theme resource resolution.
+- [x] Updated theme generation, pixel-asset generation, and theme-audit tooling to use `assets/themes/`.
+- [x] Updated asset-path tests and project documentation for the new layout.
+
+Validation completed:
+
+- [x] Full Python compilation passed.
+- [x] Full regression suite passed with 36 tests.
+- [x] `tools/generate_themes.ps1 -ValidateOnly` passed.
+- [x] `tools/audit_themes.py --check` passed against `assets/themes/`.
+- [x] `build.py --web` completed successfully and staged all five themes.
+- [x] No stale direct `assets/<theme>` references remain.
+- [x] Workspace diagnostics and `git diff --check` passed.
+
+## Step 46. Game Icon
+
+### Prompt
+
+> Change game icon from pygame default to something that looks like doom guy.
+
+### Output
+
+- [x] Added an original 64x64 pixel-art marine face at `assets/icon.png`.
+- [x] Applied the custom icon to desktop Pygame windows.
+- [x] Applied the custom icon to the browser Pygame display.
+- [x] Replaced the generated browser favicon with the same project-owned icon.
+- [x] Added a regression test for Pygame icon application.
+
+Validation completed:
+
+- [x] Focused icon regression test passed.
+- [x] Full regression suite passed with 37 tests.
+- [x] Browser build completed successfully.
+- [x] Web output contains `favicon.png` and references it from `index.html`.
+- [x] Touched-file diagnostics and `git diff --check` passed.

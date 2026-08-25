@@ -3,6 +3,7 @@ from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parents[2]
 RESOURCE_DIR = BASE_DIR / 'assets'
+THEME_DIR = RESOURCE_DIR / 'themes'
 
 # game settings
 RES = WIDTH, HEIGHT = 1600, 900
