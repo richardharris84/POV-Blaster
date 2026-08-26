@@ -691,6 +691,56 @@ class WebStartupBrowserInputTests(unittest.TestCase):
         self.assertEqual(FakeBrowserNameInput.instances[0].focus_calls, 1)
         self.assertEqual(FakeBrowserNameInput.instances[0].deactivate_calls, 1)
 
+    def test_web_startup_textinput_falls_back_when_browser_input_is_unfocused(self):
+        pg.init()
+        pg.display.set_mode((1600, 900))
+
+        class FakeBrowserNameInput:
+            instances = []
+
+            def __init__(self, on_change):
+                self.on_change = on_change
+                self.element = SimpleNamespace(value='', setSelectionRange=lambda *_args: None)
+                self.document = SimpleNamespace(activeElement=None)
+                self.current_value = ''
+                self.set_value_calls = []
+                FakeBrowserNameInput.instances.append(self)
+
+            def focus(self):
+                pass
+
+            def sync_bounds(self):
+                pass
+
+            def activate(self):
+                pass
+
+            def deactivate(self):
+                pass
+
+            def set_value(self, value):
+                self.set_value_calls.append(value)
+                self.current_value = value
+                self.element.value = value
+
+            def value(self):
+                return self.current_value
+
+            def close(self):
+                self.element = None
+
+        try:
+            pg.event.post(pg.event.Event(pg.TEXTINPUT, text='A'))
+            pg.event.post(pg.event.Event(pg.KEYDOWN, key=pg.K_RETURN))
+            pg.event.post(pg.event.Event(pg.KEYDOWN, key=pg.K_RETURN))
+            with patch.object(web_startup, '_BrowserNameInput', FakeBrowserNameInput):
+                player_name, _selected_theme = asyncio.run(choose_startup())
+        finally:
+            pg.quit()
+
+        self.assertEqual(player_name, 'A')
+        self.assertEqual(FakeBrowserNameInput.instances[0].set_value_calls, ['A'])
+
 
 class AssetIntegrityTests(unittest.TestCase):
     def test_every_theme_loads_without_falling_back_to_a_placeholder(self):

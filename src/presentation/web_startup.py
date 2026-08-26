@@ -73,11 +73,13 @@ class _BrowserNameInput:
     def __init__(self, on_change):
         self.element = None
         self.window = None
+        self.document = None
         if sys.platform != "emscripten":
             return
         try:
             self.window = platform.window
             document = platform.document
+            self.document = document
             element = document.createElement("input")
             element.type = "text"
             element.maxLength = 24
@@ -161,6 +163,18 @@ def _browser_event_target(event, browser_name_input):
     return target if target is not None else browser_name_input.element
 
 
+def _browser_input_is_focused(browser_name_input):
+    if browser_name_input is None or browser_name_input.element is None:
+        return False
+    document = getattr(browser_name_input, "document", None)
+    if document is None:
+        return False
+    try:
+        return document.activeElement is browser_name_input.element
+    except (AttributeError, TypeError):
+        return False
+
+
 async def choose_startup():
     """Return the selected (player name, theme), or None when Escape is pressed."""
     surface = pg.display.get_surface()
@@ -232,8 +246,9 @@ async def choose_startup():
                             selected_theme = (selected_theme + 1) % len(theme_menu_items())
                         elif event.key in (pg.K_RETURN, pg.K_KP_ENTER):
                             return player_name.strip(), theme_menu_items()[selected_theme][1]
-                elif event.type == pg.TEXTINPUT and browser_name_input.element is None and phase == "name" and focused:
-                    if len(player_name) < 24:
+                elif event.type == pg.TEXTINPUT and phase == "name" and focused:
+                    browser_input_focused = _browser_input_is_focused(browser_name_input)
+                    if (browser_name_input.element is None or not browser_input_focused) and len(player_name) < 24:
                         player_name += event.text
                         if browser_name_input is not None:
                             browser_name_input.set_value(player_name)
