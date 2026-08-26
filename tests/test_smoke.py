@@ -315,12 +315,18 @@ class ThemeSelectionTests(unittest.TestCase):
         pg.init()
         pg.display.set_mode((1600, 900))
 
+        class FakeElement:
+            @property
+            def value(self):
+                raise AttributeError
+
         class FakeBrowserNameInput:
             instances = []
 
             def __init__(self, on_change):
                 self.on_change = on_change
-                self.element = SimpleNamespace(value='ABCDEFGHIJKLMNOPQRSTUVWXYZ')
+                self.current_value = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+                self.element = FakeElement()
                 self.set_value_calls = []
                 FakeBrowserNameInput.instances.append(self)
 
@@ -329,10 +335,10 @@ class ThemeSelectionTests(unittest.TestCase):
 
             def set_value(self, value):
                 self.set_value_calls.append(value)
-                self.element.value = value
+                self.current_value = value
 
             def value(self):
-                return self.element.value
+                return self.current_value
 
             def deactivate(self):
                 self.close()
