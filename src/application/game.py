@@ -221,6 +221,8 @@ class Game:
 
     def close(self):
         self.record_score()
+        if not getattr(self, 'browser_mode', False):
+            self.high_scores.display()
         pg.event.set_grab(False)
         pg.mouse.set_visible(True)
         self.sound.stop_theme()
