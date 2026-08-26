@@ -140,6 +140,8 @@ class _BrowserNameInput:
 
 
 def _browser_event_target(event, browser_name_input):
+    if browser_name_input is None:
+        return None
     try:
         target = event.target
     except (AttributeError, TypeError):
@@ -162,16 +164,19 @@ async def choose_startup():
     error = ""
     focused = True
     browser_name_input = None
+    browser_name_input_holder = {"input": None}
 
     def browser_name_changed(event):
         nonlocal player_name
-        target = _browser_event_target(event, browser_name_input)
+        current_browser_name_input = browser_name_input_holder["input"]
+        target = _browser_event_target(event, current_browser_name_input)
         try:
             value = str(target.value)
         except (AttributeError, TypeError):
-            value = browser_name_input.value()
+            value = "" if current_browser_name_input is None else current_browser_name_input.value()
         player_name = value[:24]
-        browser_name_input.set_value(player_name)
+        if current_browser_name_input is not None:
+            current_browser_name_input.set_value(player_name)
         # Defensive: force the caret to stay at the end so a stray reset
         # cannot cause subsequent keystrokes to insert at the start again.
         try:
@@ -181,6 +186,7 @@ async def choose_startup():
             pass
 
     browser_name_input = _BrowserNameInput(browser_name_changed)
+    browser_name_input_holder["input"] = browser_name_input
     pg.key.start_text_input()
 
     def advance_to_theme():

@@ -348,7 +348,8 @@ class ThemeSelectionTests(unittest.TestCase):
             pg.quit()
 
         browser_input = FakeBrowserNameInput.instances[0]
-        self.assertEqual(browser_input.set_value_calls, ['ABCDEFGHIJKLMNOPQRSTUVWX'])
+        self.assertEqual(len(browser_input.set_value_calls), 1)
+        self.assertEqual(browser_input.set_value_calls[0], 'ABCDEFGHIJKLMNOPQRSTUVWX')
 
     def test_player_name_is_requested_before_theme_selection(self):
         choices = iter(['', 'Alice'])
