@@ -1,6 +1,6 @@
 # POV-Blaster: Codebase Reconstruction Guide (Updated)
 
-**Current snapshot:** 2026-08-25; reflects `main` through the current browser/mobile input work.
+**Current snapshot:** 2026-08-26; reflects `main` through the current browser/mobile input work.
 
 > This document reflects the **current** state of the project, which has evolved substantially since the original `docs/CodeBase.md`: the code is now organized under `src/` into layered `application/`, `domain/`, `infrastructure/`, and `presentation/` packages, themes select entire enemy/asset sets, maps live in plain-text files under `assets/maps/`, and the game ships as native desktop executables (Windows/Linux/macOS via PyInstaller) **and** as a browser build (via Pygbag/WASM) deployed automatically to GitHub Pages.
 
@@ -20,6 +20,47 @@ POV-Blaster is a first-person shooter written in Python with Pygame. It recreate
 For the quality, architecture, deployment, and remaining-risk review, see [CodeAudit.md](CodeAudit.md). For the step-by-step implementation record, see [CHANGELOG.md](../CHANGELOG.md).
 
 This document explains the current implementation, then gives a practical, ordered plan for recreating it from scratch. It assumes the reader knows basic Python but is new to Pygame, layered architecture, and building for the browser.
+
+## 1a. Quick Orientation (New Contributor Checklist)
+
+The sections below go deep. If you just want to know where to start reading, use this table first, then follow the numbered checklist.
+
+### Primary Languages and Frameworks
+
+| Concern | Technology |
+|---|---|
+| Game engine | Python 3 + `pygame` 2.6.1 |
+| Web build | `pygbag` 0.9.3 (Pygame → WASM) |
+| Score API | `fastapi` 0.116.1 + `uvicorn` |
+| API database | SQLite (local/test) or Neon Postgres (`psycopg`) |
+| Desktop packaging | `pyinstaller` 6.22.2 |
+| Asset tools | `Pillow`, `numpy`, `opencv-python`, `scikit-image` |
+| Tests | `pytest` + `httpx` |
+
+### Key Entry Points
+
+| File | Purpose |
+|---|---|
+| `main.py` | **Desktop entry point**: prompts for player name and theme, runs `Game(...).run()` in a loop; also detects Emscripten/WASM and delegates to the browser path |
+| `src/application/web_main.py` | **Browser entry point** — async game loop invoked by the Pygbag-generated WASM `main.py` |
+| `src/application/game.py` | **`Game` class** — the heart of everything: Pygame lifecycle, frame loop, state transitions, score recording |
+| `src/application/ports.py` | **Interfaces/Protocols** — defines the contracts (`GameContext`, `Renderer`, `AudioOutput`, …) between layers |
+| `src/application/theme.py` | **Theme registry** — five playable themes; CLI selection logic |
+| `src/application/raycasting.py` | **Core rendering algorithm** — DDA raycaster, wall-column projection |
+| `src/infrastructure/settings.py` | **All constants** — resolution, FOV, ray count, player speeds, file paths |
+| `api/main.py` | **FastAPI score/session service** — `GET/POST /scores`, `GET/POST /sessions`, dual SQLite/Postgres backend |
+| `build.py` | **Build & deploy CLI** — `-w/-l/-m` (PyInstaller executables), `-b` (Pygbag web build), `-d` (GitHub Pages deploy) |
+
+### Suggested Reading Order
+
+1. Read **Section 1** (what the game is) and **Section 3** (repository layout) to build a mental map.
+2. Open **`src/application/game.py`** — understand the `Game` class, its `new_game()` wiring, and the `run()` frame loop.
+3. Skim **`src/infrastructure/settings.py`** — all magic numbers live here; change resolution, FOV, or speeds here.
+4. Read **`src/application/ports.py`** — the `Protocol` interfaces define every subsystem boundary.
+5. Read **`src/application/theme.py`** — to add or modify a theme, this is the only file that needs changing.
+6. Read **`src/application/raycasting.py`** — the DDA raycaster feeds every wall column rendered each frame.
+7. Browse **`api/main.py`** — the entire REST API (routes, DB init, geolocation) is self-contained here.
+8. Run `pytest` from the repository root to confirm your environment is clean before making changes.
 
 ## 2. Prerequisites
 
