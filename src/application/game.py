@@ -212,7 +212,11 @@ class Game:
                 if self.mouse_active:
                     self.player.add_mouse_motion(event.rel[0])
             if self.game_state.name == 'playing':
-                self.player.single_fire_event(event)
+                if not (
+                    self.mobile_controls_enabled
+                    and event.type in (pg.MOUSEBUTTONDOWN, pg.MOUSEBUTTONUP)
+                ):
+                    self.player.single_fire_event(event)
         return False
 
     def close(self):

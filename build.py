@@ -195,6 +195,12 @@ def apply_web_html_patches(html):
     )
     html = _require_replace(
         html,
+        'platform.document.body.style.background = "#7f7f7f"',
+        'platform.document.body.style.background = "#000000"',
+        'set the runtime page background to black',
+    )
+    html = _require_replace(
+        html,
         'body {\n            font-family: arial;\n            margin: 0;\n            padding: none;',
         'html {\n            width: 100%;\n            height: 100%;\n        }\n\n'
         '        body {\n            font-family: arial;\n            margin: 0;\n            padding: none;\n'

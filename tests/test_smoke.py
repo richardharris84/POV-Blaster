@@ -250,11 +250,11 @@ class ThemeSelectionTests(unittest.TestCase):
             pg.event.post(pg.event.Event(pg.KEYDOWN, key=pg.K_RETURN))
             player_name, selected_theme = asyncio.run(choose_startup())
             self.assertEqual(player_name, 'Alice')
-            self.assertEqual(selected_theme, THEMES[0])
+            self.assertEqual(selected_theme, THEMES[3])
         finally:
             pg.quit()
 
-    def test_web_startup_defaults_theme_to_doom_and_requires_confirmation(self):
+    def test_web_startup_defaults_theme_to_hunting_and_requires_confirmation(self):
         pg.init()
         pg.display.set_mode((1600, 900))
         try:
@@ -263,7 +263,7 @@ class ThemeSelectionTests(unittest.TestCase):
             pg.event.post(pg.event.Event(pg.KEYDOWN, key=pg.K_RETURN))
             player_name, selected_theme = asyncio.run(choose_startup())
             self.assertEqual(player_name, 'Alice')
-            self.assertEqual(selected_theme, THEMES[-1])
+            self.assertEqual(selected_theme, THEMES[2])
         finally:
             pg.quit()
 
@@ -279,11 +279,11 @@ class ThemeSelectionTests(unittest.TestCase):
 
             player_name, selected_theme = asyncio.run(choose_startup())
             self.assertEqual(player_name, 'Alice')
-            self.assertEqual(selected_theme, THEMES[-1])
+            self.assertEqual(selected_theme, THEMES[4])
         finally:
             pg.quit()
 
-    def test_theme_order_has_hunting_before_graveyard_and_doom_is_default(self):
+    def test_theme_order_has_hunting_before_graveyard_and_doom_last(self):
         self.assertEqual(THEMES[2].key, 'hunting')
         self.assertEqual(THEMES[3].key, 'graveyard')
         self.assertEqual(THEMES[4].key, 'default')
@@ -473,6 +473,7 @@ class WebHtmlPatchTests(unittest.TestCase):
         from build import apply_web_html_patches
 
         html = (
+            '    platform.document.body.style.background = "#7f7f7f"\n'
             '<style>\n'
             '        #infobox {\n'
             '            position: fixed; /* center relative to viewport */\n'
@@ -498,6 +499,7 @@ class WebHtmlPatchTests(unittest.TestCase):
         self.assertIn('background: black;', patched)
         self.assertIn('color: white;', patched)
         self.assertIn('background-color: #000000;', patched)
+        self.assertIn('platform.document.body.style.background = "#000000"', patched)
         self.assertIn('object-fit: fill;', patched)
         self.assertIn('html {\n            width: 100%;\n            height: 100%;\n        }', patched)
 

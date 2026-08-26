@@ -121,7 +121,10 @@ async def choose_startup():
         surface = pg.display.set_mode((WIDTH, HEIGHT))
     clock = pg.time.Clock()
     player_name = ""
-    selected_theme = len(theme_menu_items()) - 1
+    selected_theme = next(
+        index for index, (_, theme) in enumerate(theme_menu_items())
+        if theme.key == 'hunting'
+    )
     phase = "name"
     error = ""
     focused = True
