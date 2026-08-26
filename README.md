@@ -4,6 +4,12 @@ POV-Blaster is a Python and Pygame first-person shooter built with a classic ray
 
 The game uses a 2D grid map to produce a pseudo-3D view. It supports textured walls, animated scenery, mouse-look, WASD movement, a shotgun, enemy line of sight, BFS pathfinding, health, damage, victory, and game-over states.
 
+<p align="center">
+  <a href="https://richardharris84.github.io/POV-Blaster/">
+    <span style="display:inline-block; width:170px; height:38px; box-sizing:border-box; background:#ffffff; color:#000000; border:2px solid #000000; border-radius:10px; font-family:'Arial Black','Trebuchet MS',sans-serif; font-size:20px; font-weight:900; letter-spacing:0.14em; line-height:33px; text-align:center; text-decoration:none;">PLAY</span>
+  </a>
+</p>
+
 ## Controls
 
 - `W`, `A`, `S`, `D`: move
@@ -15,13 +21,19 @@ The game uses a 2D grid map to produce a pseudo-3D view. It supports textured wa
 
 <p align="center">
   <a href="https://richardharris84.github.io/POV-Blaster/">
-    <span style="display:inline-block; width:208px; height:45px; box-sizing:border-box; background:#ffffff; color:#000000; border:3px solid #000000; border-radius:12px; font-family:'Arial Black','Trebuchet MS',sans-serif; font-size:25px; font-weight:900; letter-spacing:0.14em; line-height:39px; text-align:center; text-decoration:none;">PLAY</span>
+    <span style="display:inline-block; width:170px; height:38px; box-sizing:border-box; background:#ffffff; color:#000000; border:2px solid #000000; border-radius:10px; font-family:'Arial Black','Trebuchet MS',sans-serif; font-size:20px; font-weight:900; letter-spacing:0.14em; line-height:33px; text-align:center; text-decoration:none;">PLAY</span>
   </a>
 </p>
 
 <div style="height:24px;"></div>
 
 ![POV-Blaster gameplay](screenshots/gameplay_1.gif)
+
+<p align="center">
+  <a href="https://richardharris84.github.io/POV-Blaster/">
+    <span style="display:inline-block; width:170px; height:38px; box-sizing:border-box; background:#ffffff; color:#000000; border:2px solid #000000; border-radius:10px; font-family:'Arial Black','Trebuchet MS',sans-serif; font-size:20px; font-weight:900; letter-spacing:0.14em; line-height:33px; text-align:center; text-decoration:none;">PLAY</span>
+  </a>
+</p>
 
 ## Table of Contents
 
@@ -43,6 +55,7 @@ The game uses a 2D grid map to produce a pseudo-3D view. It supports textured wa
 - [How the Game Works](#how-the-game-works)
 - [Development Walkthrough](#development-walkthrough)
 - [Assets](#assets)
+- [Testing](#testing)
 - [Development Notes](#development-notes)
 - [Project Lineage](#project-lineage)
 
@@ -474,6 +487,41 @@ assets/
 ```
 
 Keep asset paths relative to the project asset root. Mutable runtime data belongs in `data/`, not under `assets/`.
+
+<div align="right"><a href="#table-of-contents">^ TOC</a></div>
+
+## Testing
+
+The `tests/` directory holds the project's automated test suite, run with Python's built-in `unittest` runner (invoked through `pytest` in CI and locally):
+
+```powershell
+py -m pytest tests -q
+```
+
+- `tests/test_smoke.py` — the primary regression suite; around 40 fast, headless tests covering the domain rules, application/presentation layers, the build script, and asset integrity.
+- `tests/test_api.py` — FastAPI endpoint tests for `api/main.py`, using `TestClient` against a temporary SQLite database.
+- `tests/test_integration.py` — exercises `BrowserHighScores` against a mocked scores API to confirm the browser leaderboard talks to the API correctly.
+
+### How `test_smoke.py` works
+
+The module sets `SDL_VIDEODRIVER=dummy` and `SDL_AUDIODRIVER=dummy` before importing Pygame, so the entire suite runs headlessly with no real display or audio device — this is what makes it safe to run in GitHub Actions. It then inserts `src/` onto `sys.path` so it can import the game's packages the same way the frozen executables and the browser build do.
+
+Tests are grouped into focused `unittest.TestCase` classes, each targeting one concern:
+
+- `BuildScriptTests` — validates the `build.py` CLI, including the `-d` (deploy) and `-b -d` (browser build + deploy) flag combinations.
+- `HealthTests`, `GameStateTests`, `CombatTests`, `MovementTests` — cover the pure `src/domain/` rules (damage/recovery clamping, win/game-over countdown timers, hit chance and defeat, diagonal movement normalization) with no Pygame dependency.
+- `MapAssetTests` — confirms the default plain-text map loads with the expected dimensions and that an unknown map name falls back to the default map.
+- `TouchControllerTests` — drives synthetic `FINGERDOWN`/`FINGERMOTION`/`FINGERUP` events through `TouchController` to verify the left/right virtual joysticks stay isolated and that only a tap on the right joystick queues a shot.
+- `DomainBoundaryTests` — parses every module under `src/domain/` with `ast` and asserts none of them import `pygame`, `infrastructure`, or `presentation`, enforcing the project's layered architecture at test time.
+- `AssetCacheTests` and `WindowIconTests` — confirm `AssetLoader` caches repeated image loads and that the custom window/browser icon is applied.
+- `HighScoreTests` — exercises the local SQLite-backed `HighScores` (top-ten trimming) and the in-memory `BrowserHighScores` fallback used on desktop.
+- `ThemeSelectionTests` — covers the shared name/theme validation rules used by both the console and web startup flows, including profanity rejection, the default theme, and the web startup menu's keyboard and touch interactions (driven with `asyncio.run(choose_startup())` and synthetic Pygame events).
+- `HeadlessSmokeTests` — runs an actual `Game` instance through several frames with `run_async()` in headless mode to confirm the async game loop starts, updates, and exits correctly.
+- `NpcSystemsTests` — covers NPC line-of-sight detection, combat damage resolution, kill counting, and pain-animation state transitions.
+- `WebHtmlPatchTests` — confirms `build.py`'s HTML patching helpers apply correctly to a representative Pygbag template and raise loudly if the expected markup is missing.
+- `AssetIntegrityTests` — regression tests that every theme's assets and sounds load without silently falling back to a placeholder, and that specific known art-glitch fixes stay fixed.
+
+Because the suite exercises real game and application code paths rather than mocking them out, a passing run is a strong signal that the desktop, web, and build tooling all still work together after a change.
 
 <div align="right"><a href="#table-of-contents">^ TOC</a></div>
 

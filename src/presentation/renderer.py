@@ -56,9 +56,9 @@ class ObjectRenderer:
 
         map_w = len(map_grid[0])
         map_h = len(map_grid)
-        panel_size = 170
+        panel_size = 340
         margin = 12
-        cell = max(4, min((panel_size / max(map_w, map_h)), 12))
+        cell = max(4, min((panel_size / max(map_w, map_h)), 24))
         panel_w = max(4, cell * map_w)
         panel_h = max(4, cell * map_h)
         minimap = pg.Surface((panel_w + 2, panel_h + 2), pg.SRCALPHA)

@@ -250,7 +250,20 @@ class ThemeSelectionTests(unittest.TestCase):
             pg.event.post(pg.event.Event(pg.KEYDOWN, key=pg.K_RETURN))
             player_name, selected_theme = asyncio.run(choose_startup())
             self.assertEqual(player_name, 'Alice')
-            self.assertEqual(selected_theme, THEMES[1])
+            self.assertEqual(selected_theme, THEMES[0])
+        finally:
+            pg.quit()
+
+    def test_web_startup_defaults_theme_to_doom_and_requires_confirmation(self):
+        pg.init()
+        pg.display.set_mode((1600, 900))
+        try:
+            pg.event.post(pg.event.Event(pg.TEXTINPUT, text='Alice'))
+            pg.event.post(pg.event.Event(pg.KEYDOWN, key=pg.K_RETURN))
+            pg.event.post(pg.event.Event(pg.KEYDOWN, key=pg.K_RETURN))
+            player_name, selected_theme = asyncio.run(choose_startup())
+            self.assertEqual(player_name, 'Alice')
+            self.assertEqual(selected_theme, THEMES[-1])
         finally:
             pg.quit()
 

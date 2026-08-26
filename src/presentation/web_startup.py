@@ -82,8 +82,12 @@ class _BrowserNameInput:
             element.style.position = "fixed"
             element.style.left = "50%"
             element.style.top = "50%"
-            element.style.width = "1px"
-            element.style.height = "1px"
+            # A near-zero-size input breaks caret tracking on some mobile
+            # keyboards, which insert every keystroke at position 0 instead of
+            # the end (typing "Richard" renders as "drahcIR"). Give it real
+            # dimensions so the browser can compute the caret position correctly.
+            element.style.width = "280px"
+            element.style.height = "48px"
             element.style.opacity = "0.01"
             element.style.fontSize = "16px"
             element.style.zIndex = "2147483647"
@@ -117,7 +121,7 @@ async def choose_startup():
         surface = pg.display.set_mode((WIDTH, HEIGHT))
     clock = pg.time.Clock()
     player_name = ""
-    selected_theme = None
+    selected_theme = len(theme_menu_items()) - 1
     phase = "name"
     error = ""
     focused = True
@@ -127,6 +131,12 @@ async def choose_startup():
         nonlocal player_name
         value = str(event.target.value)
         player_name = value[:24]
+        # Defensive: force the caret to stay at the end so a stray reset
+        # cannot cause subsequent keystrokes to insert at the start again.
+        try:
+            event.target.setSelectionRange(len(player_name), len(player_name))
+        except Exception:
+            pass
 
     browser_name_input = _BrowserNameInput(browser_name_changed)
     pg.key.start_text_input()
@@ -139,7 +149,7 @@ async def choose_startup():
                     if event.key == pg.K_ESCAPE:
                         return None
                     if phase == "name":
-                        if event.key == pg.K_BACKSPACE and browser_name_input is None:
+                        if event.key == pg.K_BACKSPACE and browser_name_input.element is None:
                             player_name = player_name[:-1]
                         elif event.key in (pg.K_RETURN, pg.K_KP_ENTER):
                             error = validate_player_name(player_name) or ""
@@ -152,9 +162,9 @@ async def choose_startup():
                             selected_theme = (selected_theme - 1) % len(theme_menu_items())
                         elif event.key in (pg.K_DOWN, pg.K_s):
                             selected_theme = (selected_theme + 1) % len(theme_menu_items())
-                        elif event.key in (pg.K_RETURN, pg.K_KP_ENTER) and selected_theme is not None:
+                        elif event.key in (pg.K_RETURN, pg.K_KP_ENTER):
                             return player_name.strip(), theme_menu_items()[selected_theme][1]
-                elif event.type == pg.TEXTINPUT and browser_name_input is None and phase == "name" and focused:
+                elif event.type == pg.TEXTINPUT and browser_name_input.element is None and phase == "name" and focused:
                     if len(player_name) < 24:
                         player_name += event.text
                         if browser_name_input is not None:
@@ -183,7 +193,7 @@ async def choose_startup():
                             rect = pg.Rect(WIDTH // 2 - 300, 195 + index * 76, 600, 60)
                             if rect.collidepoint(pos):
                                 selected_theme = index
-                        if pg.Rect(WIDTH // 2 - 150, 635, 300, 58).collidepoint(pos) and selected_theme is not None:
+                        if pg.Rect(WIDTH // 2 - 150, 635, 300, 58).collidepoint(pos):
                             return player_name.strip(), theme_menu_items()[selected_theme][1]
 
             surface.fill(BACKGROUND)
@@ -208,7 +218,7 @@ async def choose_startup():
                 for index, (number, theme) in enumerate(theme_menu_items()):
                     rect = pg.Rect(WIDTH // 2 - 300, 195 + index * 76, 600, 60)
                     _button(surface, rect, f"{number}  {theme.label}", selected=index == selected_theme)
-                _button(surface, pg.Rect(WIDTH // 2 - 150, 635, 300, 58), "START GAME", selected=selected_theme is not None)
+                _button(surface, pg.Rect(WIDTH // 2 - 150, 635, 300, 58), "START GAME", selected=True)
                 _draw_centered(surface, "Mobile: left joystick moves  |  right joystick looks  |  tap right joystick to fire", _font(17), MUTED, 730)
                 _draw_centered(surface, "Enter selects  |  Esc exits", _font(17), MUTED, 765)
             _draw_footer(surface)
