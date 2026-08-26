@@ -637,7 +637,7 @@ class WebStartupBrowserInputTests(unittest.TestCase):
 
         browser_input = FakeBrowserNameInput.instances[0]
         browser_input.on_change(SimpleNamespace())
-        self.assertEqual(browser_input.set_value_calls, ['ABCDEFGHIJKLMNOPQRSTUVWX'])
+        self.assertEqual(browser_input.set_value_calls, ['ABCDEFGHIJKLMNOPQRSTUVWX', 'ABCDEFGHIJKLMNOPQRSTUVWX'])
 
     def test_web_startup_deactivates_browser_input_after_advancing_to_theme(self):
         pg.init()
