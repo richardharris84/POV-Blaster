@@ -71,8 +71,10 @@ The game uses a 2D grid map to produce a pseudo-3D view. It supports textured wa
 - A custom DDA raycasting renderer projects 2D grid maps into textured pseudo-3D views in real time. DDA (Digital Differential Analyzer) is a simple computer graphics algorithm used on square grids to find which squares (or pixels) a line passes through.
 - Layered domain, application, infrastructure, and presentation code keeps game rules separate from Pygame and platform adapters.
 - Browser play includes mobile dual-joystick controls, responsive startup prompts, and offline local high-score storage with optional API synchronization.
-- The project includes 51 automated tests covering domain rules, gameplay integration, assets, input, web behavior, and API endpoints.
+- The project includes 50+ automated tests covering domain rules, gameplay integration, assets, input, web behavior, and API endpoints.
 - Deterministic pixel-art tooling generates consistent theme textures, characters, animations, weapons, and UI assets.
+- Gameplay includes collision-aware movement, mouse-look, enemy line of sight, BFS pathfinding, combat, health recovery, victory, and game-over states.
+- The Web target uses a dedicated asynchronous Pygbag/WASM runtime and browser audio/high-score adapters while sharing the core game systems.
 
 ### Future Changes
 
