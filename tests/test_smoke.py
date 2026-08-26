@@ -3,6 +3,7 @@ import ast
 import asyncio
 import tempfile
 from collections import deque
+from types import SimpleNamespace
 import unittest
 from unittest.mock import patch
 from pathlib import Path
@@ -18,6 +19,7 @@ if str(SRC_DIR) not in sys.path:
 import pygame as pg
 
 import build
+import presentation.web_startup as web_startup
 from main import Game, choose_player_name
 from application.map import DEFAULT_MAP_NAME, load_map
 from application.theme import THEMES, choose_theme
@@ -510,6 +512,186 @@ class WebHtmlPatchTests(unittest.TestCase):
             apply_web_html_patches('<html><body>unexpected template</body></html>')
 
 
+class WebStartupBrowserInputTests(unittest.TestCase):
+    def test_browser_name_input_uses_name_field_overlay_bounds(self):
+        class FakeBody:
+            def __init__(self):
+                self.children = []
+
+            def appendChild(self, element):
+                self.children.append(element)
+
+        class FakeElement:
+            def __init__(self):
+                self.style = SimpleNamespace()
+                self.value = ''
+                self.listeners = {}
+                self.focus_calls = 0
+                self.blur_calls = 0
+                self.removed = False
+
+            def setAttribute(self, name, value):
+                setattr(self, name, value)
+
+            def addEventListener(self, name, callback):
+                self.listeners[name] = callback
+
+            def focus(self):
+                self.focus_calls += 1
+
+            def blur(self):
+                self.blur_calls += 1
+
+            def remove(self):
+                self.removed = True
+
+        class FakeDocument:
+            def __init__(self):
+                self.body = FakeBody()
+                self.element = FakeElement()
+
+            def createElement(self, tag):
+                self.created_tag = tag
+                return self.element
+
+        fake_document = FakeDocument()
+        fake_window = SimpleNamespace(innerWidth=800, innerHeight=450)
+
+        with patch.object(web_startup.sys, 'platform', 'emscripten'):
+            with patch.object(web_startup.platform, 'document', fake_document, create=True):
+                with patch.object(web_startup.platform, 'window', fake_window, create=True):
+                    browser_input = web_startup._BrowserNameInput(lambda event: None)
+
+        self.assertIs(browser_input.element, fake_document.element)
+        self.assertEqual(fake_document.created_tag, 'input')
+        self.assertEqual(fake_document.body.children, [fake_document.element])
+        self.assertEqual(browser_input.element.style.left, '250.00px')
+        self.assertEqual(browser_input.element.style.top, '125.00px')
+        self.assertEqual(browser_input.element.style.width, '300.00px')
+        self.assertEqual(browser_input.element.style.height, '32.00px')
+
+        browser_input.focus()
+        self.assertEqual(browser_input.element.style.display, 'block')
+        self.assertEqual(browser_input.element.style.pointerEvents, 'auto')
+        self.assertEqual(browser_input.element.focus_calls, 1)
+
+        browser_input.deactivate()
+        self.assertEqual(browser_input.element.style.display, 'none')
+        self.assertEqual(browser_input.element.style.pointerEvents, 'none')
+        self.assertEqual(browser_input.element.blur_calls, 1)
+
+        browser_input.close()
+        self.assertIsNone(browser_input.element)
+        self.assertTrue(fake_document.element.removed)
+
+    def test_web_startup_browser_input_falls_back_to_element_value_when_event_target_is_missing(self):
+        pg.init()
+        pg.display.set_mode((1600, 900))
+
+        class FakeElement:
+            @property
+            def value(self):
+                raise AttributeError
+
+            def setSelectionRange(self, *_args):
+                pass
+
+        class FakeBrowserNameInput:
+            instances = []
+
+            def __init__(self, on_change):
+                self.on_change = on_change
+                self.current_value = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+                self.element = FakeElement()
+                self.set_value_calls = []
+                FakeBrowserNameInput.instances.append(self)
+
+            def focus(self):
+                pass
+
+            def sync_bounds(self):
+                pass
+
+            def activate(self):
+                pass
+
+            def deactivate(self):
+                pass
+
+            def set_value(self, value):
+                self.set_value_calls.append(value)
+                self.current_value = value
+
+            def value(self):
+                return self.current_value
+
+            def close(self):
+                self.element = None
+
+        try:
+            pg.event.post(pg.event.Event(pg.QUIT))
+            with patch.object(web_startup, '_BrowserNameInput', FakeBrowserNameInput):
+                self.assertIsNone(asyncio.run(choose_startup()))
+        finally:
+            pg.quit()
+
+        browser_input = FakeBrowserNameInput.instances[0]
+        browser_input.on_change(SimpleNamespace())
+        self.assertEqual(browser_input.set_value_calls, ['ABCDEFGHIJKLMNOPQRSTUVWX'])
+
+    def test_web_startup_deactivates_browser_input_after_advancing_to_theme(self):
+        pg.init()
+        pg.display.set_mode((1600, 900))
+
+        class FakeBrowserNameInput:
+            instances = []
+
+            def __init__(self, on_change):
+                self.on_change = on_change
+                self.element = SimpleNamespace(
+                    value='Alice',
+                    setSelectionRange=lambda *_args: None,
+                )
+                self.deactivate_calls = 0
+                self.focus_calls = 0
+                FakeBrowserNameInput.instances.append(self)
+
+            def focus(self):
+                self.focus_calls += 1
+                if self.focus_calls == 1:
+                    self.on_change(SimpleNamespace(target=self.element))
+
+            def sync_bounds(self):
+                pass
+
+            def activate(self):
+                pass
+
+            def deactivate(self):
+                self.deactivate_calls += 1
+
+            def set_value(self, value):
+                self.element.value = value
+
+            def value(self):
+                return self.element.value
+
+            def close(self):
+                self.element = None
+
+        try:
+            pg.event.post(pg.event.Event(pg.KEYDOWN, key=pg.K_RETURN))
+            pg.event.post(pg.event.Event(pg.KEYDOWN, key=pg.K_RETURN))
+            with patch.object(web_startup, '_BrowserNameInput', FakeBrowserNameInput):
+                player_name, _selected_theme = asyncio.run(choose_startup())
+        finally:
+            pg.quit()
+
+        self.assertEqual(player_name, 'Alice')
+        self.assertEqual(FakeBrowserNameInput.instances[0].focus_calls, 1)
+        self.assertEqual(FakeBrowserNameInput.instances[0].deactivate_calls, 1)
+
+
 class AssetIntegrityTests(unittest.TestCase):
     def test_every_theme_loads_without_falling_back_to_a_placeholder(self):
         # regression test: assets/levels/*.json scenery paths must not duplicate the
@@ -597,4 +779,3 @@ class AssetIntegrityTests(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
-
