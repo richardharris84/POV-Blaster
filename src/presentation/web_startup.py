@@ -134,7 +134,7 @@ class _BrowserNameInput:
         if self.element is not None:
             try:
                 self.element.blur()
-            except Exception:
+            except (AttributeError, TypeError):
                 pass
             self.close()
 
@@ -175,11 +175,9 @@ async def choose_startup():
         if error:
             return
         phase = "theme"
-        if browser_name_input is not None:
-            browser_name_input.deactivate()
+        browser_name_input.deactivate()
 
-    if browser_name_input is not None:
-        browser_name_input.focus()
+    browser_name_input.focus()
     try:
         while True:
             for event in pg.event.get():
@@ -205,8 +203,7 @@ async def choose_startup():
                 elif event.type == pg.TEXTINPUT and browser_name_input.element is None and phase == "name" and focused:
                     if len(player_name) < 24:
                         player_name += event.text
-                        if browser_name_input is not None:
-                            browser_name_input.set_value(player_name)
+                        browser_name_input.set_value(player_name)
                 elif event.type in (pg.MOUSEBUTTONDOWN, pg.FINGERDOWN):
                     if event.type == pg.MOUSEBUTTONDOWN and event.button != 1:
                         continue
@@ -217,8 +214,7 @@ async def choose_startup():
                         if NAME_RECT.collidepoint(pos):
                             focused = True
                             pg.key.start_text_input()
-                            if browser_name_input is not None:
-                                browser_name_input.focus()
+                            browser_name_input.focus()
                         elif CONTINUE_RECT.collidepoint(pos):
                             advance_to_theme()
                         elif PRIVACY_RECT.collidepoint(pos):
@@ -261,5 +257,4 @@ async def choose_startup():
             await asyncio.sleep(0)
     finally:
         pg.key.stop_text_input()
-        if browser_name_input is not None:
-            browser_name_input.close()
+        browser_name_input.close()
