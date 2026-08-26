@@ -139,6 +139,14 @@ class _BrowserNameInput:
             self.close()
 
 
+def _browser_event_target(event, browser_name_input):
+    try:
+        target = event.target
+    except (AttributeError, TypeError):
+        target = None
+    return target if target is not None else browser_name_input.element
+
+
 async def choose_startup():
     """Return the selected (player name, theme), or None when Escape is pressed."""
     surface = pg.display.get_surface()
@@ -157,12 +165,18 @@ async def choose_startup():
 
     def browser_name_changed(event):
         nonlocal player_name
-        value = str(event.target.value)
+        target = _browser_event_target(event, browser_name_input)
+        try:
+            value = str(target.value)
+        except (AttributeError, TypeError):
+            value = browser_name_input.value()
         player_name = value[:24]
+        browser_name_input.set_value(player_name)
         # Defensive: force the caret to stay at the end so a stray reset
         # cannot cause subsequent keystrokes to insert at the start again.
         try:
-            event.target.setSelectionRange(len(player_name), len(player_name))
+            if target is not None:
+                target.setSelectionRange(len(player_name), len(player_name))
         except Exception:
             pass
 

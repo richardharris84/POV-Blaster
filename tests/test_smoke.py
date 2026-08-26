@@ -311,6 +311,47 @@ class ThemeSelectionTests(unittest.TestCase):
         self.assertEqual(FakeBrowserNameInput.instances[0].focus_calls, 1)
         self.assertEqual(FakeBrowserNameInput.instances[0].close_calls, 1)
 
+    def test_web_startup_browser_input_falls_back_to_element_value_when_event_target_is_missing(self):
+        pg.init()
+        pg.display.set_mode((1600, 900))
+
+        class FakeBrowserNameInput:
+            instances = []
+
+            def __init__(self, on_change):
+                self.on_change = on_change
+                self.element = SimpleNamespace(value='ABCDEFGHIJKLMNOPQRSTUVWXYZ')
+                self.set_value_calls = []
+                FakeBrowserNameInput.instances.append(self)
+
+            def focus(self):
+                pass
+
+            def set_value(self, value):
+                self.set_value_calls.append(value)
+                self.element.value = value
+
+            def value(self):
+                return self.element.value
+
+            def deactivate(self):
+                self.close()
+
+            def close(self):
+                self.element = None
+
+        try:
+            pg.event.post(pg.event.Event(pg.QUIT))
+            with patch.object(web_startup, '_BrowserNameInput', FakeBrowserNameInput):
+                self.assertIsNone(asyncio.run(choose_startup()))
+        finally:
+            pg.quit()
+
+        browser_input = FakeBrowserNameInput.instances[0]
+        browser_input.element = SimpleNamespace(value='ABCDEFGHIJKLMNOPQRSTUVWXYZ')
+        browser_input.on_change(SimpleNamespace())
+        self.assertEqual(browser_input.set_value_calls, ['ABCDEFGHIJKLMNOPQRSTUVWX'])
+
     def test_player_name_is_requested_before_theme_selection(self):
         choices = iter(['', 'Alice'])
 
