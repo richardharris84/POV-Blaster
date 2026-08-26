@@ -117,7 +117,7 @@ async def choose_startup():
         surface = pg.display.set_mode((WIDTH, HEIGHT))
     clock = pg.time.Clock()
     player_name = ""
-    selected_theme = 0
+    selected_theme = None
     phase = "name"
     error = ""
     focused = True
@@ -139,7 +139,7 @@ async def choose_startup():
                     if event.key == pg.K_ESCAPE:
                         return None
                     if phase == "name":
-                        if event.key == pg.K_BACKSPACE:
+                        if event.key == pg.K_BACKSPACE and browser_name_input is None:
                             player_name = player_name[:-1]
                         elif event.key in (pg.K_RETURN, pg.K_KP_ENTER):
                             error = validate_player_name(player_name) or ""
@@ -152,9 +152,9 @@ async def choose_startup():
                             selected_theme = (selected_theme - 1) % len(theme_menu_items())
                         elif event.key in (pg.K_DOWN, pg.K_s):
                             selected_theme = (selected_theme + 1) % len(theme_menu_items())
-                        elif event.key in (pg.K_RETURN, pg.K_KP_ENTER):
+                        elif event.key in (pg.K_RETURN, pg.K_KP_ENTER) and selected_theme is not None:
                             return player_name.strip(), theme_menu_items()[selected_theme][1]
-                elif event.type == pg.TEXTINPUT and phase == "name" and focused:
+                elif event.type == pg.TEXTINPUT and browser_name_input is None and phase == "name" and focused:
                     if len(player_name) < 24:
                         player_name += event.text
                         if browser_name_input is not None:
@@ -183,7 +183,8 @@ async def choose_startup():
                             rect = pg.Rect(WIDTH // 2 - 300, 195 + index * 76, 600, 60)
                             if rect.collidepoint(pos):
                                 selected_theme = index
-                                return player_name.strip(), theme
+                        if pg.Rect(WIDTH // 2 - 150, 635, 300, 58).collidepoint(pos) and selected_theme is not None:
+                            return player_name.strip(), theme_menu_items()[selected_theme][1]
 
             surface.fill(BACKGROUND)
             if phase == "name":
@@ -200,13 +201,16 @@ async def choose_startup():
                 _button(surface, pg.Rect(WIDTH // 2 - 150, 395, 300, 58), "CONTINUE", selected=True)
                 _draw_centered(surface, "Privacy Notice", _font(18, bold=True), ACCENT, 490)
                 _draw_centered(surface, "Enter to continue  |  Esc to exit", _font(17), MUTED, 555)
+                _draw_centered(surface, "Mobile controls: left joystick moves  |  right joystick looks  |  tap right joystick to fire", _font(17), MUTED, 610)
             else:
                 _draw_centered(surface, f"WELCOME, {player_name.upper()}", _font(27, bold=True), TEXT, 105)
                 _draw_centered(surface, "CHOOSE YOUR THEME", _font(22, bold=True), MUTED, 150)
                 for index, (number, theme) in enumerate(theme_menu_items()):
                     rect = pg.Rect(WIDTH // 2 - 300, 195 + index * 76, 600, 60)
                     _button(surface, rect, f"{number}  {theme.label}", selected=index == selected_theme)
-                _draw_centered(surface, "Game controls: W/A/S/D move  |  Mouse look  |  Left click fire  |  Caps Lock toggles mini-map  |  Esc exit", _font(17), MUTED, 650)
+                _button(surface, pg.Rect(WIDTH // 2 - 150, 635, 300, 58), "START GAME", selected=selected_theme is not None)
+                _draw_centered(surface, "Mobile: left joystick moves  |  right joystick looks  |  tap right joystick to fire", _font(17), MUTED, 730)
+                _draw_centered(surface, "Enter selects  |  Esc exits", _font(17), MUTED, 765)
             _draw_footer(surface)
             pg.display.flip()
             clock.tick(60)

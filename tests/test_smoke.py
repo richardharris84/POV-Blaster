@@ -246,10 +246,11 @@ class ThemeSelectionTests(unittest.TestCase):
         try:
             pg.event.post(pg.event.Event(pg.TEXTINPUT, text='Alice'))
             pg.event.post(pg.event.Event(pg.KEYDOWN, key=pg.K_RETURN))
+            pg.event.post(pg.event.Event(pg.KEYDOWN, key=pg.K_DOWN))
             pg.event.post(pg.event.Event(pg.KEYDOWN, key=pg.K_RETURN))
             player_name, selected_theme = asyncio.run(choose_startup())
             self.assertEqual(player_name, 'Alice')
-            self.assertEqual(selected_theme, THEMES[0])
+            self.assertEqual(selected_theme, THEMES[1])
         finally:
             pg.quit()
 
@@ -261,6 +262,7 @@ class ThemeSelectionTests(unittest.TestCase):
             pg.event.post(pg.event.Event(pg.TEXTINPUT, text='Alice'))
             pg.event.post(pg.event.Event(pg.FINGERDOWN, finger_id=2, x=0.5, y=(395 + 29) / 900, dx=0.0, dy=0.0, touch_id=0))
             pg.event.post(pg.event.Event(pg.FINGERDOWN, finger_id=3, x=0.5, y=(195 + (4 * 76) + 30) / 900, dx=0.0, dy=0.0, touch_id=0))
+            pg.event.post(pg.event.Event(pg.FINGERDOWN, finger_id=4, x=0.5, y=(635 + 29) / 900, dx=0.0, dy=0.0, touch_id=0))
 
             player_name, selected_theme = asyncio.run(choose_startup())
             self.assertEqual(player_name, 'Alice')

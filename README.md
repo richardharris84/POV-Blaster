@@ -25,7 +25,7 @@ The game uses a 2D grid map to produce a pseudo-3D view. It supports textured wa
 
 ## Table of Contents
 
-- [See Also](#see-also)
+- [Additional Documentation](#additional-documentation)
 - [Controls](#controls)
 - [Requirements](#requirements)
 - [Running the Script](#running-the-script)
@@ -46,6 +46,18 @@ The game uses a 2D grid map to produce a pseudo-3D view. It supports textured wa
 - [Development Notes](#development-notes)
 - [Project Lineage](#project-lineage)
 
+## Additional Documentation
+
+- [ArchDiagrams.md](docs/ArchDiagrams.md): Mermaid architecture, runtime, API, and deployment diagrams
+- [CHANGELOG.md](CHANGELOG.md): project history and prior development prompts
+- [CodeAudit.md](docs/CodeAudit.md): architecture, quality, performance, and scalability audit
+- [CodeBase.md](docs/CodeBase.md): up-to-date reconstruction guide and codebase walkthrough (the original, now superseded, walkthrough is archived at [docs/archive/CodeBase-Orig.md](docs/archive/CodeBase-Orig.md))
+- [GraphicsRollback.md](docs/GraphicsRollback.md): graphics rollback and asset history
+- [docs/archive/CodeBase-Orig.md](docs/archive/CodeBase-Orig.md): archived pre-refactor codebase walkthrough
+- [docs/archive/Recommendations.md](docs/archive/Recommendations.md): archived architecture recommendations
+- [docs/archive/CloneCompare.md](docs/archive/CloneCompare.md): comparison of the related game projects and first-patch recommendations
+- [docs/archive/POCFeatures.md](docs/archive/POCFeatures.md): archived proof-of-concept feature record
+
 ## Hosted API and Database
 
 The desktop build keeps a local SQLite leaderboard at `data/scores.sqlite3`. The browser build uses localStorage for immediate offline play and submits scores in the background to the optional FastAPI service. The browser also records a web session when a player starts a game.
@@ -58,43 +70,9 @@ The FastAPI application in `api/main.py` exposes:
 - `GET /sessions`: lists recorded web sessions.
 - `POST /sessions`: records a player name, request IP, UTC timestamp, and best-effort city/country lookup.
 
-Production uses Neon Postgres through the `DATABASE_URL` environment variable. The API creates the `scores` and `web_sessions` tables on startup and uses Psycopg for Postgres connections. Raw IP addresses are not stored with score records; session records retain the request IP for session analytics. Local development and tests use SQLite automatically when `DATABASE_URL` is absent. `HighScores.sync(api_url, direction='push')` uploads the local SQLite leaderboard to the API, while `direction='pull'` replaces the local leaderboard with the remote scores. The browser name-entry screen links to [privacy.html](privacy.html), which explains the location data use and deletion request process.
+Production uses [Neon Postgres](https://console.neon.tech/) through the `DATABASE_URL` environment variable. The API creates the `scores` and `web_sessions` tables on startup and uses Psycopg for Postgres connections. Raw IP addresses are not stored with score records; session records retain the request IP for session analytics. Local development and tests use SQLite automatically when `DATABASE_URL` is absent. `HighScores.sync(api_url, direction='push')` uploads the local SQLite leaderboard to the API, while `direction='pull'` replaces the local leaderboard with the remote scores. The browser name-entry screen links to [privacy.html](privacy.html), which explains the location data use and deletion request process.
 
-Render hosts the `pov-blaster-api` Free web service. Its [api/render.yaml](api/render.yaml) Blueprint uses `requirements-api.txt`, which deliberately excludes Pygame and other desktop/web build dependencies, and starts the service with Uvicorn.
-
-## See Also
-
-- [CHANGELOG.md](CHANGELOG.md): project history and prior development prompts
-- [CodeAudit.md](docs/CodeAudit.md): architecture, quality, performance, and scalability audit
-- [CodeBase.md](docs/CodeBase.md): up-to-date reconstruction guide and codebase walkthrough (the original, now superseded, walkthrough is archived at [docs/archive/CodeBase-Orig.md](docs/archive/CodeBase-Orig.md))
-- [docs/archive/CloneCompare.md](docs/archive/CloneCompare.md): comparison of the related game projects and first-patch recommendations
-
-## Development History
-
-See [CHANGELOG.md](CHANGELOG.md) for the complete step-by-step history and full commit ledger. The raw history is available with `git log --all --oneline`.
-- `c279441` On main: WIP graphics upgrades before rollback
-- `8c684eb` index on main: cf45b24 Windows Mouse Fix
-- `c20bd6c` untracked files on main: cf45b24 Windows Mouse Fix
-- `cf45b24` Windows Mouse Fix
-- `64236e7` Linux Mouse Fix
-- `c511d29` Linux Mouse Fix
-- `d43bd63` Executable
-- `d572666` README.md
-- `ced6769` README.md
-- `4c42d48` Step 5. Organize Docs
-- `692c22c` Step 1. Create the Repository
-- `07b2ce3` path_finding cache
-- `9bb82ca` screenshot
-- `d590043` mouse fix
-- `81ada4f` fast diagjnal movement fix
-- `99bd8ea` Update sound.py
-- `a5b7c8e` gif
-- `3a90bda` DOOM raycasting version
-- `a1a4acc` Initial commit
-
-### AI:
-
-- N/A
+[Render](https://dashboard.render.com/) hosts the `pov-blaster-api` Free web service. Its [api/render.yaml](api/render.yaml) Blueprint uses `requirements-api.txt`, which deliberately excludes Pygame and other desktop/web build dependencies, and starts the service with Uvicorn.
 
 <div align="right"><a href="#table-of-contents">^ TOC</a></div>
 
