@@ -529,6 +529,7 @@ See the audit and comparison reports before making foundational changes.
 
 ## Documentation
 
+- [NewTheme.md](docs/NewTheme.md): AI image-generation prompt and workflow for producing new/redesigned theme character art
 - [ArchDiagrams.md](docs/ArchDiagrams.md): Mermaid architecture, runtime, API, and deployment diagrams
 - [CHANGELOG.md](CHANGELOG.md): project history and prior development prompts
 - [CodeAudit.md](docs/CodeAudit.md): architecture, quality, performance, and scalability audit
