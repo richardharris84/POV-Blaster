@@ -62,12 +62,17 @@ The game uses a 2D grid map to produce a pseudo-3D view. It supports textured wa
 ## Project Highlights
 
 - Run the game directly with Python or build Windows, Linux, macOS, and Web releases.
-- Keep a clean structure with only two Python files at the workspace root; source, assets, tests, tools, and documentation have dedicated folders.
+- Clean structure with only two Python files at the workspace root; source, assets, tests, tools, and documentation have dedicated folders.
 - Extensive README, CHANGELOG, and `docs/` coverage explains the project, architecture, history, deployment, and testing.
 - GitHub Actions builds and deploys the browser version to GitHub Pages, with completion email notifications.
 - The original DOOM-style game was forked as a Python codebase; subsequent changes were developed through 40+ documented Copilot prompts in `CHANGELOG.md`.
 - FastAPI and SQLite/Postgres support score storage across browser and desktop deployments.
-- A theme engine supports Candy Kingdom, Space, Graveyard, Hunting, and Doom themes with distinct enemies, assets, weapons, and audio.
+- Multiple game themes include distinct enemies, assets, weapons, and audio, so different audiences can choose the experience they prefer.
+- A custom DDA raycasting renderer projects 2D grid maps into textured pseudo-3D views in real time. DDA (Digital Differential Analyzer) is a simple computer graphics algorithm used on square grids to find which squares (or pixels) a line passes through.
+- Layered domain, application, infrastructure, and presentation code keeps game rules separate from Pygame and platform adapters.
+- Browser play includes mobile dual-joystick controls, responsive startup prompts, and offline local high-score storage with optional API synchronization.
+- The project includes 51 automated tests covering domain rules, gameplay integration, assets, input, web behavior, and API endpoints.
+- Deterministic pixel-art tooling generates consistent theme textures, characters, animations, weapons, and UI assets.
 
 ### Future Changes
 
