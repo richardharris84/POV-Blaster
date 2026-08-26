@@ -215,8 +215,18 @@ async def choose_startup():
     browser_name_input_holder["input"] = browser_name_input
     pg.key.start_text_input()
 
+    def sync_player_name_from_browser():
+        nonlocal player_name
+        if browser_name_input is None or browser_name_input.element is None:
+            return
+        current_value = browser_name_input.value()[:24]
+        if current_value != player_name:
+            player_name = current_value
+            browser_name_input.set_value(player_name)
+
     def advance_to_theme():
         nonlocal error, phase
+        sync_player_name_from_browser()
         error = validate_player_name(player_name) or ""
         if error:
             return
@@ -229,6 +239,8 @@ async def choose_startup():
             for event in pg.event.get():
                 if event.type == pg.QUIT:
                     return None
+                if phase == "name":
+                    sync_player_name_from_browser()
                 if event.type == pg.KEYDOWN:
                     if event.key == pg.K_ESCAPE:
                         return None

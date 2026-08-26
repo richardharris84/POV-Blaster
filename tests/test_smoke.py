@@ -691,6 +691,49 @@ class WebStartupBrowserInputTests(unittest.TestCase):
         self.assertEqual(FakeBrowserNameInput.instances[0].focus_calls, 1)
         self.assertEqual(FakeBrowserNameInput.instances[0].deactivate_calls, 1)
 
+    def test_web_startup_reads_browser_field_value_even_without_input_callback(self):
+        pg.init()
+        pg.display.set_mode((1600, 900))
+
+        class FakeBrowserNameInput:
+            def __init__(self, on_change):
+                self.on_change = on_change
+                self.element = SimpleNamespace(
+                    value='Alice',
+                    setSelectionRange=lambda *_args: None,
+                )
+
+            def focus(self):
+                pass
+
+            def sync_bounds(self):
+                pass
+
+            def activate(self):
+                pass
+
+            def deactivate(self):
+                pass
+
+            def set_value(self, value):
+                self.element.value = value
+
+            def value(self):
+                return self.element.value
+
+            def close(self):
+                self.element = None
+
+        try:
+            pg.event.post(pg.event.Event(pg.KEYDOWN, key=pg.K_RETURN))
+            pg.event.post(pg.event.Event(pg.KEYDOWN, key=pg.K_RETURN))
+            with patch.object(web_startup, '_BrowserNameInput', FakeBrowserNameInput):
+                player_name, _selected_theme = asyncio.run(choose_startup())
+        finally:
+            pg.quit()
+
+        self.assertEqual(player_name, 'Alice')
+
     def test_web_startup_textinput_falls_back_when_browser_input_is_unfocused(self):
         pg.init()
         pg.display.set_mode((1600, 900))
