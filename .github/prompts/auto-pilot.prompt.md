@@ -2,7 +2,7 @@
 description: Apply the POV-Blaster Auto-pilot workflow for this chat session.
 ---
 
-Activate Auto-pilot for the current chat session. Follow these repository rules:
+**Activate Auto-pilot** for the current chat session. Follow these repository rules:
 
 To disable Auto-pilot for the current chat session, say **"Disable Auto-pilot"**
 or **"Exit Auto-pilot"**. Once disabled, stop applying the Auto-pilot rules and
