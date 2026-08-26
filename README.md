@@ -558,6 +558,7 @@ See the audit and comparison reports before making foundational changes.
 
 - [RemaingThemes.md](docs/RemaingThemes.md): AI image-generation prompt and workflow for the remaining Candy Kingdom, Space, and Graveyard character art
 - [NewTheme.md](docs/NewTheme.md): AI image-generation prompt and workflow for producing new/redesigned theme character art
+- [.github/prompts/auto-pilot.prompt.md](.github/prompts/auto-pilot.prompt.md): optional session workflow for automated validation, builds, commits, and deployment
 - [ArchDiagrams.md](docs/ArchDiagrams.md): Mermaid architecture, runtime, API, and deployment diagrams
 - [CHANGELOG.md](CHANGELOG.md): project history and prior development prompts
 - [CodeAudit.md](docs/CodeAudit.md): architecture, quality, performance, and scalability audit
