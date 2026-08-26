@@ -3,6 +3,7 @@ import ast
 import asyncio
 import tempfile
 from collections import deque
+from types import SimpleNamespace
 import unittest
 from unittest.mock import patch
 from pathlib import Path
@@ -22,6 +23,7 @@ from main import Game, choose_player_name
 from application.map import DEFAULT_MAP_NAME, load_map
 from application.theme import THEMES, choose_theme
 from application.startup import theme_menu_items, validate_player_name
+import presentation.web_startup as web_startup
 from presentation.web_startup import choose_startup
 from domain.health import Health
 from domain.game_state import GameState
@@ -223,6 +225,92 @@ class HighScoreTests(unittest.TestCase):
 
 
 class ThemeSelectionTests(unittest.TestCase):
+    def test_browser_name_input_is_positioned_over_the_visible_name_field(self):
+        class FakeElement:
+            def __init__(self):
+                self.type = None
+                self.maxLength = None
+                self.autocomplete = None
+                self.autocapitalize = None
+                self.spellcheck = None
+                self.style = SimpleNamespace()
+                self.listeners = {}
+                self.attributes = {}
+                self.removed = False
+
+            def setAttribute(self, name, value):
+                self.attributes[name] = value
+
+            def addEventListener(self, name, listener):
+                self.listeners[name] = listener
+
+            def remove(self):
+                self.removed = True
+
+        class FakeDocument:
+            def __init__(self):
+                self.body = SimpleNamespace(appendChild=self._append_child)
+                self.appended = None
+
+            def createElement(self, name):
+                self.created_name = name
+                return FakeElement()
+
+            def _append_child(self, element):
+                self.appended = element
+
+        document = FakeDocument()
+        with patch.object(sys, 'platform', 'emscripten'), patch.object(
+            web_startup,
+            'platform',
+            SimpleNamespace(document=document),
+        ):
+            browser_input = web_startup._BrowserNameInput(lambda event: None)
+
+        self.assertIs(browser_input.element, document.appended)
+        self.assertEqual(document.created_name, 'input')
+        self.assertEqual(browser_input.element.style.left, '50%')
+        self.assertEqual(browser_input.element.style.top, web_startup.BROWSER_NAME_INPUT_TOP)
+        self.assertEqual(browser_input.element.style.transform, 'translate(-50%, -50%)')
+        self.assertEqual(browser_input.element.style.width, web_startup.BROWSER_NAME_INPUT_WIDTH)
+        self.assertEqual(browser_input.element.style.height, web_startup.BROWSER_NAME_INPUT_HEIGHT)
+        self.assertEqual(browser_input.element.attributes['aria-label'], 'Player name')
+        self.assertIn('input', browser_input.element.listeners)
+
+    def test_web_startup_focuses_browser_name_input_immediately(self):
+        pg.init()
+        pg.display.set_mode((1600, 900))
+
+        class FakeBrowserNameInput:
+            instances = []
+
+            def __init__(self, on_change):
+                self.element = object()
+                self.focus_calls = 0
+                self.close_calls = 0
+                FakeBrowserNameInput.instances.append(self)
+
+            def focus(self):
+                self.focus_calls += 1
+
+            def deactivate(self):
+                self.close()
+
+            def close(self):
+                self.close_calls += 1
+                self.element = None
+
+        try:
+            pg.event.post(pg.event.Event(pg.QUIT))
+            with patch.object(web_startup, '_BrowserNameInput', FakeBrowserNameInput):
+                self.assertIsNone(asyncio.run(choose_startup()))
+        finally:
+            pg.quit()
+
+        self.assertEqual(len(FakeBrowserNameInput.instances), 1)
+        self.assertEqual(FakeBrowserNameInput.instances[0].focus_calls, 1)
+        self.assertEqual(FakeBrowserNameInput.instances[0].close_calls, 1)
+
     def test_player_name_is_requested_before_theme_selection(self):
         choices = iter(['', 'Alice'])
 
@@ -597,4 +685,3 @@ class AssetIntegrityTests(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
-

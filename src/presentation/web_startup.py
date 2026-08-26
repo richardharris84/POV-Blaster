@@ -20,6 +20,13 @@ ACCENT = (255, 196, 76)
 DANGER = (255, 112, 105)
 BORDER = (72, 95, 105)
 FOOTER_Y = HEIGHT - 28
+NAME_RECT = pg.Rect(WIDTH // 2 - 300, 250, 600, 64)
+CONTINUE_RECT = pg.Rect(WIDTH // 2 - 150, 395, 300, 58)
+PRIVACY_RECT = pg.Rect(WIDTH // 2 - 120, 475, 240, 32)
+START_GAME_RECT = pg.Rect(WIDTH // 2 - 150, 635, 300, 58)
+BROWSER_NAME_INPUT_TOP = f"{(NAME_RECT.centery / HEIGHT) * 100:.4f}%"
+BROWSER_NAME_INPUT_WIDTH = f"{(NAME_RECT.width / WIDTH) * 100:.4f}vw"
+BROWSER_NAME_INPUT_HEIGHT = f"{(NAME_RECT.height / HEIGHT) * 100:.4f}vh"
 
 
 def _font(size, bold=False):
@@ -81,15 +88,24 @@ class _BrowserNameInput:
             element.setAttribute("aria-label", "Player name")
             element.style.position = "fixed"
             element.style.left = "50%"
-            element.style.top = "50%"
+            element.style.top = BROWSER_NAME_INPUT_TOP
+            element.style.transform = "translate(-50%, -50%)"
             # A near-zero-size input breaks caret tracking on some mobile
             # keyboards, which insert every keystroke at position 0 instead of
             # the end (typing "Richard" renders as "drahcIR"). Give it real
             # dimensions so the browser can compute the caret position correctly.
-            element.style.width = "280px"
-            element.style.height = "48px"
+            element.style.width = BROWSER_NAME_INPUT_WIDTH
+            element.style.height = BROWSER_NAME_INPUT_HEIGHT
             element.style.opacity = "0.01"
             element.style.fontSize = "16px"
+            element.style.border = "0"
+            element.style.padding = "0"
+            element.style.margin = "0"
+            element.style.background = "transparent"
+            element.style.color = "transparent"
+            element.style.caretColor = "transparent"
+            element.style.outline = "none"
+            element.style.boxSizing = "border-box"
             element.style.zIndex = "2147483647"
             element.addEventListener("input", on_change)
             document.body.appendChild(element)
@@ -112,6 +128,15 @@ class _BrowserNameInput:
         if self.element is not None:
             self.element.remove()
             self.element = None
+
+
+    def deactivate(self):
+        if self.element is not None:
+            try:
+                self.element.blur()
+            except Exception:
+                pass
+            self.close()
 
 
 async def choose_startup():
@@ -143,6 +168,18 @@ async def choose_startup():
 
     browser_name_input = _BrowserNameInput(browser_name_changed)
     pg.key.start_text_input()
+
+    def advance_to_theme():
+        nonlocal error, phase
+        error = validate_player_name(player_name) or ""
+        if error:
+            return
+        phase = "theme"
+        if browser_name_input is not None:
+            browser_name_input.deactivate()
+
+    if browser_name_input is not None:
+        browser_name_input.focus()
     try:
         while True:
             for event in pg.event.get():
@@ -155,9 +192,7 @@ async def choose_startup():
                         if event.key == pg.K_BACKSPACE and browser_name_input.element is None:
                             player_name = player_name[:-1]
                         elif event.key in (pg.K_RETURN, pg.K_KP_ENTER):
-                            error = validate_player_name(player_name) or ""
-                            if not error:
-                                phase = "theme"
+                            advance_to_theme()
                         elif event.key == pg.K_TAB:
                             focused = not focused
                     elif phase == "theme":
@@ -179,39 +214,35 @@ async def choose_startup():
                     if pos is None:
                         continue
                     if phase == "name":
-                        name_rect = pg.Rect(WIDTH // 2 - 300, 250, 600, 64)
-                        if name_rect.collidepoint(pos):
+                        if NAME_RECT.collidepoint(pos):
                             focused = True
                             pg.key.start_text_input()
                             if browser_name_input is not None:
                                 browser_name_input.focus()
-                        elif pg.Rect(WIDTH // 2 - 150, 395, 300, 58).collidepoint(pos):
-                            error = validate_player_name(player_name) or ""
-                            if not error:
-                                phase = "theme"
-                        elif pg.Rect(WIDTH // 2 - 120, 475, 240, 32).collidepoint(pos):
+                        elif CONTINUE_RECT.collidepoint(pos):
+                            advance_to_theme()
+                        elif PRIVACY_RECT.collidepoint(pos):
                             _open_privacy_notice()
                     else:
                         for index, (_, theme) in enumerate(theme_menu_items()):
                             rect = pg.Rect(WIDTH // 2 - 300, 195 + index * 76, 600, 60)
                             if rect.collidepoint(pos):
                                 selected_theme = index
-                        if pg.Rect(WIDTH // 2 - 150, 635, 300, 58).collidepoint(pos):
+                        if START_GAME_RECT.collidepoint(pos):
                             return player_name.strip(), theme_menu_items()[selected_theme][1]
 
             surface.fill(BACKGROUND)
             if phase == "name":
                 _draw_centered(surface, "ENTER YOUR NAME", _font(30, bold=True), TEXT, 170)
-                name_rect = pg.Rect(WIDTH // 2 - 300, 250, 600, 64)
-                pg.draw.rect(surface, PANEL, name_rect, border_radius=8)
-                pg.draw.rect(surface, ACCENT if focused else BORDER, name_rect, width=3, border_radius=8)
-                _draw_text(surface, player_name or "Type a name...", _font(26), TEXT if player_name else MUTED, (name_rect.x + 20, name_rect.y + 16))
+                pg.draw.rect(surface, PANEL, NAME_RECT, border_radius=8)
+                pg.draw.rect(surface, ACCENT if focused else BORDER, NAME_RECT, width=3, border_radius=8)
+                _draw_text(surface, player_name or "Type a name...", _font(26), TEXT if player_name else MUTED, (NAME_RECT.x + 20, NAME_RECT.y + 16))
                 if focused and (pg.time.get_ticks() // 500) % 2 == 0:
-                    caret_x = name_rect.x + 20 + _font(26).size(player_name)[0]
-                    pg.draw.rect(surface, ACCENT, (caret_x, name_rect.y + 14, 3, 34))
+                    caret_x = NAME_RECT.x + 20 + _font(26).size(player_name)[0]
+                    pg.draw.rect(surface, ACCENT, (caret_x, NAME_RECT.y + 14, 3, 34))
                 if error:
                     _draw_centered(surface, error, _font(20, bold=True), DANGER, 330)
-                _button(surface, pg.Rect(WIDTH // 2 - 150, 395, 300, 58), "CONTINUE", selected=True)
+                _button(surface, CONTINUE_RECT, "CONTINUE", selected=True)
                 _draw_centered(surface, "Privacy Notice", _font(18, bold=True), ACCENT, 490)
                 _draw_centered(surface, "Enter to continue  |  Esc to exit", _font(17), MUTED, 555)
                 _draw_centered(surface, "Mobile controls: left joystick moves  |  right joystick looks  |  tap right joystick to fire", _font(17), MUTED, 610)
@@ -221,7 +252,7 @@ async def choose_startup():
                 for index, (number, theme) in enumerate(theme_menu_items()):
                     rect = pg.Rect(WIDTH // 2 - 300, 195 + index * 76, 600, 60)
                     _button(surface, rect, f"{number}  {theme.label}", selected=index == selected_theme)
-                _button(surface, pg.Rect(WIDTH // 2 - 150, 635, 300, 58), "START GAME", selected=True)
+                _button(surface, START_GAME_RECT, "START GAME", selected=True)
                 _draw_centered(surface, "Mobile: left joystick moves  |  right joystick looks  |  tap right joystick to fire", _font(17), MUTED, 730)
                 _draw_centered(surface, "Enter selects  |  Esc exits", _font(17), MUTED, 765)
             _draw_footer(surface)
@@ -232,4 +263,3 @@ async def choose_startup():
         pg.key.stop_text_input()
         if browser_name_input is not None:
             browser_name_input.close()
-

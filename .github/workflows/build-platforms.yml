@@ -1,0 +1,60 @@
+name: Build release artifacts
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target: windows
+            os: windows-latest
+            build_flag: --windows
+            artifact_name: POV-Blaster-windows
+            artifact_path: build/POV-Blaster_win.exe
+          - target: linux
+            os: ubuntu-latest
+            build_flag: --linux
+            artifact_name: POV-Blaster-linux
+            artifact_path: build/POV-Blaster_lin
+          - target: macos
+            os: macos-latest
+            build_flag: --macos
+            artifact_name: POV-Blaster-macos
+            artifact_path: build/POV-Blaster_mac.app
+          - target: web
+            os: ubuntu-latest
+            build_flag: --web
+            artifact_name: POV-Blaster-web
+            artifact_path: build/web
+
+    runs-on: ${{ matrix.os }}
+    env:
+      POV_BLASTER_API_URL: ${{ vars.POV_BLASTER_API_URL }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: python -m pip install -r requirements.txt
+
+      - name: Build ${{ matrix.target }} target
+        run: python build.py ${{ matrix.build_flag }}
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact_name }}
+          path: ${{ matrix.artifact_path }}
+          if-no-files-found: error
+          retention-days: 14
