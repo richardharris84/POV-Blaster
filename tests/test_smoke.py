@@ -730,10 +730,10 @@ class WebStartupBrowserInputTests(unittest.TestCase):
                 self.element = None
 
         try:
-            pg.event.post(pg.event.Event(pg.TEXTINPUT, text='A'))
-            pg.event.post(pg.event.Event(pg.KEYDOWN, key=pg.K_RETURN))
-            pg.event.post(pg.event.Event(pg.KEYDOWN, key=pg.K_RETURN))
             with patch.object(web_startup, '_BrowserNameInput', FakeBrowserNameInput):
+                pg.event.post(pg.event.Event(pg.TEXTINPUT, text='A'))
+                pg.event.post(pg.event.Event(pg.KEYDOWN, key=pg.K_RETURN))
+                pg.event.post(pg.event.Event(pg.KEYDOWN, key=pg.K_RETURN))
                 player_name, _selected_theme = asyncio.run(choose_startup())
         finally:
             pg.quit()
