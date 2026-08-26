@@ -277,4 +277,5 @@ async def choose_startup():
             await asyncio.sleep(0)
     finally:
         pg.key.stop_text_input()
-        browser_name_input.close()
+        if browser_name_input is not None:
+            browser_name_input.close()
