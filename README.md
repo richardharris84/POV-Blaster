@@ -37,6 +37,7 @@ The game uses a 2D grid map to produce a pseudo-3D view. It supports textured wa
 
 ## Table of Contents
 
+- [Project Highlights](#project-highlights)
 - [Controls](#controls)
 - [How the Game Works](#how-the-game-works)
 - [Development Walkthrough](#development-walkthrough)
@@ -57,6 +58,25 @@ The game uses a 2D grid map to produce a pseudo-3D view. It supports textured wa
 - [Development Notes](#development-notes)
 - [Documentation](#documentation)
 - [Project Lineage](#project-lineage)
+
+## Project Highlights
+
+- Run the game directly with Python or build Windows, Linux, macOS, and Web releases.
+- Keep a clean structure with only two Python files at the workspace root; source, assets, tests, tools, and documentation have dedicated folders.
+- Extensive README, CHANGELOG, and `docs/` coverage explains the project, architecture, history, deployment, and testing.
+- GitHub Actions builds and deploys the browser version to GitHub Pages, with completion email notifications.
+- The original DOOM-style game was forked as a Python codebase; subsequent changes were developed through 40+ documented Copilot prompts in `CHANGELOG.md`.
+- FastAPI and SQLite/Postgres support score storage across browser and desktop deployments.
+- A theme engine supports Candy Kingdom, Space, Graveyard, Hunting, and Doom themes with distinct enemies, assets, weapons, and audio.
+
+### Future Changes
+
+1. Improve accessibility for visually impaired players.
+2. Enhance graphics across all themes.
+3. Add more themes.
+4. Add game modes:
+  - Arcade: single-player with persistent high scores across platforms (current).
+  - Multiplayer (planned).
 
 ## How the Game Works
 
