@@ -37,8 +37,10 @@ The game uses a 2D grid map to produce a pseudo-3D view. It supports textured wa
 
 ## Table of Contents
 
-- [Additional Documentation](#additional-documentation)
 - [Controls](#controls)
+- [How the Game Works](#how-the-game-works)
+- [Development Walkthrough](#development-walkthrough)
+- [Assets](#assets)
 - [Requirements](#requirements)
 - [Running the Script](#running-the-script)
 - [Build Executables](#build-executables)
@@ -50,42 +52,183 @@ The game uses a 2D grid map to produce a pseudo-3D view. It supports textured wa
   - [GitHub Actions](#github-actions)
 - [Hosted API and Database](#hosted-api-and-database)
 - [Deployment Settings](#deployment-settings)
-- [Development History](#development-history)
 - [Project Structure](#project-structure)
-- [How the Game Works](#how-the-game-works)
-- [Development Walkthrough](#development-walkthrough)
-- [Assets](#assets)
 - [Testing](#testing)
 - [Development Notes](#development-notes)
+- [Documentation](#documentation)
 - [Project Lineage](#project-lineage)
 
-## Additional Documentation
+## How the Game Works
 
-- [ArchDiagrams.md](docs/ArchDiagrams.md): Mermaid architecture, runtime, API, and deployment diagrams
-- [CHANGELOG.md](CHANGELOG.md): project history and prior development prompts
-- [CodeAudit.md](docs/CodeAudit.md): architecture, quality, performance, and scalability audit
-- [CodeBase.md](docs/CodeBase.md): up-to-date reconstruction guide and codebase walkthrough (the original, now superseded, walkthrough is archived at [docs/archive/CodeBase-Orig.md](docs/archive/CodeBase-Orig.md))
-- [GraphicsRollback.md](docs/GraphicsRollback.md): graphics rollback and asset history
-- [docs/archive/CodeBase-Orig.md](docs/archive/CodeBase-Orig.md): archived pre-refactor codebase walkthrough
-- [docs/archive/Recommendations.md](docs/archive/Recommendations.md): archived architecture recommendations
-- [docs/archive/CloneCompare.md](docs/archive/CloneCompare.md): comparison of the related game projects and first-patch recommendations
-- [docs/archive/POCFeatures.md](docs/archive/POCFeatures.md): archived proof-of-concept feature record
+### Player movement
 
-## Hosted API and Database
+The player moves through a grid-based world using floating-point coordinates. Wall collision checks prevent movement into solid map cells, and diagonal movement is normalized so moving in two directions is not faster than moving in one direction. Mouse movement updates the camera angle.
 
-The desktop build keeps a local SQLite leaderboard at `data/scores.sqlite3`. The browser build uses localStorage for immediate offline play and submits scores in the background to the optional FastAPI service. The browser also records a web session when a player starts a game.
+### Raycasting
 
-The FastAPI application in `api/main.py` exposes:
+The renderer casts rays across the camera field of view. Each ray finds a horizontal or vertical wall intersection, calculates corrected distance, selects a wall texture, and projects a vertical wall strip onto the screen. The result is a lightweight pseudo-3D environment without a full 3D engine.
 
-- `GET /health`: Render health check.
-- `GET /scores`: public scores ordered by kills.
-- `POST /scores`: validates and stores a player name and kill count.
-- `GET /sessions`: lists recorded web sessions.
-- `POST /sessions`: records a player name, request IP, UTC timestamp, and best-effort city/country lookup.
+### Sprites and animation
 
-Production uses [Neon Postgres](https://console.neon.tech/) through the `DATABASE_URL` environment variable. The API creates the `scores` and `web_sessions` tables on startup and uses Psycopg for Postgres connections. Raw IP addresses are not stored with score records; session records retain the request IP for session analytics. Local development and tests use SQLite automatically when `DATABASE_URL` is absent. `HighScores.sync(api_url, direction='push')` uploads the local SQLite leaderboard to the API, while `direction='pull'` replaces the local leaderboard with the remote scores. The browser name-entry screen links to [privacy.html](privacy.html), which explains the location data use and deletion request process.
+Scenery, enemies, and the weapon use transparent 2D images projected into the first-person view. Animation folders contain frame sequences for idle, walk, attack, pain, death, lighting, and weapon recoil states.
 
-[Render](https://dashboard.render.com/) hosts the `pov-blaster-api` Free web service. Its [api/render.yaml](api/render.yaml) Blueprint uses `requirements-api.txt`, which deliberately excludes Pygame and other desktop/web build dependencies, and starts the service with Uvicorn.
+### Enemies and pathfinding
+
+Soldier, Cacodemon, and Cyberdemon enemies have different health, speed, attack range, damage, and accuracy settings. Enemies use line-of-sight checks to detect the player and breadth-first search to navigate around walls.
+
+### Themes
+
+The startup menu provides five content choices:
+
+- Candy Kingdom: Marshmallow Man, Springfield Doughnut, Gingerbread Golem
+- Space: Alien Drone, Alien Warrior, Alien Overlord
+- Hunting: Hunter, Deer, Bear
+- Graveyard: Ghost, Vampire, Werewolf
+- Doom: Soldier, Caco Demon, Cyber Demon
+
+Theme assets live under `assets/themes/<theme>/`. To regenerate the themed textures and NPC animation frames on Windows, run:
+
+```powershell
+.\tools\generate_themes.ps1
+```
+
+To validate existing animation folders without changing artwork, run:
+
+```powershell
+.\tools\generate_themes.ps1 -ValidateOnly
+```
+
+To explicitly generate replacements for missing or duplicate numbered frames, add `-RepairFrames`.
+
+For a complete deterministic regeneration of every non-default PNG asset, use the
+production pixel renderer:
+
+```powershell
+& "$env:LOCALAPPDATA\Programs\Python\Python313\python.exe" tools\generate_pixel_assets.py
+& "$env:LOCALAPPDATA\Programs\Python\Python313\python.exe" tools\audit_themes.py --check
+```
+
+The installed Pixel Agents, OpenGame, Unity, Hootbu Pixel Agent, and Copilot Pixel
+Agents extensions were verified locally. They provide interactive authoring panels
+or development integration, not a documented batch PNG export API. Pixel-Harmony
+is used as a visual comparison reference; the local renderer is retained as the
+reproducible release-generation path rather than claiming unavailable automated AI
+asset output.
+
+Each generated NPC includes unique idle, walk, attack, pain, and death sequences. Candy Kingdom uses the imported CandyKingdom asset set, including the pastry-bag weapon and thick slime firing sound; its deaths melt the Marshmallow Man and crumble the Springfield Doughnut and Gingerbread Golem.
+
+### Combat and game states
+
+The shotgun fires from the center of the screen and applies damage to a visible enemy in the shot path. Player health recovers over time. Defeating all living enemies produces a victory state; health reaching zero produces a game-over state.
+
+<div align="right"><a href="#table-of-contents">^ TOC</a></div>
+
+## Development Walkthrough
+
+The following stages describe how POV-Blaster grows from a 2D map into a playable raycast shooter. The demonstrations are included for visual reference and represent the current project style and feature set.
+
+### Player Movement
+
+The player moves forward, backward, and sideways relative to the current viewing angle. Wall collision checks keep the player inside walkable cells, while diagonal movement correction keeps combined WASD input from increasing movement speed. Mouse-look changes the viewing angle and recenters the cursor when it approaches the configured screen border.
+
+![Player movement demonstration](screenshots/player_1.gif)
+
+### Raycasting Algorithm
+
+The camera field of view is the interval from the player angle minus half the FOV to the player angle plus half the FOV. POV-Blaster casts one ray for each configured screen column across that interval. Each ray stops at the first wall cell, providing the depth used to calculate the height of its projected vertical wall strip.
+
+![Raycasting grid traversal](screenshots/raycast_1.gif)
+
+![Raycast projection](screenshots/raycast_2.gif)
+
+Distance correction removes the fishbowl effect that would otherwise make walls at the sides of the view appear distorted. Distance-based shading is a future rendering opportunity; the current renderer uses textured walls, a sky background, and a floor color.
+
+![Raycast scene shading reference](screenshots/raycast_3.gif)
+
+![Textured raycast environment](screenshots/raycast_4.gif)
+
+### Static and Animated Sprites
+
+Scenery is added as transparent 2D billboard images positioned in the map. Animated sprites are sequences of images displayed over time. This supports environmental details such as lights and decorations without requiring a full polygonal 3D engine.
+
+<img src="screenshots/assets_1.png" alt="Static sprite reference" width="126">
+
+<img src="screenshots/assets_2.gif" alt="Animated sprite reference" width="126">
+
+<img src="screenshots/assets_3.gif" alt="Additional animated sprite reference" width="126">
+
+![Decorated game environment](screenshots/gameplay_2.gif)
+
+### Weapon and Shooting Animation
+
+The shotgun is a foreground sprite animated from a sequence of recoil frames. Left-click starts the firing sound and animation, and the reload lockout prevents another shot until the animation completes. The current weapon uses a center-screen hitscan interaction with visible enemies.
+
+![Shotgun firing animation](screenshots/weapon_1.gif)
+
+### Player-Enemy Interaction and Pathfinding
+
+Enemies first use line of sight to detect the player. A direct movement approach would fail when a wall blocks the straight-line route, so POV-Blaster uses breadth-first search over walkable map cells to find a route around obstacles. NPC occupancy is considered when enemies select their next cell.
+
+![Direct enemy pursuit reference](screenshots/player_enemy_1.gif)
+
+![BFS pathfinding reference](screenshots/player_enemy_2.gif)
+
+![Multiple-enemy pursuit reference](screenshots/player_enemy_3.gif)
+
+The current implementation is intentionally simple. Future improvements should schedule pathfinding work, avoid stale cache results, prevent diagonal corner cutting, and separate navigation rules from NPC rendering and combat.
+
+### Enemies
+
+POV-Blaster includes three enemy profiles. Each profile uses idle, walk, attack, pain, and death animations and has its own health, speed, attack range, damage, and accuracy values.
+
+#### Soldier
+
+![Soldier idle and combat reference](screenshots/soldier_1.gif)
+
+![Soldier movement reference](screenshots/soldier_2.gif)
+
+![Soldier attack reference](screenshots/soldier_3.gif)
+
+#### Cacodemon
+
+![Cacodemon idle and combat reference](screenshots/cacodemon_1.gif)
+
+![Cacodemon movement reference](screenshots/cacodemon_2.gif)
+
+![Cacodemon attack reference](screenshots/cacodemon_3.gif)
+
+#### Cyberdemon
+
+![Cyberdemon idle and combat reference](screenshots/cyberdemon_1.gif)
+
+![Cyberdemon movement reference](screenshots/cyberdemon_2.gif)
+
+![Cyberdemon attack reference](screenshots/cyberdemon_3.gif)
+
+### Final Gameplay
+
+The complete gameplay loop combines movement, mouse-look, raycast rendering, textured walls, animated scenery, enemy detection and navigation, shotgun combat, health and damage feedback, sound effects, and victory/game-over transitions.
+
+![POV-Blaster final gameplay](screenshots/gameplay_1.gif)
+
+<div align="right"><a href="#table-of-contents">^ TOC</a></div>
+
+## Assets
+
+Runtime assets are stored under `assets/`:
+
+```text
+assets/
+├── default/
+├── candy_kingdom/
+├── graveyard/
+├── hunting/
+├── space/
+├── maps/
+└── levels/
+```
+
+Keep asset paths relative to the project asset root. Mutable runtime data belongs in `data/`, not under `assets/`.
 
 <div align="right"><a href="#table-of-contents">^ TOC</a></div>
 
@@ -263,6 +406,26 @@ The value must be the Render service URL without a trailing slash. Do not put th
 
 Optional email notifications use these repository **Actions secrets**: `SMTP_SERVER`, `SMTP_PORT`, `SMTP_USERNAME`, and `SMTP_PASSWORD`. The Render workflow also accepts the optional `RENDER_DEPLOY_HOOK` secret.
 
+<div align="right"><a href="#table-of-contents">^ TOC</a></div>
+
+## Hosted API and Database
+
+The desktop build keeps a local SQLite leaderboard at `data/scores.sqlite3`. The browser build uses localStorage for immediate offline play and submits scores in the background to the optional FastAPI service. The browser also records a web session when a player starts a game.
+
+The FastAPI application in `api/main.py` exposes:
+
+- `GET /health`: Render health check.
+- `GET /scores`: public scores ordered by kills.
+- `POST /scores`: validates and stores a player name and kill count.
+- `GET /sessions`: lists recorded web sessions.
+- `POST /sessions`: records a player name, request IP, UTC timestamp, and best-effort city/country lookup.
+
+Production uses [Neon Postgres](https://console.neon.tech/) through the `DATABASE_URL` environment variable. The API creates the `scores` and `web_sessions` tables on startup and uses Psycopg for Postgres connections. Raw IP addresses are not stored with score records; session records retain the request IP for session analytics. Local development and tests use SQLite automatically when `DATABASE_URL` is absent. `HighScores.sync(api_url, direction='push')` uploads the local SQLite leaderboard to the API, while `direction='pull'` replaces the local leaderboard with the remote scores. The browser name-entry screen links to [privacy.html](privacy.html), which explains the location data use and deletion request process.
+
+[Render](https://dashboard.render.com/) hosts the `pov-blaster-api` Free web service. Its [api/render.yaml](api/render.yaml) Blueprint uses `requirements-api.txt`, which deliberately excludes Pygame and other desktop/web build dependencies, and starts the service with Uvicorn.
+
+<div align="right"><a href="#table-of-contents">^ TOC</a></div>
+
 ## Deployment Settings
 
 ### Render
@@ -278,8 +441,6 @@ Create a free Neon Postgres project and copy its pooled or direct connection str
 ### GitHub Pages
 
 After `POV_BLASTER_API_URL` is configured, run **Actions → Deploy web build to GitHub Pages → Run workflow** on `main`. The published game URL is `https://richardharris84.github.io/POV-Blaster/`.
-
-<div align="right"><a href="#table-of-contents">^ TOC</a></div>
 
 <div align="right"><a href="#table-of-contents">^ TOC</a></div>
 
@@ -313,180 +474,6 @@ screenshots/           Project screenshots
 ```
 
 See [docs/CodeBase.md](docs/CodeBase.md) for a full walkthrough of how these pieces fit together.
-
-<div align="right"><a href="#table-of-contents">^ TOC</a></div>
-
-## How the Game Works
-
-### Player movement
-
-The player moves through a grid-based world using floating-point coordinates. Wall collision checks prevent movement into solid map cells, and diagonal movement is normalized so moving in two directions is not faster than moving in one direction. Mouse movement updates the camera angle.
-
-### Raycasting
-
-The renderer casts rays across the camera field of view. Each ray finds a horizontal or vertical wall intersection, calculates corrected distance, selects a wall texture, and projects a vertical wall strip onto the screen. The result is a lightweight pseudo-3D environment without a full 3D engine.
-
-### Sprites and animation
-
-Scenery, enemies, and the weapon use transparent 2D images projected into the first-person view. Animation folders contain frame sequences for idle, walk, attack, pain, death, lighting, and weapon recoil states.
-
-### Enemies and pathfinding
-
-Soldier, Cacodemon, and Cyberdemon enemies have different health, speed, attack range, damage, and accuracy settings. Enemies use line-of-sight checks to detect the player and breadth-first search to navigate around walls.
-
-### Themes
-
-The startup menu provides five content choices:
-
-- Candy Kingdom: Marshmallow Man, Springfield Doughnut, Gingerbread Golem
-- Space: Alien Drone, Alien Warrior, Alien Overlord
-- Hunting: Hunter, Deer, Bear
-- Graveyard: Ghost, Vampire, Werewolf
-- Doom: Soldier, Caco Demon, Cyber Demon
-
-Theme assets live under `assets/themes/<theme>/`. To regenerate the themed textures and NPC animation frames on Windows, run:
-
-```powershell
-.\tools\generate_themes.ps1
-```
-
-To validate existing animation folders without changing artwork, run:
-
-```powershell
-.\tools\generate_themes.ps1 -ValidateOnly
-```
-
-To explicitly generate replacements for missing or duplicate numbered frames, add `-RepairFrames`.
-
-For a complete deterministic regeneration of every non-default PNG asset, use the
-production pixel renderer:
-
-```powershell
-& "$env:LOCALAPPDATA\Programs\Python\Python313\python.exe" tools\generate_pixel_assets.py
-& "$env:LOCALAPPDATA\Programs\Python\Python313\python.exe" tools\audit_themes.py --check
-```
-
-The installed Pixel Agents, OpenGame, Unity, Hootbu Pixel Agent, and Copilot Pixel
-Agents extensions were verified locally. They provide interactive authoring panels
-or development integration, not a documented batch PNG export API. Pixel-Harmony
-is used as a visual comparison reference; the local renderer is retained as the
-reproducible release-generation path rather than claiming unavailable automated AI
-asset output.
-
-Each generated NPC includes unique idle, walk, attack, pain, and death sequences. Candy Kingdom uses the imported CandyKingdom asset set, including the pastry-bag weapon and thick slime firing sound; its deaths melt the Marshmallow Man and crumble the Springfield Doughnut and Gingerbread Golem.
-
-### Combat and game states
-
-The shotgun fires from the center of the screen and applies damage to a visible enemy in the shot path. Player health recovers over time. Defeating all living enemies produces a victory state; health reaching zero produces a game-over state.
-
-<div align="right"><a href="#table-of-contents">^ TOC</a></div>
-
-## Development Walkthrough
-
-The following stages describe how POV-Blaster grows from a 2D map into a playable raycast shooter. The demonstrations are included for visual reference and represent the current project style and feature set.
-
-### Player Movement
-
-The player moves forward, backward, and sideways relative to the current viewing angle. Wall collision checks keep the player inside walkable cells, while diagonal movement correction keeps combined WASD input from increasing movement speed. Mouse-look changes the viewing angle and recenters the cursor when it approaches the configured screen border.
-
-![Player movement demonstration](screenshots/player_1.gif)
-
-### Raycasting Algorithm
-
-The camera field of view is the interval from the player angle minus half the FOV to the player angle plus half the FOV. POV-Blaster casts one ray for each configured screen column across that interval. Each ray stops at the first wall cell, providing the depth used to calculate the height of its projected vertical wall strip.
-
-![Raycasting grid traversal](screenshots/raycast_1.gif)
-
-![Raycast projection](screenshots/raycast_2.gif)
-
-Distance correction removes the fishbowl effect that would otherwise make walls at the sides of the view appear distorted. Distance-based shading is a future rendering opportunity; the current renderer uses textured walls, a sky background, and a floor color.
-
-![Raycast scene shading reference](screenshots/raycast_3.gif)
-
-![Textured raycast environment](screenshots/raycast_4.gif)
-
-### Static and Animated Sprites
-
-Scenery is added as transparent 2D billboard images positioned in the map. Animated sprites are sequences of images displayed over time. This supports environmental details such as lights and decorations without requiring a full polygonal 3D engine.
-
-<img src="screenshots/assets_1.png" alt="Static sprite reference" width="126">
-
-<img src="screenshots/assets_2.gif" alt="Animated sprite reference" width="126">
-
-<img src="screenshots/assets_3.gif" alt="Additional animated sprite reference" width="126">
-
-![Decorated game environment](screenshots/gameplay_2.gif)
-
-### Weapon and Shooting Animation
-
-The shotgun is a foreground sprite animated from a sequence of recoil frames. Left-click starts the firing sound and animation, and the reload lockout prevents another shot until the animation completes. The current weapon uses a center-screen hitscan interaction with visible enemies.
-
-![Shotgun firing animation](screenshots/weapon_1.gif)
-
-### Player-Enemy Interaction and Pathfinding
-
-Enemies first use line of sight to detect the player. A direct movement approach would fail when a wall blocks the straight-line route, so POV-Blaster uses breadth-first search over walkable map cells to find a route around obstacles. NPC occupancy is considered when enemies select their next cell.
-
-![Direct enemy pursuit reference](screenshots/player_enemy_1.gif)
-
-![BFS pathfinding reference](screenshots/player_enemy_2.gif)
-
-![Multiple-enemy pursuit reference](screenshots/player_enemy_3.gif)
-
-The current implementation is intentionally simple. Future improvements should schedule pathfinding work, avoid stale cache results, prevent diagonal corner cutting, and separate navigation rules from NPC rendering and combat.
-
-### Enemies
-
-POV-Blaster includes three enemy profiles. Each profile uses idle, walk, attack, pain, and death animations and has its own health, speed, attack range, damage, and accuracy values.
-
-#### Soldier
-
-![Soldier idle and combat reference](screenshots/soldier_1.gif)
-
-![Soldier movement reference](screenshots/soldier_2.gif)
-
-![Soldier attack reference](screenshots/soldier_3.gif)
-
-#### Cacodemon
-
-![Cacodemon idle and combat reference](screenshots/cacodemon_1.gif)
-
-![Cacodemon movement reference](screenshots/cacodemon_2.gif)
-
-![Cacodemon attack reference](screenshots/cacodemon_3.gif)
-
-#### Cyberdemon
-
-![Cyberdemon idle and combat reference](screenshots/cyberdemon_1.gif)
-
-![Cyberdemon movement reference](screenshots/cyberdemon_2.gif)
-
-![Cyberdemon attack reference](screenshots/cyberdemon_3.gif)
-
-### Final Gameplay
-
-The complete gameplay loop combines movement, mouse-look, raycast rendering, textured walls, animated scenery, enemy detection and navigation, shotgun combat, health and damage feedback, sound effects, and victory/game-over transitions.
-
-![POV-Blaster final gameplay](screenshots/gameplay_1.gif)
-
-<div align="right"><a href="#table-of-contents">^ TOC</a></div>
-
-## Assets
-
-Runtime assets are stored under `assets/`:
-
-```text
-assets/
-├── default/
-├── candy_kingdom/
-├── graveyard/
-├── hunting/
-├── space/
-├── maps/
-└── levels/
-```
-
-Keep asset paths relative to the project asset root. Mutable runtime data belongs in `data/`, not under `assets/`.
 
 <div align="right"><a href="#table-of-contents">^ TOC</a></div>
 
@@ -539,6 +526,18 @@ The current implementation is a compact prototype and is intentionally being evo
 See the audit and comparison reports before making foundational changes.
 
 <div align="right"><a href="#table-of-contents">^ TOC</a></div>
+
+## Documentation
+
+- [ArchDiagrams.md](docs/ArchDiagrams.md): Mermaid architecture, runtime, API, and deployment diagrams
+- [CHANGELOG.md](CHANGELOG.md): project history and prior development prompts
+- [CodeAudit.md](docs/CodeAudit.md): architecture, quality, performance, and scalability audit
+- [CodeBase.md](docs/CodeBase.md): up-to-date reconstruction guide and codebase walkthrough (the original, now superseded, walkthrough is archived at [docs/archive/CodeBase-Orig.md](docs/archive/CodeBase-Orig.md))
+- [GraphicsRollback.md](docs/GraphicsRollback.md): graphics rollback and asset history
+- [docs/archive/CodeBase-Orig.md](docs/archive/CodeBase-Orig.md): archived pre-refactor codebase walkthrough
+- [docs/archive/Recommendations.md](docs/archive/Recommendations.md): archived architecture recommendations
+- [docs/archive/CloneCompare.md](docs/archive/CloneCompare.md): comparison of the related game projects and first-patch recommendations
+- [docs/archive/POCFeatures.md](docs/archive/POCFeatures.md): archived proof-of-concept feature record
 
 <div align="right"><a href="#table-of-contents">^ TOC</a></div>
 

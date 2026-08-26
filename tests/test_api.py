@@ -60,7 +60,7 @@ class ScoreApiTests(unittest.TestCase):
         self.assertEqual(record['player_name'], 'Bob')
         self.assertEqual(record['city'], 'London')
         self.assertEqual(record['country'], 'United Kingdom')
-        self.assertEqual(record['ip_address'], '203.0.113.20')
+        self.assertNotIn('ip_address', record)
         locate_ip.assert_called_once_with('203.0.113.20')
 
     def test_list_web_sessions(self):
@@ -73,6 +73,7 @@ class ScoreApiTests(unittest.TestCase):
         sessions = response.json()
         self.assertEqual(len(sessions), 1)
         self.assertEqual(sessions[0]['player_name'], 'Charlie')
+        self.assertNotIn('ip_address', sessions[0])
 
     def test_invalid_session_is_rejected(self):
         response = self.client.post('/sessions', json={'player_name': ''})

@@ -50,7 +50,7 @@ class WebSessionSubmission(BaseModel):
 
 class WebSessionRecord(WebSessionSubmission):
     id: int
-    ip_address: str | None = None
+    # ip_address is stored (see web_sessions table) but never returned via the API.
     city: str | None = None
     country: str | None = None
     created_at: str
