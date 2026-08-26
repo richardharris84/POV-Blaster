@@ -325,7 +325,7 @@ class ThemeSelectionTests(unittest.TestCase):
                 FakeBrowserNameInput.instances.append(self)
 
             def focus(self):
-                pass
+                self.on_change(SimpleNamespace())
 
             def set_value(self, value):
                 self.set_value_calls.append(value)
@@ -348,8 +348,6 @@ class ThemeSelectionTests(unittest.TestCase):
             pg.quit()
 
         browser_input = FakeBrowserNameInput.instances[0]
-        browser_input.element = SimpleNamespace(value='ABCDEFGHIJKLMNOPQRSTUVWXYZ')
-        browser_input.on_change(SimpleNamespace())
         self.assertEqual(browser_input.set_value_calls, ['ABCDEFGHIJKLMNOPQRSTUVWX'])
 
     def test_player_name_is_requested_before_theme_selection(self):
