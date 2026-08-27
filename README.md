@@ -94,6 +94,7 @@ The game uses a 2D grid map to produce a pseudo-3D view. It supports textured wa
 - Applying Clean Architecture principles with a practical [Python example](docs/CodeBase.md)
 - Documenting the codebase through clear [architecture diagrams](docs/ArchDiagrams.md)
 - Using a self-contained, workspace-agnostic [Copilot autonomy policy](.github/prompts/block-auto-pilot.prompt.md) that is inactive by default and requires explicit activation before it requires confirmation for consequential actions
+- Using a structured `CHANGELOG.md` together with [`sync_chglog.py`](sync_chglog.py) to help Tech Leads prepare release reviews by summarizing recent commits and prompt activity when commit messages, pull request titles, or pull request descriptions are incomplete or inconsistent
 
 ## How the Game Works
 

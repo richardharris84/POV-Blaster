@@ -326,7 +326,7 @@ async def choose_startup():
                 _button(surface, START_GAME_RECT, "START GAME", selected=True)
                 _draw_centered(surface, "Desktop: WASD moves  |  mouse looks  |  left click fires", _font(17), ACCENT, 730)
                 _draw_centered(surface, "Mobile: left joystick moves  |  right joystick looks  |  tap right joystick to fire", _font(17), ACCENT, 755)
-                _draw_centered(surface, "Enter selects  |  Esc exits", _font(17), MUTED, 765)
+                _draw_centered(surface, "Enter selects  |  Esc exits", _font(17), MUTED, 785)
             _draw_footer(surface)
             pg.display.flip()
             clock.tick(60)
