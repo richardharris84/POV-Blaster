@@ -1483,10 +1483,14 @@ Recommended description:
 <!-- AUTOMATED 72-HOUR SYNC:START -->
 ## Automated 72-Hour Sync
 
-Generated: 2026-08-26T23:47:13-04:00 (window: last 24 hours)
+Generated: 2026-08-27T12:09:07-04:00 (window: last 72 hours)
 
 ### Git Commits
 
+- `ddfd146` (2026-08-27) Auto Refactor
+- `66958e1` (2026-08-27) Deploy GitHub Pages
+- `c3d4391` (2026-08-27) Add map selection, sharpen theme HUD digits, tune death animations, and asset fallback
+- `f2e65d2` (2026-08-26) Complete recent prompt work and changelog sync
 - `ee2177f` (2026-08-26) Finalize Copilot policy and web footer
 - `412bc48` (2026-08-26) Add inactive gate to Copilot policy
 - `1d15f0e` (2026-08-26) Generalize block auto-pilot prompt
@@ -1523,6 +1527,27 @@ Generated: 2026-08-26T23:47:13-04:00 (window: last 24 hours)
 - `a7cb3c3` (2026-08-26) Fix mobile name input bug, default theme to Doom, double minimap size, README updates
 - `4f17fff` (2026-08-25) Merge pull request #2 from richardharris84/copilot/pov-blaster-update
 - `905949f` (2026-08-26) Add Hello World line to README
+- `f3ffa73` (2026-08-25) Merge pull request #1 from richardharris84/copilot/research-task-orientation
+- `fa73bc8` (2026-08-26) docs: add quick orientation section to CodeBase.md
+- `414f70a` (2026-08-25) Fixed Architecture Diagrams
+- `19717d7` (2026-08-25) Update docs, mobile controls, and release assets
+- `f9afb24` (2026-08-25) Deploy GitHub Pages
+- `3cdfde3` (2026-08-25) Deploy GitHub Pages
+- `45c0b89` (2026-08-25) Add GH Pages deploy to build.py
+- `e69a0ac` (2026-08-25) Architecture Diagrams
+- `9b0856d` (2026-08-24) Normalize project documentation and changelog
+- `2b6e182` (2026-08-24) Replace XML scores with local SQLite and sync support
+- `3423fbe` (2026-08-24) Refine web startup footer and mobile turning
+- `0bfe769` (2026-08-24) Document API database and deployment configuration
+- `fe813b7` (2026-08-24) Update Psycopg for Python 3.14
+- `9458493` (2026-08-24) Use API-only dependencies on Render
+- `31b9777` (2026-08-24) Use free Render service with external Postgres
+- `2efe030` (2026-08-24) Use Render Postgres for hosted score storage
+- `d676d1b` (2026-08-24) Gold Code: Complete API integration with database, web session tracking, and deployment pipelines
+- `9c33c07` (2026-08-24) Richard's Architecture - Themes
+- `b33e246` (2026-08-24) Richard's New Architecture
+- `ff80fd3` (2026-08-24) docs: normalize changelog steps and fix smtp tls
+- `7bd3ca6` (2026-08-24) feat: support mobile browser name entry
 
 ### Prompt Files Changed
 
