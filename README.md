@@ -89,11 +89,11 @@ The game uses a 2D grid map to produce a pseudo-3D view. It supports textured wa
 ## DevOps Takeaways
 
 - [GitHub Actions](https://github.com/richardharris84/POV-Blaster/actions) workflows, including email notifications
-- Creating an API with health-check endpoints ([health-check endpoint](api/main.py#L117))
+- Creating an API with health-check endpoints ([health-check endpoint](/health))
 - Designing and maintaining a custom build process
 - Applying Clean Architecture principles with a practical [Python example](docs/CodeBase.md)
 - Documenting the codebase through clear [architecture diagrams](docs/ArchDiagrams.md)
-- Using [block-auto-pilot.prompt.md](.github/prompts/block-auto-pilot.prompt.md) to keep Auto-pilot reserved for Richard Harris
+- Using a self-contained, workspace-agnostic [Copilot autonomy policy](.github/prompts/block-auto-pilot.prompt.md) that is inactive by default and requires explicit activation before it requires confirmation for consequential actions
 
 ## How the Game Works
 

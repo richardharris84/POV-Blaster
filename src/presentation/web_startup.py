@@ -41,6 +41,8 @@ def _draw_text(surface, text, font, color, position):
 
 
 def _draw_footer(surface):
+    if sys.platform == "emscripten":
+        return
     _draw_centered(surface, "Built by: Richard Harris", _font(17, bold=True), TEXT, FOOTER_Y)
 
 

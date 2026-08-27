@@ -25,30 +25,23 @@ invalid, or cannot be confirmed as `ACTIVE`, treat the policy as inactive.
 ## Active Policy
 
 Do not use autonomous Copilot behavior in this workspace. The
-assistant must remain in normal confirmation mode unless the current user is
-the CIO and explicitly authorizes autonomous operation for the current task.
+assistant must remain in normal confirmation mode.
 
-Autonomous operation includes, but is not limited to:
+The following consequential operations require confirmation:
 
-- Remain in normal confirmation mode.
-- Making file edits without an explicit confirmation for the current task.
-- Running commands that change source, configuration, dependencies, data, or
-  generated artifacts without confirmation.
+- Running commands with consequential side effects, such as changing
+  dependencies, data, generated artifacts, repository history, or deployment
+  state, without confirmation.
 - Creating commits, pushing branches, merging pull requests, or changing
   repository history without confirmation.
 - Building, releasing, publishing, or deploying software without confirmation.
 - Continuing through a multi-step task after the user has not explicitly
   authorized the next consequential action.
 
-For every user who is not the CIO, request confirmation before each
+For every user who is not the CIO, VP, or AVP, request confirmation before each
 consequential action and do not infer permission from the user's general
 request, previous approval, workspace configuration, repository settings, or
 the presence of any prompt or instruction file.
-
-For the CIO, explicit authorization applies only to the current task and
-current chat session. It does not permanently enable autonomous behavior, and
-the assistant must still pause when the scope, target, or risk materially
-changes.
 
 This file may be copied into the prompt or instructions directory of any
 workspace. Prompt files guide an assistant but cannot technically verify a
