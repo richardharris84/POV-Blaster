@@ -1,9 +1,10 @@
 import pygame as pg
 import math
 from infrastructure.settings import (DELTA_ANGLE, FOV, HALF_FOV, HALF_HEIGHT, HALF_TEXTURE_SIZE,
-                      MAX_DEPTH, NUM_RAYS, RAY_EPSILON, SCALE, SCREEN_DIST,
+                      NUM_RAYS, SCALE, SCREEN_DIST,
                       TEXTURE_SIZE, HEIGHT)
 from application.ports import GameContext
+from application.ray_engine import cast_wall_ray
 
 
 class RayCasting:
@@ -24,23 +25,24 @@ class RayCasting:
             # (texture, position, size) combinations reuse a cached scaled surface
             # instead of re-cropping and re-scaling from scratch every single frame.
             src_x = int(offset * (TEXTURE_SIZE - SCALE))
+            shade = renderer.cel_shade(depth)
 
             if proj_height < HEIGHT:
                 height_px = max(1, int(proj_height))
                 wall_column = renderer.cached_scale(
-                    renderer.wall_column_cache, ('near', texture, src_x, height_px),
-                    lambda tex=texture, x=src_x, h=height_px: pg.transform.scale(
-                        self.textures[tex].subsurface(x, 0, SCALE, TEXTURE_SIZE), (SCALE, h)
-                    ),
+                    renderer.wall_column_cache, ('near', texture, src_x, height_px, shade),
+                        lambda tex=texture, x=src_x, h=height_px, s=shade: renderer._apply_cel_shading(
+                            pg.transform.scale(self.textures[tex].subsurface(x, 0, SCALE, TEXTURE_SIZE), (SCALE, h)), s
+                        ),
                 )
                 wall_pos = (ray * SCALE, HALF_HEIGHT - proj_height // 2)
             else:
                 texture_height = max(1, int(TEXTURE_SIZE * HEIGHT / proj_height))
                 src_y = int(HALF_TEXTURE_SIZE - texture_height // 2)
                 wall_column = renderer.cached_scale(
-                    renderer.wall_column_cache, ('far', texture, src_x, src_y, texture_height),
-                    lambda tex=texture, x=src_x, y=src_y, th=texture_height: pg.transform.scale(
-                        self.textures[tex].subsurface(x, y, SCALE, th), (SCALE, HEIGHT)
+                    renderer.wall_column_cache, ('far', texture, src_x, src_y, texture_height, shade),
+                    lambda tex=texture, x=src_x, y=src_y, th=texture_height, s=shade: renderer._apply_cel_shading(
+                        pg.transform.scale(self.textures[tex].subsurface(x, y, SCALE, th), (SCALE, HEIGHT)), s
                     ),
                 )
                 wall_pos = (ray * SCALE, 0)
@@ -49,64 +51,11 @@ class RayCasting:
 
     def ray_cast(self):
         self.ray_casting_result = []
-        texture_vert, texture_hor = 1, 1
-        ox, oy = self.game.player.pos
-        x_map, y_map = self.game.player.map_pos
-
         ray_angle = self.game.player.angle - HALF_FOV + 0.0001
         for ray in range(NUM_RAYS):
-            sin_a = math.sin(ray_angle)
-            cos_a = math.cos(ray_angle)
-            if abs(sin_a) < RAY_EPSILON:
-                sin_a = RAY_EPSILON if sin_a >= 0 else -RAY_EPSILON
-            if abs(cos_a) < RAY_EPSILON:
-                cos_a = RAY_EPSILON if cos_a >= 0 else -RAY_EPSILON
-
-            # horizontals
-            y_hor, dy = (y_map + 1, 1) if sin_a > 0 else (y_map - 1e-6, -1)
-
-            depth_hor = (y_hor - oy) / sin_a
-            x_hor = ox + depth_hor * cos_a
-
-            delta_depth = dy / sin_a
-            dx = delta_depth * cos_a
-
-            for i in range(MAX_DEPTH):
-                tile_hor = int(x_hor), int(y_hor)
-                if tile_hor in self.game.map.world_map:
-                    texture_hor = self.game.map.world_map[tile_hor]
-                    break
-                x_hor += dx
-                y_hor += dy
-                depth_hor += delta_depth
-
-            # verticals
-            x_vert, dx = (x_map + 1, 1) if cos_a > 0 else (x_map - 1e-6, -1)
-
-            depth_vert = (x_vert - ox) / cos_a
-            y_vert = oy + depth_vert * sin_a
-
-            delta_depth = dx / cos_a
-            dy = delta_depth * sin_a
-
-            for i in range(MAX_DEPTH):
-                tile_vert = int(x_vert), int(y_vert)
-                if tile_vert in self.game.map.world_map:
-                    texture_vert = self.game.map.world_map[tile_vert]
-                    break
-                x_vert += dx
-                y_vert += dy
-                depth_vert += delta_depth
-
-            # depth, texture offset
-            if depth_vert < depth_hor:
-                depth, texture = depth_vert, texture_vert
-                y_vert %= 1
-                offset = y_vert if cos_a > 0 else (1 - y_vert)
-            else:
-                depth, texture = depth_hor, texture_hor
-                x_hor %= 1
-                offset = (1 - x_hor) if sin_a > 0 else x_hor
+            depth, texture, offset, _ = cast_wall_ray(
+                self.game.player.pos, ray_angle, self.game.map.world_map
+            )
 
             # remove fishbowl effect
             depth *= math.cos(self.game.player.angle - ray_angle)

@@ -6,7 +6,8 @@ from infrastructure.settings import (HALF_HEIGHT, HALF_WIDTH, HEIGHT, LINUX_MOUS
                       MOUSE_BORDER_LEFT, MOUSE_BORDER_RIGHT, MOUSE_MAX_REL,
                       MOUSE_SENSITIVITY, PLAYER_ANGLE, PLAYER_MAX_HEALTH,
                       PLAYER_POS, PLAYER_ROT_SPEED, PLAYER_SIZE_SCALE,
-                      PLAYER_SPEED, WEB_MOUSE_SENSITIVITY, MOBILE_TOUCH_SENSITIVITY, WIDTH)
+                      PLAYER_SPEED, WEB_MOUSE_SENSITIVITY, MOBILE_TOUCH_SENSITIVITY,
+                      MOVEMENT_SMOOTHING_MS, WIDTH)
 from domain.health import Health
 from domain.movement import movement_delta
 from application.ports import GameContext
@@ -24,6 +25,8 @@ class Player:
         self.health_recovery_delay = 700
         self.time_prev = pg.time.get_ticks()
         self.mouse_motion = 0
+        self.motion_x = 0.0
+        self.motion_y = 0.0
         self.diag_move_corr = 1 / math.sqrt(2)
 
     def add_mouse_motion(self, relative_x):
@@ -77,14 +80,14 @@ class Player:
         touch_controller = getattr(self.game, 'touch_controller', None)
         if touch_controller is not None:
             move_x, move_y, _ = touch_controller.axes()
-            dx = speed * (move_y * math.cos(self.angle) - move_x * math.sin(self.angle))
-            dy = speed * (move_y * math.sin(self.angle) + move_x * math.cos(self.angle))
-            self.check_wall_collision(dx, dy)
+            target_dx = speed * (move_y * math.cos(self.angle) - move_x * math.sin(self.angle))
+            target_dy = speed * (move_y * math.sin(self.angle) + move_x * math.cos(self.angle))
+            self.apply_smoothed_motion(target_dx, target_dy)
             self.angle %= math.tau
             return
 
         keys = pg.key.get_pressed()
-        dx, dy = movement_delta(
+        target_dx, target_dy = movement_delta(
             self.angle,
             speed,
             keys[pg.K_w],
@@ -93,13 +96,19 @@ class Player:
             keys[pg.K_d],
         )
 
-        self.check_wall_collision(dx, dy)
+        self.apply_smoothed_motion(target_dx, target_dy)
 
         # if keys[pg.K_LEFT]:
         #     self.angle -= PLAYER_ROT_SPEED * self.game.delta_time
         # if keys[pg.K_RIGHT]:
         #     self.angle += PLAYER_ROT_SPEED * self.game.delta_time
         self.angle %= math.tau
+
+    def apply_smoothed_motion(self, target_dx, target_dy):
+        smoothing = min(1.0, self.game.delta_time / MOVEMENT_SMOOTHING_MS)
+        self.motion_x += (target_dx - self.motion_x) * smoothing
+        self.motion_y += (target_dy - self.motion_y) * smoothing
+        self.check_wall_collision(self.motion_x, self.motion_y)
 
     def check_wall(self, x, y):
         return (x, y) not in self.game.map.world_map

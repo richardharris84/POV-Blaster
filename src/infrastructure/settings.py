@@ -18,6 +18,7 @@ MAX_DELTA_TIME = 100
 PLAYER_POS = 1.5, 5  # mini_map
 PLAYER_ANGLE = 0
 PLAYER_SPEED = 0.004
+MOVEMENT_SMOOTHING_MS = 50
 PLAYER_ROT_SPEED = 0.002
 PLAYER_SIZE_SCALE = 60
 PLAYER_MAX_HEALTH = 100
@@ -32,6 +33,10 @@ MOUSE_BORDER_LEFT = 100
 MOUSE_BORDER_RIGHT = WIDTH - MOUSE_BORDER_LEFT
 
 FLOOR_COLOR = (30, 30, 30)
+
+# Quantized wall lighting gives the raycaster a portable cel-shaded look. The
+# values are deliberately applied while columns enter the renderer cache.
+CEL_SHADING_BANDS = ((4.0, 0.62), (8.0, 0.78), (float('inf'), 1.0))
 
 FOV = math.pi / 3
 HALF_FOV = FOV / 2

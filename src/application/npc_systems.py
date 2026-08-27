@@ -8,83 +8,24 @@ import math
 
 from random import random
 
-from infrastructure.settings import HALF_WIDTH, MAX_DEPTH, RAY_EPSILON
+from infrastructure.settings import HALF_WIDTH
+from application.ray_engine import cast_wall_ray
 
 
 def npc_can_see_player(npc):
     """Line-of-sight raycast from an NPC to the player.
 
-    This intentionally duplicates the DDA grid-traversal algorithm in
-    raycasting.RayCasting.ray_cast rather than sharing it -- see CodeAudit.md (H2)
-    for the follow-up to unify both into one implementation.
+    The wall distance comes from the same DDA implementation used for rendering.
     """
     game = npc.game
     if game.player.map_pos == npc.map_pos:
         return True
 
-    wall_dist_v, wall_dist_h = 0, 0
-    player_dist_v, player_dist_h = 0, 0
-
-    ox, oy = game.player.pos
-    x_map, y_map = game.player.map_pos
-
-    ray_angle = npc.theta
-
-    sin_a = math.sin(ray_angle)
-    cos_a = math.cos(ray_angle)
-    if abs(sin_a) < RAY_EPSILON:
-        sin_a = RAY_EPSILON if sin_a >= 0 else -RAY_EPSILON
-    if abs(cos_a) < RAY_EPSILON:
-        cos_a = RAY_EPSILON if cos_a >= 0 else -RAY_EPSILON
-
-    # horizontals
-    y_hor, dy = (y_map + 1, 1) if sin_a > 0 else (y_map - 1e-6, -1)
-
-    depth_hor = (y_hor - oy) / sin_a
-    x_hor = ox + depth_hor * cos_a
-
-    delta_depth = dy / sin_a
-    dx = delta_depth * cos_a
-
-    for _ in range(MAX_DEPTH):
-        tile_hor = int(x_hor), int(y_hor)
-        if tile_hor == npc.map_pos:
-            player_dist_h = depth_hor
-            break
-        if tile_hor in game.map.world_map:
-            wall_dist_h = depth_hor
-            break
-        x_hor += dx
-        y_hor += dy
-        depth_hor += delta_depth
-
-    # verticals
-    x_vert, dx = (x_map + 1, 1) if cos_a > 0 else (x_map - 1e-6, -1)
-
-    depth_vert = (x_vert - ox) / cos_a
-    y_vert = oy + depth_vert * sin_a
-
-    delta_depth = dx / cos_a
-    dy = delta_depth * sin_a
-
-    for _ in range(MAX_DEPTH):
-        tile_vert = int(x_vert), int(y_vert)
-        if tile_vert == npc.map_pos:
-            player_dist_v = depth_vert
-            break
-        if tile_vert in game.map.world_map:
-            wall_dist_v = depth_vert
-            break
-        x_vert += dx
-        y_vert += dy
-        depth_vert += delta_depth
-
-    player_dist = max(player_dist_v, player_dist_h)
-    wall_dist = max(wall_dist_v, wall_dist_h)
-
-    if 0 < player_dist < wall_dist or not wall_dist:
-        return True
-    return False
+    wall_dist, _, _, _ = cast_wall_ray(
+        game.player.pos, npc.theta, game.map.world_map
+    )
+    player_dist = math.hypot(npc.x - game.player.x, npc.y - game.player.y)
+    return player_dist < wall_dist
 
 
 class AnimationController:

@@ -3,7 +3,8 @@ from pathlib import Path
 
 import pygame as pg
 
-from infrastructure.settings import FLOOR_COLOR, HALF_HEIGHT, HEIGHT, RES, SCALE, TEXTURE_SIZE, WIDTH
+from infrastructure.settings import (CEL_SHADING_BANDS, FLOOR_COLOR, HALF_HEIGHT,
+                                     HEIGHT, RES, SCALE, TEXTURE_SIZE, WIDTH)
 from infrastructure.assets import AssetLoader
 
 
@@ -38,6 +39,20 @@ class ObjectRenderer:
                 cache.clear()
             cache[key] = cached
         return cached
+
+    @staticmethod
+    def cel_shade(depth):
+        for distance, shade in CEL_SHADING_BANDS:
+            if depth < distance:
+                break
+        return shade
+
+    @staticmethod
+    def _apply_cel_shading(surface, shade):
+        shaded = surface.copy()
+        channel = int(shade * 255)
+        shaded.fill((channel, channel, channel), special_flags=pg.BLEND_RGB_MULT)
+        return shaded
 
     def draw(self, snapshot=None):
         self.draw_background()
