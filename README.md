@@ -39,6 +39,7 @@ The game uses a 2D grid map to produce a pseudo-3D view. It supports textured wa
 
 - [Project Highlights](#project-highlights)
 - [Controls](#controls)
+- [DevOps Takeaways](#devops-takeaways)
 - [How the Game Works](#how-the-game-works)
 - [Development Walkthrough](#development-walkthrough)
 - [Assets](#assets)
@@ -84,6 +85,14 @@ The game uses a 2D grid map to produce a pseudo-3D view. It supports textured wa
 4. Add game modes:
   - Arcade: single-player with persistent high scores across platforms (current).
   - Multiplayer (planned).
+
+## DevOps Takeaways
+
+- GitHub Actions workflows, including email notifications
+- Creating an API with health-check endpoints
+- Designing and maintaining a custom build process
+- Applying Clean Architecture principles with a practical Python example
+- Documenting the codebase through clear architecture diagrams
 
 ## How the Game Works
 

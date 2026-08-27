@@ -222,6 +222,21 @@ def apply_web_html_patches(html):
                 '</script>\n'
             )
             html = html.replace('</body>', f'{title_script}</body>', 1)
+        if 'id="pov-blaster-footer"' not in html:
+            footer_markup = (
+                '\n<div id="pov-blaster-footer">'
+                '<a href="https://github.com/richardharris84/POV-Blaster" '
+                'target="_blank" rel="noopener noreferrer">'
+                '👨‍💻🧠🤖🤯 Built by: Richard Harris 🧙‍♂️🪄⚙️🌐'
+                '</a></div>\n'
+                '<style>\n'
+                '#pov-blaster-footer { position: fixed; bottom: 18px; left: 0; '
+                'width: 100%; text-align: center; z-index: 20; font: bold 17px '
+                '"Segoe UI Emoji", "Apple Color Emoji", sans-serif; }\n'
+                '#pov-blaster-footer a { color: #ffffff; text-decoration: none; }\n'
+                '</style>\n'
+            )
+            html = html.replace('</body>', f'{footer_markup}</body>', 1)
     return html
 
 

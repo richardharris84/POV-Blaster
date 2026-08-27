@@ -41,7 +41,7 @@ def _draw_text(surface, text, font, color, position):
 
 
 def _draw_footer(surface):
-    _draw_centered(surface, "👨‍💻🧠🤖🤯 Built by: Richard Harris 🧙‍♂️🪄⚙️🌐", _font(17, bold=True), TEXT, FOOTER_Y)
+    _draw_centered(surface, "Built by: Richard Harris", _font(17, bold=True), TEXT, FOOTER_Y)
 
 
 def _button(surface, rect, label, selected=False):
@@ -313,7 +313,7 @@ async def choose_startup():
                 _button(surface, CONTINUE_RECT, "CONTINUE", selected=True)
                 _draw_centered(surface, "Enter to continue  |  Esc to exit", _font(17), ACCENT, 490)
                 _draw_centered(surface, "Privacy Notice", _font(18, bold=True), MUTED, 555)
-                _draw_centered(surface, "Desktop: WASD moves  |  mouse looks  |  left click fires", _font(17), TEXT, 585)
+                _draw_centered(surface, "Desktop: WASD moves  |  mouse looks  |  left click fires", _font(17), ACCENT, 585)
                 _draw_centered(surface, "Mobile controls: left joystick moves  |  right joystick looks  |  tap right joystick to fire", _font(17), ACCENT, 610)
             else:
                 _draw_centered(surface, f"WELCOME, {player_name.upper()}", _font(27, bold=True), TEXT, 105)
@@ -322,7 +322,7 @@ async def choose_startup():
                     rect = pg.Rect(WIDTH // 2 - 300, 195 + index * 76, 600, 60)
                     _button(surface, rect, f"{number}  {theme.label}", selected=index == selected_theme)
                 _button(surface, START_GAME_RECT, "START GAME", selected=True)
-                _draw_centered(surface, "Desktop: WASD moves  |  mouse looks  |  left click fires", _font(17), TEXT, 730)
+                _draw_centered(surface, "Desktop: WASD moves  |  mouse looks  |  left click fires", _font(17), ACCENT, 730)
                 _draw_centered(surface, "Mobile: left joystick moves  |  right joystick looks  |  tap right joystick to fire", _font(17), ACCENT, 755)
                 _draw_centered(surface, "Enter selects  |  Esc exits", _font(17), MUTED, 765)
             _draw_footer(surface)
