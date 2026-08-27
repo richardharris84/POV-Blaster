@@ -15,15 +15,21 @@ async def main():
     set_game_icon()
     from presentation.web_startup import choose_startup
 
-    startup = await choose_startup()
-    if startup is None:
-        pg.quit()
-        return
-    player_name, selected_theme = startup
     scores = BrowserHighScores(api_url=SCORE_API_URL)
-    scores.record_session(player_name)  # Record that this player started a web session
-    game = Game(selected_theme, player_name=player_name, high_scores=scores, sound_factory=BrowserSound)
-    await game.run_async(return_on_exit=False)
+    player_name = None
+    session_recorded = False
+    while True:
+        startup = await choose_startup(player_name=player_name, high_scores=scores)
+        if startup is None:
+            pg.quit()
+            return
+        player_name, selected_theme, selected_map = startup
+        if not session_recorded:
+            scores.record_session(player_name)  # Record that this player started a web session
+            session_recorded = True
+        game = Game(selected_theme, player_name=player_name, high_scores=scores, sound_factory=BrowserSound,
+                    map_name=selected_map)
+        await game.run_async(return_on_exit=True, browser_mode=True)
 
 
 if __name__ == '__main__':

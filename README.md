@@ -64,9 +64,9 @@ The game uses a 2D grid map to produce a pseudo-3D view. It supports textured wa
 
 - Run the game directly with Python or build Windows, Linux, macOS, and Web releases.
 - Clean structure with only two Python files at the workspace root; source, assets, tests, tools, and documentation have dedicated folders.
-- Extensive README, CHANGELOG, and `docs/` coverage explains the project, architecture, history, deployment, and testing.
+- Extensive [`README.md`](README.md), [`CHANGELOG.md`](CHANGELOG.md), and [`docs/`](docs/) coverage explains the project, architecture, history, deployment, and testing.
 - GitHub Actions builds and deploys the browser version to GitHub Pages, with completion email notifications.
-- The original DOOM-style game was forked as a Python codebase; subsequent changes were developed through 40+ documented Copilot prompts in `CHANGELOG.md`.
+- The original [DOOM-style game](https://github.com/StanislavPetrovV/DOOM-style-Game) was forked as a Python codebase; subsequent changes were developed through 40+ documented Copilot prompts in [`CHANGELOG.md`](CHANGELOG.md).
 - FastAPI and SQLite/Postgres support score storage across browser and desktop deployments.
 - Multiple game themes include distinct enemies, assets, weapons, and audio, so different audiences can choose the experience they prefer.
 - A custom DDA raycasting renderer projects 2D grid maps into textured pseudo-3D views in real time. DDA (Digital Differential Analyzer) is a simple computer graphics algorithm used on square grids to find which squares (or pixels) a line passes through.
@@ -76,6 +76,7 @@ The game uses a 2D grid map to produce a pseudo-3D view. It supports textured wa
 - Deterministic pixel-art tooling generates consistent theme textures, characters, animations, weapons, and UI assets.
 - Gameplay includes collision-aware movement, mouse-look, enemy line of sight, BFS pathfinding, combat, health recovery, victory, and game-over states.
 - The Web target uses a dedicated asynchronous Pygbag/WASM runtime and browser audio/high-score adapters while sharing the core game systems.
+- Web startup performance is improved by deferring full-screen overlays and animated sprite frames until needed, excluding development-only reference assets from the web archive, minifying published HTML, and removing duplicate generated web pages.
 
 ### Future Changes
 
@@ -89,7 +90,7 @@ The game uses a 2D grid map to produce a pseudo-3D view. It supports textured wa
 ## DevOps Takeaways
 
 - [GitHub Actions](https://github.com/richardharris84/POV-Blaster/actions) workflows, including email notifications
-- Creating an API with health-check endpoints ([health-check endpoint](/health))
+- Creating an API with health-check endpoints ([https://pov-blaster-api.onrender.com/health](https://pov-blaster-api.onrender.com/health))
 - Designing and maintaining a custom build process
 - Applying Clean Architecture principles with a practical [Python example](docs/CodeBase.md)
 - Documenting the codebase through clear [architecture diagrams](docs/ArchDiagrams.md)
@@ -511,7 +512,7 @@ logs/                  Local generated logs (gitignored)
 screenshots/           Project screenshots
 ```
 
-See [docs/CodeBase.md](docs/CodeBase.md) for a full walkthrough of how these pieces fit together.
+See [`docs/CodeBase.md`](docs/CodeBase.md) for a full walkthrough of how these pieces fit together.
 
 <div align="right"><a href="#table-of-contents">^ TOC</a></div>
 
@@ -567,24 +568,24 @@ See the audit and comparison reports before making foundational changes.
 
 ## Documentation
 
-- [RemaingThemes.md](docs/RemaingThemes.md): AI image-generation prompt and workflow for the remaining Candy Kingdom, Space, and Graveyard character art
-- [NewTheme.md](docs/NewTheme.md): AI image-generation prompt and workflow for producing new/redesigned theme character art
-- [.github/prompts/auto-pilot.prompt.md](.github/prompts/auto-pilot.prompt.md): optional session workflow for automated validation, builds, commits, and deployment
-- [ArchDiagrams.md](docs/ArchDiagrams.md): Mermaid architecture, runtime, API, and deployment diagrams
-- [CHANGELOG.md](CHANGELOG.md): project history and prior development prompts
-- [CodeAudit.md](docs/CodeAudit.md): architecture, quality, performance, and scalability audit
-- [CodeBase.md](docs/CodeBase.md): up-to-date reconstruction guide and codebase walkthrough (the original, now superseded, walkthrough is archived at [docs/archive/CodeBase-Orig.md](docs/archive/CodeBase-Orig.md))
-- [GraphicsRollback.md](docs/GraphicsRollback.md): graphics rollback and asset history
-- [docs/archive/CodeBase-Orig.md](docs/archive/CodeBase-Orig.md): archived pre-refactor codebase walkthrough
-- [docs/archive/Recommendations.md](docs/archive/Recommendations.md): archived architecture recommendations
-- [docs/archive/CloneCompare.md](docs/archive/CloneCompare.md): comparison of the related game projects and first-patch recommendations
-- [docs/archive/POCFeatures.md](docs/archive/POCFeatures.md): archived proof-of-concept feature record
+- [`RemaingThemes.md`](docs/RemaingThemes.md): AI image-generation prompt and workflow for the remaining Candy Kingdom, Space, and Graveyard character art
+- [`NewTheme.md`](docs/NewTheme.md): AI image-generation prompt and workflow for producing new/redesigned theme character art
+- [`.github/prompts/auto-pilot.prompt.md`](.github/prompts/auto-pilot.prompt.md): optional session workflow for automated validation, builds, commits, and deployment
+- [`ArchDiagrams.md`](docs/ArchDiagrams.md): Mermaid architecture, runtime, API, and deployment diagrams
+- [`CHANGELOG.md`](CHANGELOG.md): project history and prior development prompts
+- [`CodeAudit.md`](docs/CodeAudit.md): architecture, quality, performance, and scalability audit
+- [`CodeBase.md`](docs/CodeBase.md): up-to-date reconstruction guide and codebase walkthrough (the original, now superseded, walkthrough is archived at [`docs/archive/CodeBase-Orig.md`](docs/archive/CodeBase-Orig.md))
+- [`GraphicsRollback.md`](docs/GraphicsRollback.md): graphics rollback and asset history
+- [`docs/archive/CodeBase-Orig.md`](docs/archive/CodeBase-Orig.md): archived pre-refactor codebase walkthrough
+- [`docs/archive/Recommendations.md`](docs/archive/Recommendations.md): archived architecture recommendations
+- [`docs/archive/CloneCompare.md`](docs/archive/CloneCompare.md): comparison of the related game projects and first-patch recommendations
+- [`docs/archive/POCFeatures.md`](docs/archive/POCFeatures.md): archived proof-of-concept feature record
 
 <div align="right"><a href="#table-of-contents">^ TOC</a></div>
 
 ## Project Lineage
 
-POV-Blaster is a direct fork of [StanislavPetrovV/DOOM-style-Game](https://github.com/StanislavPetrovV/DOOM-style-Game). The related [Saurabh-66/DOOM-3D-FPS-Shooting-Game](https://github.com/Saurabh-66/DOOM-3D-FPS-Shooting-Game) project was also compared during planning. The archived [docs/archive/CloneCompare.md](docs/archive/CloneCompare.md) records the source-similarity evidence, while [docs/archive/CodeBase-Orig.md](docs/archive/CodeBase-Orig.md) preserves the original flat-module architecture and runtime assumptions.
+POV-Blaster is a direct fork of [StanislavPetrovV/DOOM-style-Game](https://github.com/StanislavPetrovV/DOOM-style-Game). The related [Saurabh-66/DOOM-3D-FPS-Shooting-Game](https://github.com/Saurabh-66/DOOM-3D-FPS-Shooting-Game) project was also compared during planning. The archived [`docs/archive/CloneCompare.md`](docs/archive/CloneCompare.md) records the source-similarity evidence, while [`docs/archive/CodeBase-Orig.md`](docs/archive/CodeBase-Orig.md) preserves the original flat-module architecture and runtime assumptions.
 
 ### Similarity Analysis
 

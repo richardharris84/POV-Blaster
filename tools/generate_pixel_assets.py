@@ -191,6 +191,19 @@ def ui(spec, kind, size):
     return image
 
 
+def _tilt_and_fade(image, angle=80, alpha_scale=0.4):
+    """Rotate a dying sprite to lie almost flat on the ground and fade it out."""
+    rotated = image.rotate(angle, resample=Image.BICUBIC, expand=True)
+    scale = min(image.width / rotated.width, image.height / rotated.height)
+    new_size = (max(1, int(rotated.width * scale)), max(1, int(rotated.height * scale)))
+    rotated = rotated.resize(new_size, Image.LANCZOS)
+    result = Image.new("RGBA", image.size, (0, 0, 0, 0))
+    offset = ((image.width - rotated.width) // 2, (image.height - rotated.height) // 2)
+    result.alpha_composite(rotated, offset)
+    result.putalpha(result.getchannel("A").point(lambda value: int(value * alpha_scale)))
+    return result
+
+
 def npc_frame(spec, role, action, frame):
     image = canvas((76, 110))
     draw = ImageDraw.Draw(image)
@@ -392,6 +405,12 @@ def npc_frame(spec, role, action, frame):
             draw.ellipse((26, ground_y - 16, 32, ground_y - 10), fill=light)
             draw.ellipse((45, ground_y - 24, 51, ground_y - 18), fill=light)
             draw.ellipse((55, ground_y - 10, 61, ground_y - 4), fill=light)
+    if dying and role in {"marshmallow", "doughnut", "gingerbread"}:
+        # Candy Kingdom deaths fade to half opacity instead of staying solid.
+        image.putalpha(image.getchannel("A").point(lambda value: value // 2))
+    if dying and role in {"drone", "warrior", "overlord", "hunter", "deer", "bear", "ghost", "vampire", "werewolf"}:
+        # Space, hunting, and graveyard deaths fall almost flat and fade 60%.
+        image = _tilt_and_fade(image)
     if role == "hunter":
         inset = Image.new("RGBA", image.size)
         inset.alpha_composite(image, (-2, -2))
@@ -452,6 +471,39 @@ def scenery(spec, size, name, frame):
     return image
 
 
+def render_digit_glyph(character, size, fill, outline=(12, 14, 21), supersample=4):
+    """Draw a bold, black-outlined digit glyph for sharp HUD readability.
+
+    Rendered at a higher resolution and downsampled with Lanczos filtering so the
+    outline is a thick, smooth ring instead of a jagged or blurry pixel edge.
+    """
+    canvas_size = size * supersample
+    stroke_width = max(6, canvas_size // 16)
+    image = Image.new("RGBA", (canvas_size, canvas_size), (0, 0, 0, 0))
+    draw = ImageDraw.Draw(image)
+    font = ImageFont.truetype("C:/Windows/Fonts/impact.ttf", int(canvas_size * 0.68))
+    box = draw.textbbox((0, 0), character, font=font, stroke_width=stroke_width)
+    x = (canvas_size - (box[2] - box[0])) // 2 - box[0]
+    y = (canvas_size - (box[3] - box[1])) // 2 - box[1]
+    draw.text((x, y), character, font=font, fill=fill, stroke_width=stroke_width, stroke_fill=outline)
+    return image.resize((size, size), Image.LANCZOS)
+
+
+def generate_digits(textures, theme, sharp_outline=False):
+    digits = textures / "digits"; digits.mkdir(exist_ok=True, parents=True)
+    for index in range(11):
+        if sharp_outline:
+            character = "%" if index == 10 else str(index)
+            render_digit_glyph(character, 128, theme["light"]).save(digits / f"{index}.png")
+        else:
+            source = Image.open(DEFAULT / "textures" / "digits" / f"{index}.png").convert("RGBA")
+            pixels = source.load(); tint = theme["light"]
+            for y in range(source.height):
+                for x in range(source.width):
+                    if pixels[x, y][3]: pixels[x, y] = (*tint, pixels[x, y][3])
+            source.save(digits / f"{index}.png")
+
+
 def generate(theme_name, theme):
     root = THEMES_ROOT / theme_name
     textures = root / "textures"; sprites = root / "sprites"
@@ -463,14 +515,7 @@ def generate(theme_name, theme):
         image.save(textures / f"{index}.png")
     (hunting_sky() if theme_name == "hunting" else sky(theme)).save(textures / "sky.png")
     for kind, size in {"blood_screen": (1600, 900), "game_over": (1600, 900), "win": (1920, 1080)}.items(): ui(theme, kind, size).save(textures / f"{kind}.png")
-    digits = textures / "digits"; digits.mkdir(exist_ok=True)
-    for index in range(11):
-        source = Image.open(DEFAULT / "textures" / "digits" / f"{index}.png").convert("RGBA")
-        pixels = source.load(); tint = theme["light"]
-        for y in range(source.height):
-            for x in range(source.width):
-                if pixels[x, y][3]: pixels[x, y] = (*tint, pixels[x, y][3])
-        source.save(digits / f"{index}.png")
+    generate_digits(textures, theme, sharp_outline=True)
     npc_root = sprites / "npc"
     for name, role in theme["roles"].items():
         for action, count in ANIMATIONS.items():
@@ -494,7 +539,13 @@ def generate(theme_name, theme):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--themes", nargs="*", choices=sorted(THEMES), default=sorted(THEMES))
+    parser.add_argument("--digits-only", action="store_true", help="regenerate only the HUD digit textures")
     args = parser.parse_args()
+    if args.digits_only:
+        for name in args.themes:
+            generate_digits(THEMES_ROOT / name / "textures", THEMES[name], sharp_outline=True)
+        print("Regenerated digit textures for: " + ", ".join(args.themes))
+        return
     game_icon().save(ROOT / "assets" / "icon.png")
     for name in args.themes: generate(name, THEMES[name])
     print("Generated original pixel assets for: " + ", ".join(args.themes))

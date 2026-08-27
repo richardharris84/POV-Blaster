@@ -19,7 +19,12 @@ class Theme:
         return THEME_DIR / self.key
 
     def path(self, asset_path):
-        return self.resource_dir / Path(asset_path)
+        themed_path = self.resource_dir / Path(asset_path)
+        if self.key != 'default' and not themed_path.exists():
+            # Themes only need to ship assets that differ from Default;
+            # anything missing falls back to Default's copy automatically.
+            return THEME_DIR / 'default' / Path(asset_path)
+        return themed_path
 
 
 THEMES = (

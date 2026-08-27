@@ -4,6 +4,28 @@ import pygame as pg
 
 MAPS_DIR = Path(__file__).resolve().parents[2] / 'assets' / 'maps'
 DEFAULT_MAP_NAME = '1_mini_map_default'
+AVAILABLE_MAPS = (
+    (DEFAULT_MAP_NAME, 'Doom Facility'),
+    ('2_mini_map_office', 'Office'),
+)
+
+
+def choose_map(input_func=input, output_func=print):
+    output_func('')
+    output_func('Choose a map:')
+    for index, (_, label) in enumerate(AVAILABLE_MAPS, start=1):
+        output_func(f'{index}) {label}')
+    output_func('0) Exit')
+
+    while True:
+        choice = input_func('Selection: ').strip()
+        if choice == '':
+            choice = '1'
+        if choice == '0':
+            return None
+        if choice.isdigit() and 1 <= int(choice) <= len(AVAILABLE_MAPS):
+            return AVAILABLE_MAPS[int(choice) - 1][0]
+        output_func('Invalid selection. Choose a listed map or 0 to exit.')
 
 
 def load_map(map_name=DEFAULT_MAP_NAME):

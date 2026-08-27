@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import re
 
+from application.map import AVAILABLE_MAPS
 from application.theme import THEMES
 
 PROFANITY_PATTERN = re.compile(
@@ -24,4 +25,9 @@ def validate_player_name(name: str) -> str | None:
 def theme_menu_items():
     """Return the same ordered theme data displayed by the console menu."""
     return tuple((index, theme) for index, theme in enumerate(THEMES, start=1))
+
+
+def map_menu_items():
+    """Return the same ordered (map_name, label) data displayed by the console menu."""
+    return tuple((index, map_name, label) for index, (map_name, label) in enumerate(AVAILABLE_MAPS, start=1))
 

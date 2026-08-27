@@ -2,11 +2,46 @@ import pygame as pg
 import os
 import re
 import math
-from collections import deque
 from infrastructure.settings import (DELTA_ANGLE, HALF_HEIGHT, HALF_NUM_RAYS, HALF_WIDTH,
                       NUM_RAYS, RAY_EPSILON, SCALE, SCREEN_DIST, WIDTH)
 from infrastructure.assets import create_fallback_surface, resolve_resource_path
 from application.ports import GameContext
+
+
+class LazyImageSequence:
+    def __init__(self, asset_loader, paths, fallback_label='A'):
+        self.asset_loader = asset_loader
+        self.paths = tuple(paths)
+        self.fallback_label = fallback_label
+        self.images = [None] * len(self.paths)
+        self.offset = 0
+
+    def __len__(self):
+        return len(self.paths)
+
+    def __getitem__(self, index):
+        if not self.paths:
+            raise IndexError(index)
+        if index < 0:
+            index += len(self.paths)
+        if index < 0 or index >= len(self.paths):
+            raise IndexError(index)
+        image_index = (self.offset + index) % len(self.paths)
+        image = self.images[image_index]
+        if image is None:
+            if self.paths[image_index] is None:
+                image = create_fallback_surface((64, 64), self.fallback_label)
+            else:
+                image = self.asset_loader.load_image(
+                    self.paths[image_index],
+                    fallback_label=self.fallback_label,
+                )
+            self.images[image_index] = image
+        return image
+
+    def rotate(self, steps):
+        if self.paths:
+            self.offset = (self.offset + steps) % len(self.paths)
 
 
 class SpriteObject:
@@ -104,10 +139,13 @@ class AnimatedSprite(SpriteObject):
             self.animation_trigger = True
 
     def get_images(self, path):
-        images = deque()
         resource_path = resolve_resource_path(path)
         if not resource_path.exists():
-            return deque([create_fallback_surface((64, 64), 'A')])
+            return LazyImageSequence(
+                self.game.asset_loader,
+                [None],
+                fallback_label='A',
+            )
 
         image_files = [
             file_name for file_name in os.listdir(resource_path)
@@ -120,10 +158,16 @@ class AnimatedSprite(SpriteObject):
             return int(match.group(1)) if match else 0, stem
 
         if not image_files:
-            return deque([create_fallback_surface((64, 64), 'A')])
+            return LazyImageSequence(
+                self.game.asset_loader,
+                [None],
+                fallback_label='A',
+            )
 
-        for file_name in sorted(image_files, key=frame_sort_key):
-            images.append(self.game.asset_loader.load_image(resource_path / file_name,
-                                                            fallback_label=file_name[0].upper()))
-        return images
+        sorted_files = sorted(image_files, key=frame_sort_key)
+        return LazyImageSequence(
+            self.game.asset_loader,
+            [resource_path / file_name for file_name in sorted_files],
+            fallback_label=sorted_files[0][0].upper(),
+        )
 

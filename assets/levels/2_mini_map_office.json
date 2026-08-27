@@ -1,0 +1,19 @@
+{
+    "enemy_count": 8,
+    "enemy_weights": {
+        "SoldierNPC": 70,
+        "CacoDemonNPC": 20,
+        "CyberDemonNPC": 10
+    },
+    "restricted_area": {
+        "x_range": [
+            0,
+            4
+        ],
+        "y_range": [
+            0,
+            4
+        ]
+    },
+    "scenery": []
+}

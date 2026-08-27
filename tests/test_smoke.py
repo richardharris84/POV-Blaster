@@ -248,9 +248,12 @@ class ThemeSelectionTests(unittest.TestCase):
             pg.event.post(pg.event.Event(pg.KEYDOWN, key=pg.K_RETURN))
             pg.event.post(pg.event.Event(pg.KEYDOWN, key=pg.K_DOWN))
             pg.event.post(pg.event.Event(pg.KEYDOWN, key=pg.K_RETURN))
-            player_name, selected_theme = asyncio.run(choose_startup())
+            pg.event.post(pg.event.Event(pg.KEYDOWN, key=pg.K_RETURN))
+            pg.event.post(pg.event.Event(pg.KEYDOWN, key=pg.K_RETURN))
+            player_name, selected_theme, selected_map = asyncio.run(choose_startup())
             self.assertEqual(player_name, 'Alice')
             self.assertEqual(selected_theme, THEMES[3])
+            self.assertEqual(selected_map, DEFAULT_MAP_NAME)
         finally:
             pg.quit()
 
@@ -261,9 +264,12 @@ class ThemeSelectionTests(unittest.TestCase):
             pg.event.post(pg.event.Event(pg.TEXTINPUT, text='Alice'))
             pg.event.post(pg.event.Event(pg.KEYDOWN, key=pg.K_RETURN))
             pg.event.post(pg.event.Event(pg.KEYDOWN, key=pg.K_RETURN))
-            player_name, selected_theme = asyncio.run(choose_startup())
+            pg.event.post(pg.event.Event(pg.KEYDOWN, key=pg.K_RETURN))
+            pg.event.post(pg.event.Event(pg.KEYDOWN, key=pg.K_RETURN))
+            player_name, selected_theme, selected_map = asyncio.run(choose_startup())
             self.assertEqual(player_name, 'Alice')
             self.assertEqual(selected_theme, THEMES[2])
+            self.assertEqual(selected_map, DEFAULT_MAP_NAME)
         finally:
             pg.quit()
 
@@ -276,10 +282,13 @@ class ThemeSelectionTests(unittest.TestCase):
             pg.event.post(pg.event.Event(pg.FINGERDOWN, finger_id=2, x=0.5, y=(395 + 29) / 900, dx=0.0, dy=0.0, touch_id=0))
             pg.event.post(pg.event.Event(pg.FINGERDOWN, finger_id=3, x=0.5, y=(195 + (4 * 76) + 30) / 900, dx=0.0, dy=0.0, touch_id=0))
             pg.event.post(pg.event.Event(pg.FINGERDOWN, finger_id=4, x=0.5, y=(635 + 29) / 900, dx=0.0, dy=0.0, touch_id=0))
+            pg.event.post(pg.event.Event(pg.FINGERDOWN, finger_id=5, x=0.5, y=(635 + 29) / 900, dx=0.0, dy=0.0, touch_id=0))
+            pg.event.post(pg.event.Event(pg.FINGERDOWN, finger_id=6, x=0.5, y=(635 + 29) / 900, dx=0.0, dy=0.0, touch_id=0))
 
-            player_name, selected_theme = asyncio.run(choose_startup())
+            player_name, selected_theme, selected_map = asyncio.run(choose_startup())
             self.assertEqual(player_name, 'Alice')
             self.assertEqual(selected_theme, THEMES[4])
+            self.assertEqual(selected_map, DEFAULT_MAP_NAME)
         finally:
             pg.quit()
 
@@ -469,6 +478,14 @@ class NpcSystemsTests(unittest.TestCase):
 
 
 class WebHtmlPatchTests(unittest.TestCase):
+    def test_minifies_markup_without_changing_inline_script_or_style(self):
+        from build import _minify_html
+
+        html = '<div>  hello\n world </div><script>  const value = "a  b";  </script>'
+        minimized = _minify_html(html)
+
+        self.assertEqual(minimized, '<div> hello world </div><script>  const value = "a  b";  </script>')
+
     def test_patches_apply_to_a_representative_template(self):
         from build import apply_web_html_patches
 

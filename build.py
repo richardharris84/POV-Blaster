@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -177,6 +178,14 @@ def _set_html_title(html, title):
     return html
 
 
+def _minify_html(html):
+    """Collapse markup whitespace while leaving inline scripts and styles intact."""
+    parts = re.split(r'(<(?:script|style)\b[^>]*>.*?</(?:script|style)>)', html, flags=re.IGNORECASE | re.DOTALL)
+    for index in range(0, len(parts), 2):
+        parts[index] = re.sub(r'\s+', ' ', parts[index]).strip()
+    return ''.join(parts)
+
+
 def apply_web_html_patches(html):
     """Pygbag's default template styling: recolor the loading box/background, and
     make the game canvas fill the whole browser window while preserving aspect ratio
@@ -246,6 +255,14 @@ def apply_web_html_patches(html):
     return html
 
 
+def _prune_web_source(web_source):
+    """Remove development-only assets before Pygbag archives the web source."""
+    for relative_path in ('assets/theme_reference',):
+        path = web_source / relative_path
+        if path.exists():
+            shutil.rmtree(path)
+
+
 def build_web():
     if not WEB_ENTRY_POINT.is_file():
         raise FileNotFoundError(f'Web entry point not found: {WEB_ENTRY_POINT}')
@@ -267,6 +284,7 @@ def build_web():
         web_source,
         ignore=ignore_web_files,
     )
+    _prune_web_source(web_source)
     web_settings = web_source / 'src' / 'infrastructure' / 'settings.py'
     configured_api_url = repr(os.environ.get('POV_BLASTER_API_URL', '').rstrip('/'))
     settings_text = web_settings.read_text(encoding='utf-8')
@@ -314,6 +332,7 @@ def build_web():
     embedded_index = web_dir / 'web-source.html'
     if embedded_index.exists():
         shutil.copy2(embedded_index, index)
+        embedded_index.unlink()
     index_html = index.read_text(encoding='utf-8').replace(
         'https://pygame-web.github.io/cdn/0.9.3//browserfs.min.js',
         'browserfs.min.js',
@@ -326,8 +345,9 @@ def build_web():
             1,
         )
     index_html = apply_web_html_patches(index_html)
-    index.write_text(index_html, encoding='utf-8')
-    shutil.copy2(PROJECT_ROOT / 'privacy.html', web_dir / 'privacy.html')
+    index.write_text(_minify_html(index_html), encoding='utf-8')
+    privacy_html = (PROJECT_ROOT / 'privacy.html').read_text(encoding='utf-8')
+    (web_dir / 'privacy.html').write_text(_minify_html(privacy_html), encoding='utf-8')
     print(f'Created web build: {web_dir}')
     print('Serve with: python -m pygbag build/web-source')
 

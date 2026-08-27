@@ -8,6 +8,7 @@ if str(SRC_DIR) not in sys.path:
     sys.path.insert(0, str(SRC_DIR))
 
 from application.game import Game
+from application.map import choose_map
 from application.startup import validate_player_name
 from application.theme import THEMES, choose_theme
 from infrastructure.scores import HighScores
@@ -39,5 +40,8 @@ elif __name__ == '__main__':
         selected_theme = choose_theme()
         if selected_theme is None:
             sys.exit(0)
-        Game(selected_theme, player_name=player_name, high_scores=high_scores).run()
+        selected_map = choose_map()
+        if selected_map is None:
+            sys.exit(0)
+        Game(selected_theme, player_name=player_name, high_scores=high_scores, map_name=selected_map).run()
 

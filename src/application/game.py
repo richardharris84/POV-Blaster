@@ -28,8 +28,9 @@ from application.weapon import Weapon
 
 
 class Game:
-    def __init__(self, theme, player_name='Player', seed=None, high_scores=None, sound_factory=None):
+    def __init__(self, theme, player_name='Player', seed=None, high_scores=None, sound_factory=None, map_name=None):
         self.theme = theme
+        self.map_name = map_name
         self.player_name = player_name
         self.high_scores = high_scores or HighScores()
         self.sound_factory = sound_factory or Sound
@@ -117,7 +118,7 @@ class Game:
         self.game_state.set('playing', 0)
         self.score_recorded = False
         self.minimap_enabled = True
-        self.map = Map(self)
+        self.map = Map(self, self.map_name)
         self.player = Player(self)
         self.player.kills = self.kill_count
         self.kill_count = self.player.kills
@@ -221,8 +222,6 @@ class Game:
 
     def close(self):
         self.record_score()
-        if not getattr(self, 'browser_mode', False):
-            self.high_scores.display()
         pg.event.set_grab(False)
         pg.mouse.set_visible(True)
         self.sound.stop_theme()
@@ -244,8 +243,8 @@ class Game:
             if not getattr(self, 'browser_mode', False):
                 pg.display.set_caption(f'{self.clock.get_fps() :.1f}')
 
-    async def run_async(self, return_on_exit=True):
-        self.browser_mode = not return_on_exit
+    async def run_async(self, return_on_exit=True, browser_mode=None):
+        self.browser_mode = not return_on_exit if browser_mode is None else browser_mode
         if self.browser_mode:
             pg.display.set_caption('POV Blaster')
         while True:

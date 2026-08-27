@@ -22,13 +22,13 @@ class ObjectRenderer:
         self.sprite_scale_cache = {}
         self.sky_image = self.get_texture('textures/sky.png', (WIDTH, HALF_HEIGHT))
         self.sky_offset = 0
-        self.blood_screen = self.get_texture('textures/blood_screen.png', RES)
         self.digit_size = 90
         self.digit_images = [self.get_texture(f'textures/digits/{i}.png', [self.digit_size] * 2)
                              for i in range(11)]
         self.digits = dict(zip(map(str, range(11)), self.digit_images))
-        self.game_over_image = self.get_texture('textures/game_over.png', RES)
-        self.win_image = self.get_texture('textures/win.png', RES)
+        self.blood_screen = None
+        self.game_over_image = None
+        self.win_image = None
 
     def cached_scale(self, cache, key, build_fn):
         cached = cache.get(key)
@@ -89,9 +89,13 @@ class ObjectRenderer:
         self.screen.blit(minimap, (margin, health_height + margin * 2))
 
     def win(self):
+        if self.win_image is None:
+            self.win_image = self.get_texture('textures/win.png', RES)
         self.screen.blit(self.win_image, (0, 0))
 
     def game_over(self):
+        if self.game_over_image is None:
+            self.game_over_image = self.get_texture('textures/game_over.png', RES)
         self.screen.blit(self.game_over_image, (0, 0))
 
     def draw_player_health(self):
@@ -109,6 +113,8 @@ class ObjectRenderer:
             self.screen.blit(self.digits[char], (start_x + (i * self.digit_size), 0))
 
     def player_damage(self):
+        if self.blood_screen is None:
+            self.blood_screen = self.get_texture('textures/blood_screen.png', RES)
         self.screen.blit(self.blood_screen, (0, 0))
 
     def draw_background(self):

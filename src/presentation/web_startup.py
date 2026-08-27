@@ -8,7 +8,7 @@ import sys
 
 import pygame as pg
 
-from application.startup import theme_menu_items, validate_player_name
+from application.startup import map_menu_items, theme_menu_items, validate_player_name
 from infrastructure.settings import HEIGHT, WIDTH
 
 BACKGROUND = (13, 19, 29)
@@ -24,6 +24,8 @@ FOOTER_RECT = pg.Rect(WIDTH // 2 - 140, HEIGHT - 48, 280, 32)
 NAME_RECT = pg.Rect(WIDTH // 2 - 300, 250, 600, 64)
 CONTINUE_RECT = pg.Rect(WIDTH // 2 - 150, 395, 300, 58)
 PRIVACY_RECT = pg.Rect(WIDTH // 2 - 120, 475, 240, 32)
+NEXT_RECT = pg.Rect(WIDTH // 2 - 150, 635, 300, 58)
+SCORES_CONTINUE_RECT = pg.Rect(WIDTH // 2 - 150, 635, 300, 58)
 START_GAME_RECT = pg.Rect(WIDTH // 2 - 150, 635, 300, 58)
 
 
@@ -187,20 +189,22 @@ def _browser_input_is_focused(browser_name_input):
         return False
 
 
-async def choose_startup():
-    """Return the selected (player name, theme), or None when Escape is pressed."""
+async def choose_startup(player_name=None, high_scores=None):
+    """Return the selected (player name, theme, map name), or None when Escape is pressed."""
     surface = pg.display.get_surface()
     if surface is None:
         surface = pg.display.set_mode((WIDTH, HEIGHT))
     clock = pg.time.Clock()
-    player_name = ""
+    player_name = player_name or ""
     selected_theme = next(
         index for index, (_, theme) in enumerate(theme_menu_items())
         if theme.key == 'hunting'
     )
-    phase = "name"
+    selected_map = 0
+    phase = "theme" if player_name else "name"
     error = ""
     focused = True
+    scores_cache = None
     browser_name_input = None
     browser_name_input_holder = {"input": None}
 
@@ -242,8 +246,12 @@ async def choose_startup():
             return
         phase = "theme"
         browser_name_input.deactivate()
+        pg.key.stop_text_input()
 
     browser_name_input.focus()
+    if phase != "name":
+        browser_name_input.deactivate()
+        pg.key.stop_text_input()
     try:
         while True:
             for event in pg.event.get():
@@ -267,7 +275,18 @@ async def choose_startup():
                         elif event.key in (pg.K_DOWN, pg.K_s):
                             selected_theme = (selected_theme + 1) % len(theme_menu_items())
                         elif event.key in (pg.K_RETURN, pg.K_KP_ENTER):
-                            return player_name.strip(), theme_menu_items()[selected_theme][1]
+                            phase = "scores"
+                    elif phase == "scores":
+                        if event.key in (pg.K_RETURN, pg.K_KP_ENTER):
+                            phase = "map"
+                    elif phase == "map":
+                        if event.key in (pg.K_UP, pg.K_w):
+                            selected_map = (selected_map - 1) % len(map_menu_items())
+                        elif event.key in (pg.K_DOWN, pg.K_s):
+                            selected_map = (selected_map + 1) % len(map_menu_items())
+                        elif event.key in (pg.K_RETURN, pg.K_KP_ENTER):
+                            return (player_name.strip(), theme_menu_items()[selected_theme][1],
+                                    map_menu_items()[selected_map][1])
                 elif event.type == pg.TEXTINPUT and phase == "name" and focused:
                     browser_input_focused = _browser_input_is_focused(browser_name_input)
                     if (browser_name_input.element is None or not browser_input_focused) and len(player_name) < 24:
@@ -292,13 +311,24 @@ async def choose_startup():
                             advance_to_theme()
                         elif PRIVACY_RECT.collidepoint(pos):
                             _open_privacy_notice()
-                    else:
+                    elif phase == "theme":
                         for index, (_, theme) in enumerate(theme_menu_items()):
                             rect = pg.Rect(WIDTH // 2 - 300, 195 + index * 76, 600, 60)
                             if rect.collidepoint(pos):
                                 selected_theme = index
+                        if NEXT_RECT.collidepoint(pos):
+                            phase = "scores"
+                    elif phase == "scores":
+                        if SCORES_CONTINUE_RECT.collidepoint(pos):
+                            phase = "map"
+                    elif phase == "map":
+                        for index, (_, map_name, label) in enumerate(map_menu_items()):
+                            rect = pg.Rect(WIDTH // 2 - 300, 195 + index * 76, 600, 60)
+                            if rect.collidepoint(pos):
+                                selected_map = index
                         if START_GAME_RECT.collidepoint(pos):
-                            return player_name.strip(), theme_menu_items()[selected_theme][1]
+                            return (player_name.strip(), theme_menu_items()[selected_theme][1],
+                                    map_menu_items()[selected_map][1])
 
             surface.fill(BACKGROUND)
             if phase == "name":
@@ -317,12 +347,35 @@ async def choose_startup():
                 _draw_centered(surface, "Privacy Notice", _font(18, bold=True), MUTED, 555)
                 _draw_centered(surface, "Desktop: WASD moves  |  mouse looks  |  left click fires", _font(17), ACCENT, 585)
                 _draw_centered(surface, "Mobile controls: left joystick moves  |  right joystick looks  |  tap right joystick to fire", _font(17), ACCENT, 610)
-            else:
+            elif phase == "theme":
                 _draw_centered(surface, f"WELCOME, {player_name.upper()}", _font(27, bold=True), TEXT, 105)
                 _draw_centered(surface, "CHOOSE YOUR THEME", _font(22, bold=True), MUTED, 150)
                 for index, (number, theme) in enumerate(theme_menu_items()):
                     rect = pg.Rect(WIDTH // 2 - 300, 195 + index * 76, 600, 60)
                     _button(surface, rect, f"{number}  {theme.label}", selected=index == selected_theme)
+                _button(surface, NEXT_RECT, "NEXT", selected=True)
+                _draw_centered(surface, "Desktop: WASD moves  |  mouse looks  |  left click fires", _font(17), ACCENT, 730)
+                _draw_centered(surface, "Mobile: left joystick moves  |  right joystick looks  |  tap right joystick to fire", _font(17), ACCENT, 755)
+                _draw_centered(surface, "Enter selects  |  Esc exits", _font(17), MUTED, 785)
+            elif phase == "scores":
+                if scores_cache is None:
+                    scores_cache = high_scores.load() if high_scores is not None else []
+                _draw_centered(surface, "TOP 10 SCORES", _font(27, bold=True), TEXT, 105)
+                if not scores_cache:
+                    _draw_centered(surface, "No scores yet.", _font(22), MUTED, 200)
+                else:
+                    for index, score in enumerate(scores_cache[:10], start=1):
+                        _draw_centered(
+                            surface, f"{index}) {score.player_name} - {score.kills} kills",
+                            _font(22), TEXT, 170 + index * 40,
+                        )
+                _button(surface, SCORES_CONTINUE_RECT, "CONTINUE", selected=True)
+                _draw_centered(surface, "Enter continues  |  Esc exits", _font(17), MUTED, 785)
+            else:
+                _draw_centered(surface, "CHOOSE YOUR MAP", _font(22, bold=True), MUTED, 150)
+                for index, (number, map_name, label) in enumerate(map_menu_items()):
+                    rect = pg.Rect(WIDTH // 2 - 300, 195 + index * 76, 600, 60)
+                    _button(surface, rect, f"{number}  {label}", selected=index == selected_map)
                 _button(surface, START_GAME_RECT, "START GAME", selected=True)
                 _draw_centered(surface, "Desktop: WASD moves  |  mouse looks  |  left click fires", _font(17), ACCENT, 730)
                 _draw_centered(surface, "Mobile: left joystick moves  |  right joystick looks  |  tap right joystick to fire", _font(17), ACCENT, 755)
