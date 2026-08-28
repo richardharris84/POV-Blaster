@@ -1,8 +1,9 @@
 name: Build and Deploy Web Game
 
 on:
-  push:
-    branches: [main]
+  workflow_run:
+    workflows: ["Validate Game and Assets"]
+    types: [completed]
   workflow_dispatch:
 
 permissions:
@@ -17,18 +18,26 @@ concurrency:
 jobs:
   build:
     name: Build Browser Artifact
+    if: ${{ github.event_name == 'workflow_dispatch' || (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'main') }}
+    timeout-minutes: 30
     runs-on: ubuntu-latest
     env:
       POV_BLASTER_API_URL: ${{ vars.POV_BLASTER_API_URL }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
+          cache: pip
       - name: Install dependencies
         run: python -m pip install -r requirements.txt
       - name: Build web target
         run: python build.py --web
+      - name: Verify browser artifact
+        shell: bash
+        run: test -s build/web/index.html && test -s build/web/browserfs.min.js
       - uses: actions/upload-pages-artifact@v3
         with:
           path: build/web

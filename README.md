@@ -419,7 +419,7 @@ The `build.py` script rejects builds requested from the wrong operating system, 
 
 #### Deploying to GitHub Pages
 
-`.github/workflows/deploy-pages.yml` builds the web target and publishes `build/web` to GitHub Pages automatically on every push to `main`. To enable it:
+`.github/workflows/deploy-pages.yml` builds the web target and publishes `build/web` to GitHub Pages after **Validate Game and Assets** succeeds for `main`, or when manually dispatched. To enable it:
 
 1. Go to [Settings → Pages](https://github.com/richardharris84/POV-Blaster/settings/pages) and set **Source** to **GitHub Actions**.
 2. Push to `main` (or run the workflow manually from the [Actions](https://github.com/richardharris84/POV-Blaster/actions) tab).
@@ -433,7 +433,7 @@ precisely than a generic `CI` label:
 | Workflow | Trigger | What it does | Failure meaning |
 | --- | --- | --- | --- |
 | **Validate Game and Assets** (`.github/workflows/ci.yml`) | Every push and pull request | Runs on Windows with dummy SDL video/audio, installs `requirements.txt`, compiles Python modules, runs the `unittest` suite, validates generated theme assets, and audits theme images. A separate main-branch job sends an optional success email. | The code, tests, asset validation, or asset audit failed. The notification job is not part of the validation result and is non-blocking. |
-| **Build and Deploy Web Game** (`.github/workflows/deploy-pages.yml`) | Pushes to `main` or manual dispatch | Builds the Pygbag browser artifact, uploads it to the Pages artifact store, publishes it to the `github-pages` environment, and optionally sends a completion email. The build uses the `POV_BLASTER_API_URL` repository variable. | The browser build or Pages publication failed. Check the first failed job, usually `Build Browser Artifact` or `Publish GitHub Pages`. |
+| **Build and Deploy Web Game** (`.github/workflows/deploy-pages.yml`) | Successful validation workflow completion on `main`, or manual dispatch | Builds the Pygbag browser artifact, uploads it to the Pages artifact store, publishes it to the `github-pages` environment, and optionally sends a completion email. The build uses the `POV_BLASTER_API_URL` repository variable. | The browser build or Pages publication failed. Check the first failed job, usually `Build Browser Artifact` or `Publish GitHub Pages`. |
 | **Deploy Score API to Render** (`.github/workflows/deploy-render.yml`) | Changes to API/deployment files on `main` or manual dispatch | Calls the optional `RENDER_DEPLOY_HOOK` with `curl`. If the secret is absent, it prints setup instructions and completes without deploying. A separate job optionally emails the result. | The Render hook call failed, or the service configuration is incomplete. Missing hook configuration is intentionally reported rather than treated as a deployment. |
 
 The **Validate Game and Assets** workflow is the project's CI gate: it checks
@@ -453,6 +453,41 @@ POV_BLASTER_API_URL=https://pov-blaster-api.onrender.com
 The value must be the Render service URL without a trailing slash. Do not put the Neon connection string in GitHub because it is only needed by Render.
 
 Optional email notifications use these repository **Actions secrets**: `SMTP_SERVER`, `SMTP_PORT`, `SMTP_USERNAME`, and `SMTP_PASSWORD`. The Render workflow also accepts the optional `RENDER_DEPLOY_HOOK` secret.
+
+### Auto-pilot Mode
+
+Run the workspace prompt **Activate Auto-pilot** when you explicitly want the
+agent to carry a task through implementation, validation, commit, push, and
+authorized release actions. Say **Disable Auto-pilot** or **Exit Auto-pilot** to
+return to normal confirmation behavior. The rules are defined in
+[`.github/prompts/auto-pilot.prompt.md`](.github/prompts/auto-pilot.prompt.md).
+
+Auto-pilot may proceed without extra chat confirmations for read-only work,
+requested edits, local tests, ordinary commits, and ordinary pushes. It must
+stop before secret changes, force pushes, destructive history changes,
+production data changes, workflow-run deletion, branch-protection changes, or
+protected-environment approvals. Prompts guide the agent but cannot enforce
+permissions or identity; configure GitHub branch protection and environment
+approvals for those guarantees.
+
+The workflow requires focused validation after edits, compilation and the full
+`unittest` suite before commits, host-compatible builds only, and explicit
+reporting of skipped platforms or unknown remote status. Commands are bounded,
+background processes must be stopped, and a hung command must be terminated
+before a focused retry. Pages deployment is gated by a successful
+**Validate Game and Assets** workflow; Render production deployment should use
+a protected environment if approval is required.
+
+For an optional local pre-commit check, configure the repository once:
+
+```bash
+git config core.hooksPath .githooks
+```
+
+The hook runs `compileall` and the test suite. It is advisory until configured
+locally; GitHub branch protection and required status checks are the enforceable
+controls. Historical failed workflow runs should be deleted only after a
+replacement run succeeds, and run deletion requires explicit authorization.
 
 <div align="right"><a href="#table-of-contents">^ TOC</a></div>
 
