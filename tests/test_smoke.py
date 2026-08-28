@@ -1,6 +1,7 @@
 import os
 import ast
 import asyncio
+import json
 import tempfile
 from collections import deque
 import unittest
@@ -46,7 +47,10 @@ class BuildScriptTests(unittest.TestCase):
             'run_number': 1,
         }
         with patch('build.subprocess.run') as run_command, patch('build.urlopen') as open_url:
-            run_command.return_value.stdout = 'a' * 40
+            run_command.side_effect = [
+                type('Result', (), {'stdout': 'https://github.com/example/project.git'})(),
+                type('Result', (), {'stdout': 'a' * 40})(),
+            ]
             response = open_url.return_value.__enter__.return_value
             response.read.return_value = json.dumps({'workflow_runs': [run]}).encode('utf-8')
 
