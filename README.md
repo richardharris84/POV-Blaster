@@ -427,11 +427,20 @@ The `build.py` script rejects builds requested from the wrong operating system, 
 
 #### GitHub Actions
 
-The repository has three GitHub Actions workflows:
+The Actions page contains three workflows. The names describe the outcome more
+precisely than a generic `CI` label:
 
-- `.github/workflows/ci.yml` runs on every push and pull request. It uses `actions/checkout@v4` and `actions/setup-python@v5` on Windows, installs `requirements.txt`, compiles Python modules, runs the full test suite, validates theme assets, and audits theme images. On successful pushes to `main`, it uses `dawidd6/action-send-mail@v3` for an optional CI email.
-- `.github/workflows/deploy-pages.yml` runs on every push to `main` or manually. It uses `actions/checkout@v4`, `actions/setup-python@v5`, `actions/upload-pages-artifact@v3`, and `actions/deploy-pages@v4` to build and publish `build/web` to the `github-pages` environment. It reads the `POV_BLASTER_API_URL` repository variable during the build and optionally sends a completion email.
-- `.github/workflows/deploy-render.yml` runs when API/deployment files change on `main` or manually. If configured, it calls the Render deploy hook with `curl`; without the hook it reports setup instructions and does not trigger a deployment. It can optionally send a deployment email.
+| Workflow | Trigger | What it does | Failure meaning |
+| --- | --- | --- | --- |
+| **Validate Game and Assets** (`.github/workflows/ci.yml`) | Every push and pull request | Runs on Windows with dummy SDL video/audio, installs `requirements.txt`, compiles Python modules, runs the `unittest` suite, validates generated theme assets, and audits theme images. A separate main-branch job sends an optional success email. | The code, tests, asset validation, or asset audit failed. The notification job is not part of the validation result and is non-blocking. |
+| **Build and Deploy Web Game** (`.github/workflows/deploy-pages.yml`) | Pushes to `main` or manual dispatch | Builds the Pygbag browser artifact, uploads it to the Pages artifact store, publishes it to the `github-pages` environment, and optionally sends a completion email. The build uses the `POV_BLASTER_API_URL` repository variable. | The browser build or Pages publication failed. Check the first failed job, usually `Build Browser Artifact` or `Publish GitHub Pages`. |
+| **Deploy Score API to Render** (`.github/workflows/deploy-render.yml`) | Changes to API/deployment files on `main` or manual dispatch | Calls the optional `RENDER_DEPLOY_HOOK` with `curl`. If the secret is absent, it prints setup instructions and completes without deploying. A separate job optionally emails the result. | The Render hook call failed, or the service configuration is incomplete. Missing hook configuration is intentionally reported rather than treated as a deployment. |
+
+The **Validate Game and Assets** workflow is the project's CI gate: it checks
+the source and content before a change is considered healthy. The Pages and
+Render workflows are deployment workflows, not substitutes for that gate.
+Email jobs use `continue-on-error: true`, so mail-provider problems do not hide
+the actual test or deployment result.
 
 ### GitHub Actions settings
 
@@ -479,7 +488,7 @@ Create a free Neon Postgres project and copy its pooled or direct connection str
 
 ### GitHub Pages
 
-After `POV_BLASTER_API_URL` is configured, run **Actions → Deploy web build to GitHub Pages → Run workflow** on `main`. The published game URL is `https://richardharris84.github.io/POV-Blaster/`.
+After `POV_BLASTER_API_URL` is configured, run **Actions → Build and Deploy Web Game → Run workflow** on `main`. The published game URL is `https://richardharris84.github.io/POV-Blaster/`.
 
 <div align="right"><a href="#table-of-contents">^ TOC</a></div>
 
@@ -518,7 +527,7 @@ See [`docs/CodeBase.md`](docs/CodeBase.md) for a full walkthrough of how these p
 
 ## Testing
 
-The `tests/` directory holds the project's automated test suite, run with Python's built-in `unittest` runner (invoked through `pytest` in CI and locally):
+The `tests/` directory holds the project's automated test suite, run with Python's built-in `unittest` runner in CI and locally:
 
 ```powershell
 py -m pytest tests -q

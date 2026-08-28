@@ -1,4 +1,4 @@
-name: CI
+name: Validate Game and Assets
 
 on:
   push:
@@ -6,6 +6,7 @@ on:
 
 jobs:
   test:
+    name: Test, Compile, and Audit
     runs-on: windows-latest
     env:
       SDL_VIDEODRIVER: dummy
@@ -28,6 +29,7 @@ jobs:
         run: python tools/audit_themes.py --check
 
   notify:
+    name: Notify Successful Main Validation
     needs: test
     if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' && needs.test.result == 'success' }}
     runs-on: ubuntu-latest

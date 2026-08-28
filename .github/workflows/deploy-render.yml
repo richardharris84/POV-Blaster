@@ -1,4 +1,4 @@
-name: Deploy API to Render
+name: Deploy Score API to Render
 
 on:
   push:
@@ -12,6 +12,7 @@ on:
 
 jobs:
   deploy:
+    name: Trigger Render Deployment
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -33,6 +34,7 @@ jobs:
           fi
 
   notify:
+    name: Notify Render Deployment
     needs: deploy
     runs-on: ubuntu-latest
     steps:
