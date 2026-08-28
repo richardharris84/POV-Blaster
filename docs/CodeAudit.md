@@ -186,21 +186,25 @@ Resolution, FOV, ray count, mouse sensitivities, and other derived values remain
 
 **Recommendation:** group settings into typed configs (`DisplayConfig`, `RaycastConfig`, `InputConfig`) and validate derived values at startup rather than trusting hand-tuned constants.
 
-#### M10. Dependencies remain unpinned
+#### M10. Dependency pins should stay aligned across runtime and API installs
 
 **Location:** `requirements.txt`
 
-`requirements.txt` now also declares `Pillow`, `opencv-python`, and `scikit-image` for theme auditing, but all dependencies remain unpinned.
+**Status: Improved.** Runtime and build dependencies are now pinned in `requirements.txt`, and the API dependencies are pinned in `requirements-api.txt`. Keep shared packages aligned across both files so local validation, CI, and Render do not exercise different patch releases.
 
-**Recommendation:** unchanged — pin or constrain for release builds; separate a dev-tools requirements file (linter, type checker, test runner) from the runtime/build set.
+**Recommendation:** separate a dev-tools requirements file (linter, type checker, test runner) from the runtime/build set when the toolchain grows further.
 
 #### M11 (new). No automated coverage for the browser-specific code paths
 
 **Location:** `src/infrastructure/audio.py`'s `BrowserSound`/`BrowserClip`, `build.py`'s HTML/audio patch functions
 
-`tests/test_smoke.py` covers domain rules, map loading, both high-score backends, and an async smoke test of `run_async()`'s restart behavior — good coverage for what it covers. But the entire browser-audio code path (which needed multiple rounds of manual debugging this session: wrong JS calling convention, cloning-vs-pooling, duplicate theme playback) and all of `build.py`'s web-specific logic have zero automated tests. These are exactly the areas most likely to silently regress.
+**Status: Improved.** `BrowserClip` now has fake-DOM regression coverage for audio element pooling, round-robin playback, play-time reset, data URI assignment, and volume propagation. `build.py` also has coverage for staging `browserfs.min.js` from a local fallback when the CDN download fails. Full `BrowserSound` theme-autoplay behavior still needs a browser/runtime simulation.
 
-**Recommendation:** add unit tests for `BrowserClip`/`BrowserSound` using fake `document`/`window` objects (they only need `createElement`, and the returned object needs `.play()`/`.pause()`/attribute assignment — trivial to fake), and tests for `build.py`'s pure functions (`apply_web_html_patches`, path resolution) that don't require actually invoking `pygbag`.
+`tests/test_smoke.py` covers domain rules, map loading, both high-score backends, an async smoke test of `run_async()`'s restart behavior, browser HTML patching, BrowserFS fallback staging, and `BrowserClip` pooling. These are the areas most likely to silently regress in local and CI checks.
+
+Two existing smoke tests were also corrected to fail closed instead of passing over empty inputs: the domain-boundary test now inspects `src/domain`, and the hunter sprite integrity test now points at `assets/themes/hunting` and asserts that frames were actually loaded.
+
+**Recommendation:** add a bounded browser/runtime simulation for `BrowserSound` theme autoplay retry behavior, and keep build-script pure-function tests around web artifact patching and staging.
 
 ### Low-Priority
 
@@ -208,9 +212,9 @@ Resolution, FOV, ray count, mouse sensitivities, and other derived values remain
 
 `mini_map` is still not a minimap (it's the full map grid); `IMAGE_WIDTH`/`SPRITE_SCALE`-style constants are still instance fields that read like class constants; commented-out debug code (`# self.draw_ray_cast()`, `# pg.draw.rect(...)`) is still present in `npc.py`/`player.py`.
 
-#### L2 (carried over, still true). List comprehensions used only for side effects
+#### L2 (carried over). List comprehensions used only for side effects
 
-`ObjectHandler.update()` still uses `[sprite.update() for sprite in self.sprite_list]` purely for its side effects.
+**Status: Fixed.** `ObjectHandler.update()` now uses explicit `for` loops for sprite and NPC updates, preserving update order without allocating throwaway lists.
 
 #### L3 (new). `src/infrastructure/sound.py` and `src/application/renderer.py` are pure re-export shims
 
@@ -344,9 +348,9 @@ This keeps the already-correct dependency direction, avoids a disruptive full-re
 - ☑ **`object_handler.py`**: scenery positions and enemy weight tables moved into `assets/levels/<map_name>.json`, validated (fails loudly if missing) (M7, extends M5).
 - ☐ **`infrastructure/audio.py`**: still one file with all four classes; splitting into `infrastructure/audio/desktop.py` and `infrastructure/audio/browser.py` (M1) remains open. `BrowserClip`/theme-level data URI caching (H4's audio-specific angle) also remains open — H4 was addressed at the `Game.new_game()` level (not rebuilding the backend at all on restart) rather than by caching within `BrowserClip` itself.
 - ☐ **`application/game.py`**: still no `Platform`/`PlatformConfig` object; `getattr(..., 'browser_mode', False)` checks remain scattered (M2, open).
-- ☑ **`build.py`**: `apply_web_html_patches` now raises loudly on a missing substring instead of silently no-op'ing (M3), with unit tests for both the patch functions and the failure path. PyInstaller targets now also bundle `content/` (a gap surfaced by the M7 fix). Splitting `build.py` into separate desktop/web modules, and adding fakeable `BrowserSound`/`BrowserClip` tests (M11), remain open.
+- ☑ **`build.py`**: `apply_web_html_patches` now raises loudly on a missing substring instead of silently no-op'ing (M3), with unit tests for both the patch functions and the failure path. BrowserFS staging retries the CDN download and falls back to the previous local artifact when available. PyInstaller targets now also bundle `assets/` (a gap surfaced by the M7 fix). Splitting `build.py` into separate desktop/web modules, and full fakeable `BrowserSound` tests (M11), remain open.
 - ☑ **`settings.py`**/**`infrastructure/assets.py`**: resolved the duplicate `BASE_DIR` definition (M4). Grouping `settings.py` into small validated config objects (M9) remains open.
-- ☐ **`requirements.txt`**: still unpinned (M10, open).
+- ☑ **`requirements.txt`**/**`requirements-api.txt`**: shared dependency pins are aligned for the hosted score API stack (M10); a future dev-only requirements split remains optional.
 
 ## Summary of Suggested Changes
 
@@ -354,7 +358,7 @@ All five highest-priority items from the Executive Summary are now resolved:
 
 1. ☑ **Performance:** wall-column and sprite scale caching (H1) — measured ~33% faster over 300 profiled frames, ~67% faster specifically in `get_objects_to_render`.
 2. ☑ **`NPC` decomposition + hardcoded tables:** `NPC` now delegates to `AnimationController`/`CombatResolver`/`npc_can_see_player` (M6); scenery/spawn tables moved to `assets/levels/*.json` (M7), with a packaging fix so PyInstaller builds still work.
-3. ☑ **Web-build robustness:** `build.py`'s HTML patching now fails loudly instead of silently, with test coverage (M3).
+3. ☑ **Web-build robustness:** `build.py`'s HTML patching now fails loudly instead of silently, with test coverage (M3), and BrowserFS staging can recover from a transient CDN failure by using the previous local artifact.
 4. ☑ **Duplicate project-root definition:** `infrastructure/assets.py` now imports `BASE_DIR` from `settings.py` (M4).
 5. ☑ **Per-round rebuild waste:** the sound backend is now built once per `Game` instance instead of every restart (H4).
 
@@ -362,7 +366,7 @@ Remaining open items, not part of this pass but worth prioritizing next:
 
 - **H2/H3 (correctness/maintainability):** fully deduplicate the raycasting DDA algorithm; resolve NPC hits against the nearest visible target instead of "first NPC to notice."
 - **M1/M2 (housekeeping/extensibility):** split `infrastructure/audio.py` by platform; introduce a `Platform`/`PlatformConfig` object instead of scattered `getattr(..., 'browser_mode', False)` checks.
-- **M9/M10/M11 (hardening):** validate `settings.py`'s derived constants; pin dependencies; add fakeable unit tests for `BrowserSound`/`BrowserClip`.
+- **M9/M11 (hardening):** validate `settings.py`'s derived constants; add a bounded browser/runtime simulation for `BrowserSound` autoplay retries.
 
 None of this required undoing the layered architecture already in place — it was a matter of finishing the migration into it.
 

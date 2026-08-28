@@ -30,6 +30,7 @@ from domain.game_state import GameState
 from domain.combat import Combatant
 from domain.movement import movement_delta
 from infrastructure.assets import AssetLoader
+from infrastructure.audio import BrowserClip
 from infrastructure.scores import BrowserHighScores, HighScores
 from infrastructure.windowing import set_game_icon
 from application.npc_systems import npc_can_see_player
@@ -74,6 +75,19 @@ class BuildScriptTests(unittest.TestCase):
 
         self.assertTrue(args.web)
         self.assertTrue(args.deploy)
+
+    def test_browserfs_staging_uses_local_fallback_after_download_failure(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            staged = root / 'staged' / 'browserfs.min.js'
+            staged.parent.mkdir()
+            fallback = root / 'fallback-browserfs.min.js'
+            fallback.write_text('browserfs fallback', encoding='utf-8')
+
+            with patch('build.urlretrieve', side_effect=OSError('offline')):
+                self.assertEqual(build._stage_browserfs(staged, fallback=fallback, retries=1), staged)
+
+            self.assertEqual(staged.read_text(encoding='utf-8'), 'browserfs fallback')
 
 
 class HealthTests(unittest.TestCase):
@@ -199,10 +213,12 @@ class TouchControllerTests(unittest.TestCase):
 
 class DomainBoundaryTests(unittest.TestCase):
     def test_domain_modules_have_no_framework_imports(self):
-        domain_root = Path(__file__).parents[1] / 'domain'
+        domain_root = SRC_DIR / 'domain'
         forbidden = {'pygame', 'infrastructure', 'presentation'}
+        module_paths = list(domain_root.glob('*.py'))
 
-        for module_path in domain_root.glob('*.py'):
+        self.assertGreater(len(module_paths), 0)
+        for module_path in module_paths:
             tree = ast.parse(module_path.read_text(encoding='utf-8'))
             imports = {
                 node.names[0].name.split('.')[0]
@@ -267,6 +283,47 @@ class HighScoreTests(unittest.TestCase):
 
         self.assertEqual(scores.load()[0].player_name, 'Browser Player')
         self.assertEqual(scores.load()[0].kills, 12)
+
+
+class BrowserAudioTests(unittest.TestCase):
+    def test_browser_clip_pools_audio_nodes_and_round_robins_playback(self):
+        class FakeAudio:
+            def __init__(self):
+                self.src = ''
+                self.volume = 1.0
+                self.currentTime = 5
+                self.play_count = 0
+
+            def play(self):
+                self.play_count += 1
+
+        class FakeDocument:
+            def __init__(self):
+                self.created = []
+
+            def createElement(self, tag):
+                if tag != 'audio':
+                    raise AssertionError(tag)
+                audio = FakeAudio()
+                self.created.append(audio)
+                return audio
+
+        with tempfile.TemporaryDirectory() as directory:
+            sound_file = Path(directory) / 'effect.wav'
+            sound_file.write_bytes(b'audio bytes')
+            document = FakeDocument()
+
+            clip = BrowserClip(document, sound_file, volume=0.25)
+            clip.play()
+            clip.play()
+            clip.set_volume(0.5)
+
+        self.assertEqual(len(document.created), BrowserClip.POOL_SIZE)
+        self.assertEqual(document.created[0].play_count, 1)
+        self.assertEqual(document.created[1].play_count, 1)
+        self.assertEqual(document.created[0].currentTime, 0)
+        self.assertTrue(document.created[0].src.startswith('data:audio/wav;base64,'))
+        self.assertTrue(all(audio.volume == 0.5 for audio in document.created))
 
 
 class ThemeSelectionTests(unittest.TestCase):
@@ -659,8 +716,10 @@ class AssetIntegrityTests(unittest.TestCase):
     def test_hunting_hunter_has_no_detached_upper_sprite_chunks(self):
         # regression test: hunter face/hat layers must not float as detached chunks
         # above the main sprite body.
-        hunter_root = Path(__file__).parents[1] / 'assets' / 'hunting' / 'sprites' / 'npc' / 'hunter'
+        hunter_root = PROJECT_ROOT / 'assets' / 'themes' / 'hunting' / 'sprites' / 'npc' / 'hunter'
         phases = ('idle', 'walk', 'attack', 'pain', 'death')
+        frame_paths = [frame_path for phase in phases for frame_path in sorted((hunter_root / phase).glob('*.png'))]
+        self.assertGreater(len(frame_paths), 0)
 
         def connected_components(image):
             width, height = image.get_size()
@@ -688,21 +747,20 @@ class AssetIntegrityTests(unittest.TestCase):
             return groups
 
         offenders = []
-        for phase in phases:
-            for frame_path in sorted((hunter_root / phase).glob('*.png')):
-                frame = pg.image.load(str(frame_path))
-                components = connected_components(frame)
-                if len(components) <= 1:
-                    continue
+        for frame_path in frame_paths:
+            frame = pg.image.load(str(frame_path))
+            components = connected_components(frame)
+            if len(components) <= 1:
+                continue
 
-                main = max(components, key=len)
-                main_min_y = min(y for _, y in main)
-                for component in components:
-                    if component is main:
-                        continue
-                    # Ignore one-pixel AA dust, but block meaningful detached chunks.
-                    if len(component) >= 20 and max(y for _, y in component) < main_min_y + 26:
-                        offenders.append(f'{phase}/{frame_path.name}:{len(component)}')
+            main = max(components, key=len)
+            main_min_y = min(y for _, y in main)
+            for component in components:
+                if component is main:
+                    continue
+                # Ignore one-pixel AA dust, but block meaningful detached chunks.
+                if len(component) >= 20 and max(y for _, y in component) < main_min_y + 26:
+                    offenders.append(f'{frame_path.parent.name}/{frame_path.name}:{len(component)}')
 
         self.assertEqual(offenders, [])
 

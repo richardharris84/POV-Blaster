@@ -11,7 +11,7 @@ import sys
 import tempfile
 import time
 import json
-from urllib.error import HTTPError, URLError
+from urllib.error import ContentTooShortError, HTTPError, URLError
 from urllib.request import Request, urlopen
 from urllib.request import urlretrieve
 from pathlib import Path
@@ -272,6 +272,26 @@ def _prune_web_source(web_source):
             shutil.rmtree(path)
 
 
+def _stage_browserfs(staged_browserfs, fallback=None, retries=2):
+    source_url = 'https://cdn.jsdelivr.net/npm/browserfs@1.4.3/dist/browserfs.min.js'
+    last_error = None
+    for attempt in range(retries):
+        try:
+            urlretrieve(source_url, staged_browserfs)
+            return staged_browserfs
+        except (ContentTooShortError, HTTPError, URLError, OSError) as error:
+            last_error = error
+            if attempt + 1 < retries:
+                time.sleep(1)
+    if fallback is not None and fallback.is_file():
+        shutil.copy2(fallback, staged_browserfs)
+        return staged_browserfs
+    raise RuntimeError(
+        'Unable to stage browserfs.min.js from the CDN and no local fallback exists. '
+        'Run a successful web build once or place browserfs.min.js in build/web before retrying.'
+    ) from last_error
+
+
 def build_web():
     if not WEB_ENTRY_POINT.is_file():
         raise FileNotFoundError(f'Web entry point not found: {WEB_ENTRY_POINT}')
@@ -328,7 +348,7 @@ def build_web():
         )
     generated_web_dir = web_source / 'build' / 'web'
     staged_browserfs = generated_web_dir / 'browserfs.min.js'
-    urlretrieve('https://cdn.jsdelivr.net/npm/browserfs@1.4.3/dist/browserfs.min.js', staged_browserfs)
+    _stage_browserfs(staged_browserfs, fallback=web_dir / 'browserfs.min.js')
     shutil.copy2(PROJECT_ROOT / 'assets' / 'icon.png', generated_web_dir / 'favicon.png')
     if generated_web_dir.exists() and generated_web_dir != web_dir:
         if web_dir.exists():
