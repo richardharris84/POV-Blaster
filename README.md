@@ -461,6 +461,8 @@ agent to carry a task through implementation, validation, commit, push, and
 authorized release actions. Say **Disable Auto-pilot** or **Exit Auto-pilot** to
 return to normal confirmation behavior. The rules are defined in
 [`.github/prompts/auto-pilot.prompt.md`](.github/prompts/auto-pilot.prompt.md).
+See the detailed [Auto-pilot guide](docs/Auto-Pilot.md) for the full workflow,
+safety model, release decision tree, and operator checklist.
 
 Auto-pilot may proceed without extra chat confirmations for read-only work,
 requested edits, local tests, ordinary commits, and ordinary pushes. It must
