@@ -162,7 +162,7 @@ class TouchControllerTests(unittest.TestCase):
 
             move_x, move_y, turn_x = touch.axes()
             self.assertGreater(move_x, 0.0)
-            self.assertLess(move_y, 0.0)
+            self.assertGreater(move_y, 0.0)
             self.assertGreater(turn_x, 0.0)
 
             touch.handle_event(pg.event.Event(pg.FINGERUP, finger_id=left_id, x=0.19, y=0.76, dx=0.0, dy=0.0, touch_id=0))
@@ -709,4 +709,3 @@ class AssetIntegrityTests(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
-

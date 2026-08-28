@@ -85,8 +85,8 @@ class TouchController:
         left = self._normalized_vector(self.left_finger)
         right = self._normalized_vector(self.right_finger)
         move_x = self._deadzone(left[0], 0.12)
-        # On-screen up is backward; down is forward.
-        move_y = self._deadzone(left[1], 0.12)
+        # On-screen up is forward; down is backward.
+        move_y = self._deadzone(-left[1], 0.12)
         turn_x = self._deadzone(right[0], 0.08)
         return move_x, move_y, turn_x
 
