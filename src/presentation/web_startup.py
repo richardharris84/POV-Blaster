@@ -23,7 +23,7 @@ FOOTER_Y = HEIGHT - 28
 FOOTER_RECT = pg.Rect(WIDTH // 2 - 140, HEIGHT - 48, 280, 32)
 NAME_RECT = pg.Rect(WIDTH // 2 - 300, 250, 600, 64)
 CONTINUE_RECT = pg.Rect(WIDTH // 2 - 150, 395, 300, 58)
-PRIVACY_RECT = pg.Rect(WIDTH // 2 - 120, 475, 240, 32)
+PRIVACY_RECT = pg.Rect(WIDTH // 2 - 120, 625, 240, 32)
 NEXT_RECT = pg.Rect(WIDTH // 2 - 150, 635, 300, 58)
 SCORES_CONTINUE_RECT = pg.Rect(WIDTH // 2 - 150, 635, 300, 58)
 START_GAME_RECT = pg.Rect(WIDTH // 2 - 150, 635, 300, 58)
@@ -263,8 +263,12 @@ async def choose_startup(player_name=None, high_scores=None):
                     if event.key == pg.K_ESCAPE:
                         return None
                     if phase == "name":
-                        if event.key == pg.K_BACKSPACE and browser_name_input.element is None:
+                        if event.key == pg.K_BACKSPACE and (
+                            browser_name_input.element is None
+                            or not _browser_input_is_focused(browser_name_input)
+                        ):
                             player_name = player_name[:-1]
+                            browser_name_input.set_value(player_name)
                         elif event.key in (pg.K_RETURN, pg.K_KP_ENTER):
                             advance_to_theme()
                         elif event.key == pg.K_TAB:
@@ -344,9 +348,9 @@ async def choose_startup(player_name=None, high_scores=None):
                     _draw_centered(surface, error, _font(20, bold=True), DANGER, 330)
                 _button(surface, CONTINUE_RECT, "CONTINUE", selected=True)
                 _draw_centered(surface, "Enter to continue  |  Esc to exit", _font(17), ACCENT, 490)
-                _draw_centered(surface, "Privacy Notice", _font(18, bold=True), MUTED, 555)
-                _draw_centered(surface, "Desktop: WASD moves  |  mouse looks  |  left click fires", _font(17), ACCENT, 585)
-                _draw_centered(surface, "Mobile controls: left joystick moves  |  right joystick looks  |  tap right joystick to fire", _font(17), ACCENT, 610)
+                _draw_centered(surface, "Desktop: WASD moves  |  mouse looks  |  left click fires", _font(17), ACCENT, 555)
+                _draw_centered(surface, "Mobile controls: left joystick moves  |  right joystick looks  |  tap right joystick to fire", _font(17), ACCENT, 580)
+                _draw_centered(surface, "Privacy Notice", _font(18, bold=True), MUTED, 641)
             elif phase == "theme":
                 _draw_centered(surface, f"WELCOME, {player_name.upper()}", _font(27, bold=True), TEXT, 105)
                 _draw_centered(surface, "CHOOSE YOUR THEME", _font(22, bold=True), MUTED, 150)

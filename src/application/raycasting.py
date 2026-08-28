@@ -20,12 +20,12 @@ class RayCasting:
         self.depth_buffer = [result[0] for result in self.ray_casting_result]
         renderer = self.game.object_renderer
         for ray, values in enumerate(self.ray_casting_result):
-            depth, proj_height, texture, offset = values
+            depth, proj_height, texture, offset, vertical_wall = values
             # snap the continuous offset/height to integer pixel buckets so identical
             # (texture, position, size) combinations reuse a cached scaled surface
             # instead of re-cropping and re-scaling from scratch every single frame.
             src_x = int(offset * (TEXTURE_SIZE - SCALE))
-            shade = renderer.cel_shade(depth)
+            shade = renderer.cel_shade(vertical_wall)
 
             if proj_height < HEIGHT:
                 height_px = max(1, int(proj_height))
@@ -53,7 +53,7 @@ class RayCasting:
         self.ray_casting_result = []
         ray_angle = self.game.player.angle - HALF_FOV + 0.0001
         for ray in range(NUM_RAYS):
-            depth, texture, offset, _ = cast_wall_ray(
+            depth, texture, offset, vertical_wall = cast_wall_ray(
                 self.game.player.pos, ray_angle, self.game.map.world_map
             )
 
@@ -64,7 +64,7 @@ class RayCasting:
             proj_height = SCREEN_DIST / (depth + 0.0001)
 
             # ray casting result
-            self.ray_casting_result.append((depth, proj_height, texture, offset))
+            self.ray_casting_result.append((depth, proj_height, texture, offset, vertical_wall))
 
             ray_angle += DELTA_ANGLE
 

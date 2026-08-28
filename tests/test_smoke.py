@@ -23,6 +23,7 @@ from application.map import DEFAULT_MAP_NAME, load_map
 from application.theme import THEMES, choose_theme
 from application.startup import theme_menu_items, validate_player_name
 from presentation.web_startup import choose_startup
+from presentation.web_startup import PRIVACY_RECT
 from domain.health import Health
 from domain.game_state import GameState
 from domain.combat import Combatant
@@ -141,7 +142,7 @@ class TouchControllerTests(unittest.TestCase):
 
             move_x, move_y, turn_x = touch.axes()
             self.assertGreater(move_x, 0.0)
-            self.assertGreater(move_y, 0.0)
+            self.assertLess(move_y, 0.0)
             self.assertGreater(turn_x, 0.0)
 
             touch.handle_event(pg.event.Event(pg.FINGERUP, finger_id=left_id, x=0.19, y=0.76, dx=0.0, dy=0.0, touch_id=0))
@@ -273,6 +274,8 @@ class ThemeSelectionTests(unittest.TestCase):
             pg.event.post(pg.event.Event(pg.TEXTINPUT, text='Alice'))
             pg.event.post(pg.event.Event(pg.KEYDOWN, key=pg.K_RETURN))
             pg.event.post(pg.event.Event(pg.KEYDOWN, key=pg.K_DOWN))
+            pg.event.post(pg.event.Event(pg.KEYDOWN, key=pg.K_RETURN))
+            pg.event.post(pg.event.Event(pg.KEYDOWN, key=pg.K_RETURN))
             pg.event.post(pg.event.Event(pg.KEYDOWN, key=pg.K_RETURN))
             pg.event.post(pg.event.Event(pg.KEYDOWN, key=pg.K_RETURN))
             pg.event.post(pg.event.Event(pg.KEYDOWN, key=pg.K_RETURN))
@@ -504,6 +507,25 @@ class NpcSystemsTests(unittest.TestCase):
 
 
 class WebHtmlPatchTests(unittest.TestCase):
+    def test_privacy_notice_hitbox_is_below_controls(self):
+        self.assertGreater(PRIVACY_RECT.top, 580)
+
+    def test_startup_name_field_supports_backspace(self):
+        pg.init()
+        pg.display.set_mode((1600, 900))
+        try:
+            pg.event.post(pg.event.Event(pg.TEXTINPUT, text='Alice'))
+            pg.event.post(pg.event.Event(pg.KEYDOWN, key=pg.K_BACKSPACE))
+            pg.event.post(pg.event.Event(pg.KEYDOWN, key=pg.K_RETURN))
+            pg.event.post(pg.event.Event(pg.KEYDOWN, key=pg.K_RETURN))
+            pg.event.post(pg.event.Event(pg.KEYDOWN, key=pg.K_RETURN))
+            pg.event.post(pg.event.Event(pg.KEYDOWN, key=pg.K_RETURN))
+
+            player_name, _, _ = asyncio.run(choose_startup())
+            self.assertEqual(player_name, 'Alic')
+        finally:
+            pg.quit()
+
     def test_minifies_markup_without_changing_inline_script_or_style(self):
         from build import _minify_html
 

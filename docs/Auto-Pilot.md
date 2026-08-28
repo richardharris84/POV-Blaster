@@ -17,9 +17,9 @@ the enforceable controls.
 
 ## Activation
 
-Invoke the workspace prompt using **Activate Auto-pilot**. The mode applies only
-to the current chat session. It is not permanently enabled by the presence of
-the prompt file.
+Invoke the workspace prompt by saying **Activate Auto-pilot**. The mode applies
+only to the current chat session. It is not permanently enabled by the presence
+of the prompt file.
 
 Disable it at any time with either:
 

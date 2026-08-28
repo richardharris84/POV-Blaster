@@ -260,7 +260,9 @@ class Game:
             self.update()
             self.draw()
             pg.display.flip()
-            if not self.browser_mode:
+            if self.browser_mode:
+                pg.display.set_caption('POV Blaster')
+            else:
                 pg.display.set_caption(f'{self.clock.get_fps() :.1f}')
             await asyncio.sleep(0)
 

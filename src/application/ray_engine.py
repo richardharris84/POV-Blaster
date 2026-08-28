@@ -24,7 +24,7 @@ def cast_wall_ray(origin, angle, world_map, max_depth=MAX_DEPTH):
     x_hor = ox + depth_hor * cos_a
     delta_depth = step_y / sin_a
     step_x = delta_depth * cos_a
-    texture_hor = None
+    texture_hor = 1
     for _ in range(max_depth):
         tile = int(x_hor), int(y_hor)
         if tile in world_map:
@@ -39,7 +39,7 @@ def cast_wall_ray(origin, angle, world_map, max_depth=MAX_DEPTH):
     y_vert = oy + depth_vert * sin_a
     delta_depth = step_x / cos_a
     step_y = delta_depth * sin_a
-    texture_vert = None
+    texture_vert = 1
     for _ in range(max_depth):
         tile = int(x_vert), int(y_vert)
         if tile in world_map:

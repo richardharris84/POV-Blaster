@@ -41,11 +41,8 @@ class ObjectRenderer:
         return cached
 
     @staticmethod
-    def cel_shade(depth):
-        for distance, shade in CEL_SHADING_BANDS:
-            if depth < distance:
-                break
-        return shade
+    def cel_shade(vertical_wall):
+        return CEL_SHADING_BANDS[0][1] if vertical_wall else CEL_SHADING_BANDS[1][1]
 
     @staticmethod
     def _apply_cel_shading(surface, shade):

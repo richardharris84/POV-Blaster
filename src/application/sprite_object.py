@@ -43,10 +43,6 @@ class LazyImageSequence:
         if self.paths:
             self.offset = (self.offset - steps) % len(self.paths)
 
-    def preload(self):
-        for index in range(len(self.paths)):
-            self[index]
-
 
 class SpriteObject:
     def __init__(self, game: GameContext, path='sprites/static_sprites/candlebra.png',
@@ -122,7 +118,6 @@ class AnimatedSprite(SpriteObject):
         self.animation_time = animation_time
         self.path = game.theme.path(path).parent
         self.images = self.get_images(self.path)
-        self.images.preload()
         self.animation_time_prev = pg.time.get_ticks()
         self.animation_trigger = False
 

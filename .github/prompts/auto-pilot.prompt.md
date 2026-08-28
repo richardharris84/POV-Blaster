@@ -5,9 +5,9 @@ agent: agent
 
 # POV-Blaster Auto-pilot
 
-Activate this workflow for the current chat session only. To disable it, say
-**Disable Auto-pilot** or **Exit Auto-pilot**. After disabling, return to normal
-confirmation behavior.
+To activate this workflow for the current chat session, say **Activate Auto-pilot**.
+To disable it, say **Disable Auto-pilot** or **Exit Auto-pilot**. After
+disabling, return to normal confirmation behavior.
 
 ## Operating Mode
 

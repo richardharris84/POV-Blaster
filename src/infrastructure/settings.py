@@ -1,5 +1,6 @@
 import math
 import os
+import sys
 from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parents[2]
@@ -34,13 +35,13 @@ MOUSE_BORDER_RIGHT = WIDTH - MOUSE_BORDER_LEFT
 
 FLOOR_COLOR = (30, 30, 30)
 
-# Quantized wall lighting gives the raycaster a portable cel-shaded look. The
+# Quantized face lighting gives the raycaster a portable cel-shaded look. The
 # values are deliberately applied while columns enter the renderer cache.
 CEL_SHADING_BANDS = ((4.0, 0.62), (8.0, 0.78), (float('inf'), 1.0))
 
 FOV = math.pi / 3
 HALF_FOV = FOV / 2
-NUM_RAYS = WIDTH // 2
+NUM_RAYS = WIDTH // (4 if sys.platform == 'emscripten' else 2)
 HALF_NUM_RAYS = NUM_RAYS // 2
 DELTA_ANGLE = FOV / NUM_RAYS
 MAX_DEPTH = 20
