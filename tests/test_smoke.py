@@ -38,6 +38,22 @@ from infrastructure.settings import HALF_WIDTH, NUM_RAYS
 
 
 class BuildScriptTests(unittest.TestCase):
+    def test_ci_verification_accepts_completed_success(self):
+        run = {
+            'name': 'Validate Game and Assets',
+            'status': 'completed',
+            'conclusion': 'success',
+            'run_number': 1,
+        }
+        with patch('build.subprocess.run') as run_command, patch('build.urlopen') as open_url:
+            run_command.return_value.stdout = 'a' * 40
+            response = open_url.return_value.__enter__.return_value
+            response.read.return_value = json.dumps({'workflow_runs': [run]}).encode('utf-8')
+
+            from build import verify_github_actions
+
+            self.assertEqual(verify_github_actions(timeout_seconds=0), run)
+
     def test_deploy_flag_allows_deploy_only_mode(self):
         with patch.object(sys, 'argv', ['build.py', '-d']):
             args = build.parse_args()

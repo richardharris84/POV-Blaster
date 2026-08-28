@@ -417,6 +417,12 @@ The Pygbag dev server re-packages the app fresh each time it starts, but not whi
 
 The `build.py` script rejects builds requested from the wrong operating system, preventing incorrectly named non-native executables. macOS builds must run on macOS because PyInstaller creates native artifacts for the host platform.
 
+When `build.py --deploy` is used, the script first verifies the current commit
+against the **Validate Game and Assets** GitHub Actions workflow. It waits for a
+completed successful run and refuses to publish if validation fails, is
+cancelled, cannot be found before the timeout, or cannot be queried. The Pages
+workflow applies the same protection through its `workflow_run` trigger.
+
 #### Deploying to GitHub Pages
 
 `.github/workflows/deploy-pages.yml` builds the web target and publishes `build/web` to GitHub Pages after **Validate Game and Assets** succeeds for `main`, or when manually dispatched. To enable it:

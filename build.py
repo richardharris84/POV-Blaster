@@ -9,6 +9,10 @@ import shutil
 import subprocess
 import sys
 import tempfile
+import time
+import json
+from urllib.error import HTTPError, URLError
+from urllib.request import Request, urlopen
 from urllib.request import urlretrieve
 from pathlib import Path
 
@@ -20,6 +24,7 @@ WEB_ENTRY_POINT = SRC_DIR / 'application' / 'web_main.py'
 BUILD_DIR = PROJECT_ROOT / 'build'
 WORK_DIR = BUILD_DIR / 'pyinstaller-work'
 SPEC_DIR = BUILD_DIR / 'pyinstaller-spec'
+CI_WORKFLOW_NAME = 'Validate Game and Assets'
 
 
 def parse_args():
@@ -356,12 +361,63 @@ def build_web():
     print('Serve with: python -m pygbag build/web-source')
 
 
+def verify_github_actions(commit_sha=None, timeout_seconds=600, poll_seconds=15):
+    """Wait for validation of the commit before allowing a Pages publish."""
+    remote_url = subprocess.run(
+        ['git', 'remote', 'get-url', 'origin'],
+        cwd=PROJECT_ROOT,
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout.strip()
+    match = re.search(r'github\.com[:/]([^/]+)/([^/.]+?)(?:\.git)?$', remote_url)
+    if not match:
+        raise RuntimeError('CI verification requires a GitHub origin remote.')
+    owner, repository = match.groups()
+    commit_sha = commit_sha or subprocess.run(
+        ['git', 'rev-parse', 'HEAD'], cwd=PROJECT_ROOT, check=True,
+        capture_output=True, text=True,
+    ).stdout.strip()
+    api_url = f'https://api.github.com/repos/{owner}/{repository}/actions/runs'
+    headers = {'Accept': 'application/vnd.github+json', 'User-Agent': 'POV-Blaster-build'}
+    token = os.environ.get('GITHUB_TOKEN')
+    if token:
+        headers['Authorization'] = f'Bearer {token}'
+    deadline = time.monotonic() + timeout_seconds
+    while True:
+        request = Request(f'{api_url}?head_sha={commit_sha}&per_page=20', headers=headers)
+        try:
+            with urlopen(request, timeout=15) as response:
+                runs = json.loads(response.read().decode('utf-8')).get('workflow_runs', [])
+        except (HTTPError, URLError, OSError, json.JSONDecodeError, TypeError) as error:
+            raise RuntimeError(f'Unable to verify GitHub Actions for {commit_sha[:12]}.') from error
+        validation_runs = [run for run in runs if run.get('name') == CI_WORKFLOW_NAME]
+        if validation_runs:
+            run = max(validation_runs, key=lambda item: item.get('run_number', 0))
+            status = run.get('status')
+            conclusion = run.get('conclusion')
+            if status == 'completed':
+                if conclusion == 'success':
+                    print(f'GitHub Actions validation passed: {run.get("html_url", commit_sha)}')
+                    return run
+                raise RuntimeError(
+                    f'GitHub Actions validation concluded {conclusion!r}; refusing deployment: '
+                    f'{run.get("html_url", commit_sha)}'
+                )
+        if time.monotonic() >= deadline:
+            raise TimeoutError(f'Timed out waiting for GitHub Actions validation of {commit_sha[:12]}.')
+        print(f'Waiting for GitHub Actions validation of {commit_sha[:12]}...')
+        time.sleep(poll_seconds)
+
+
 def deploy_to_github_pages(source_dir: Path | None = None):
     source_dir = source_dir or (BUILD_DIR / 'web')
     if not source_dir.exists():
         raise FileNotFoundError(
             'No browser build was found at build/web. Run "py build.py -bd" to build and deploy it.'
         )
+
+    verify_github_actions()
 
     remote_url = subprocess.run(
         ['git', 'remote', 'get-url', 'origin'],

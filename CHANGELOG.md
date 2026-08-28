@@ -1483,10 +1483,18 @@ Recommended description:
 <!-- AUTOMATED 72-HOUR SYNC:START -->
 ## Automated 72-Hour Sync
 
-Generated: 2026-08-27T12:09:07-04:00 (window: last 72 hours)
+Generated: 2026-08-28T03:49:52-04:00 (window: last 72 hours)
 
 ### Git Commits
 
+- `0781e36` (2026-08-28) Fix theme audit false positives
+- `15ef271` (2026-08-28) Fix mobile freeze and Copilot footer
+- `c8e876f` (2026-08-28) Harden autonomous policy and browser fixes
+- `e2384b8` (2026-08-28) Document Auto-pilot workflow
+- `eea15dc` (2026-08-28) Harden Auto-pilot workflow
+- `eb17b05` (2026-08-27) Document GitHub Actions workflows
+- `177bac0` (2026-08-27) Fix browser gameplay regressions
+- `805de8c` (2026-08-27) Sync recent changes into changelog
 - `ddfd146` (2026-08-27) Auto Refactor
 - `66958e1` (2026-08-27) Deploy GitHub Pages
 - `c3d4391` (2026-08-27) Add map selection, sharpen theme HUD digits, tune death animations, and asset fallback
@@ -1530,29 +1538,12 @@ Generated: 2026-08-27T12:09:07-04:00 (window: last 72 hours)
 - `f3ffa73` (2026-08-25) Merge pull request #1 from richardharris84/copilot/research-task-orientation
 - `fa73bc8` (2026-08-26) docs: add quick orientation section to CodeBase.md
 - `414f70a` (2026-08-25) Fixed Architecture Diagrams
-- `19717d7` (2026-08-25) Update docs, mobile controls, and release assets
-- `f9afb24` (2026-08-25) Deploy GitHub Pages
-- `3cdfde3` (2026-08-25) Deploy GitHub Pages
-- `45c0b89` (2026-08-25) Add GH Pages deploy to build.py
-- `e69a0ac` (2026-08-25) Architecture Diagrams
-- `9b0856d` (2026-08-24) Normalize project documentation and changelog
-- `2b6e182` (2026-08-24) Replace XML scores with local SQLite and sync support
-- `3423fbe` (2026-08-24) Refine web startup footer and mobile turning
-- `0bfe769` (2026-08-24) Document API database and deployment configuration
-- `fe813b7` (2026-08-24) Update Psycopg for Python 3.14
-- `9458493` (2026-08-24) Use API-only dependencies on Render
-- `31b9777` (2026-08-24) Use free Render service with external Postgres
-- `2efe030` (2026-08-24) Use Render Postgres for hosted score storage
-- `d676d1b` (2026-08-24) Gold Code: Complete API integration with database, web session tracking, and deployment pipelines
-- `9c33c07` (2026-08-24) Richard's Architecture - Themes
-- `b33e246` (2026-08-24) Richard's New Architecture
-- `ff80fd3` (2026-08-24) docs: normalize changelog steps and fix smtp tls
-- `7bd3ca6` (2026-08-24) feat: support mobile browser name entry
 
 ### Prompt Files Changed
 
 - [`.github/prompts/auto-pilot.prompt.md`](.github/prompts/auto-pilot.prompt.md)
 - [`.github/prompts/block-auto-pilot.prompt.md`](.github/prompts/block-auto-pilot.prompt.md)
+- [`.github/prompts/full-codebase-audit.prompt.md`](.github/prompts/full-codebase-audit.prompt.md)
 
 ### Copilot Prompt/Output Excerpts
 
