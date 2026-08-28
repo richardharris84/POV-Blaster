@@ -80,7 +80,6 @@ class BrowserClip:
                 clip = document.createElement('audio')
                 clip.src = src
                 clip.volume = volume
-                clip.load()
                 self._pool.append(clip)
 
     def play(self):
@@ -123,7 +122,6 @@ class BrowserSound:
             self.theme.src = _data_uri(theme_path)
             self.theme.loop = True
             self.theme.volume = 0.3
-            self.theme.load()
 
     def play_theme(self):
         self._theme_requested = True

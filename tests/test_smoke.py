@@ -568,6 +568,33 @@ class WebHtmlPatchTests(unittest.TestCase):
         self.assertIn('object-fit: fill;', patched)
         self.assertIn('html {\n            width: 100%;\n            height: 100%;\n        }', patched)
 
+    def test_footer_links_to_copilot_after_author_name(self):
+        html = (
+            '<body><style>\n'
+            '        platform.document.body.style.background = "#7f7f7f"\n'
+            '        #infobox {\n'
+            '            position: fixed; /* center relative to viewport */\n'
+            '            background: green;\n'
+            '            color: blue;\n'
+            '        }\n'
+            '        body {\n'
+            '            font-family: arial;\n'
+            '            margin: 0;\n'
+            '            padding: none;\n'
+            '            background-color:powderblue;\n'
+            '        }\n'
+            '        canvas.emscripten {\n'
+            '            width: 100%;\n'
+            '            height: 100%;\n'
+            '            z-index: 5;\n'
+            '        }\n</style></body>'
+        )
+
+        patched = build.apply_web_html_patches(html)
+
+        self.assertIn('Richard Harris</span> +', patched)
+        self.assertIn('https://github.com/features/copilot', patched)
+
     def test_raises_loudly_when_expected_markup_is_missing(self):
         from build import apply_web_html_patches
 

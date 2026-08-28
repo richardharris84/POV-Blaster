@@ -3,6 +3,7 @@ from dataclasses import dataclass
 import json
 import os
 import sqlite3
+import sys
 from pathlib import Path
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
@@ -119,17 +120,14 @@ class BrowserHighScores:
         self._memory = []
 
     def load(self):
-        # Try to fetch from remote API first
-        if self.api_url:
-            try:
-                scores = self._load_remote()
-                if scores:
-                    self._memory = scores
-                    return self._sort(scores)
-            except Exception:
-                pass
-        
-        # Fall back to local storage
+        # Browser menu rendering must remain nonblocking; desktop callers can
+        # retain the synchronous API-backed leaderboard behavior.
+        if self.api_url and sys.platform != 'emscripten':
+            scores = self._load_remote()
+            if scores:
+                self._memory = scores
+                return self._sort(scores)
+
         try:
             import platform
             stored = platform.window.localStorage.getItem(self.storage_key)
