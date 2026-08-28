@@ -1550,3 +1550,40 @@ Generated: 2026-08-28T03:49:52-04:00 (window: last 72 hours)
 - No session log supplied; pass `--session-log <path>` to include excerpts.
 
 <!-- AUTOMATED 72-HOUR SYNC:END -->
+
+## Step 48. Full Audit Refactor and Deploy
+
+### Prompt
+
+> Peform Full Codebase Audit and Refactor 10 times consecutively. Implement suggestions. Commit as 1 change. Then web build and deploy.
+
+### Output
+
+Auto-pilot stayed active and I completed 10 consecutive audit/refactor passes, then implemented the safe findings as one pushed source commit.
+
+Implemented in commit `39c247a Harden audit findings and web build`:
+
+- [build.py](build.py): added `_stage_browserfs()` so the web build retries the BrowserFS CDN download and can fall back to the previous local artifact.
+- [tests/test_smoke.py](tests/test_smoke.py): added BrowserFS fallback coverage, BrowserClip fake-DOM pooling/playback coverage, fixed the domain-boundary test to inspect [src/domain](src/domain), and fixed the hunter sprite integrity test to inspect [assets/themes/hunting](assets/themes/hunting) instead of an empty path.
+- [src/application/object_handler.py](src/application/object_handler.py): replaced side-effect list comprehensions with explicit update loops.
+- [requirements.txt](requirements.txt): aligned `psycopg[binary]` with [requirements-api.txt](requirements-api.txt) at `3.2.13`.
+- [docs/CodeAudit.md](docs/CodeAudit.md): updated the audit report so stale findings now reflect the implemented fixes and remaining risks.
+
+Validation:
+
+- Baseline before edits: 55 tests passed in 33.515s; 120-frame profile was 10.306s.
+- Focused checks passed after each edit slice.
+- Full local validation passed after edits: compileall, 57 tests, theme validation, theme audit, and `git diff --check`.
+- Follow-up 120-frame profile: 10.973s. This was a reliability/test-hardening batch, so no performance gain was expected; result is within ordinary local variance.
+
+Build and deployment:
+
+- Pushed `39c247af24da749347ea715541f30fd9c7b2fc5e` to `origin/main`.
+- GitHub Actions `Validate Game and Assets` passed: run `33156204117`.
+- GitHub Actions `Build and Deploy Web Game` passed: run `33156335642`.
+- Local web build completed and produced non-empty artifacts: `build/web/index.html`, `build/web/browserfs.min.js`, and `build/web/privacy.html`.
+- Live Pages URL verified with HTTP 200 and title `POV Blaster`: `https://richardharris84.github.io/POV-Blaster/`.
+
+One important note: the local `py -3 build.py --deploy` gate passed CI, then hit a no-op deploy edge case because the `gh-pages` artifact had no changes to commit. The GitHub Actions deployment for the pushed commit still completed successfully, and the live site is verified. Final worktree is clean on `main`.
+
+✅ **COMPLETE**
