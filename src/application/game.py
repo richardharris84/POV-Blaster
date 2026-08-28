@@ -235,7 +235,7 @@ class Game:
             if self.check_events():
                 self.close()
                 return
-            self.delta_time = min(self.clock.tick(FPS), MAX_DELTA_TIME)
+            self.delta_time = max(1, min(self.clock.tick(FPS), MAX_DELTA_TIME))
             self.update_global_trigger()
             self.update()
             self.draw()
@@ -255,7 +255,7 @@ class Game:
                     return
                 self.new_game()
                 continue
-            self.delta_time = min(self.clock.tick(FPS), MAX_DELTA_TIME)
+            self.delta_time = max(1, min(self.clock.tick(FPS), MAX_DELTA_TIME))
             self.update_global_trigger()
             self.update()
             self.draw()

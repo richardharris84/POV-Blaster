@@ -31,6 +31,7 @@ from infrastructure.assets import AssetLoader
 from infrastructure.scores import BrowserHighScores, HighScores
 from infrastructure.windowing import set_game_icon
 from application.npc_systems import npc_can_see_player
+from application.sprite_object import LazyImageSequence
 from presentation.touch import TouchController
 from infrastructure.settings import HALF_WIDTH, NUM_RAYS
 
@@ -84,6 +85,17 @@ class MapAssetTests(unittest.TestCase):
 
 
 class CombatTests(unittest.TestCase):
+    def test_lazy_animation_sequence_advances_like_the_original_deque(self):
+        sequence = LazyImageSequence(object(), ["frame-0", "frame-1", "frame-2"])
+
+        self.assertEqual(sequence.offset, 0)
+        sequence.rotate(-1)
+        self.assertEqual(sequence.offset, 1)
+        sequence.rotate(-1)
+        self.assertEqual(sequence.offset, 2)
+        sequence.rotate(-1)
+        self.assertEqual(sequence.offset, 0)
+
     def test_combatant_tracks_damage_and_accuracy(self):
         combatant = Combatant.create(50, 10, 0.25)
 
@@ -100,8 +112,22 @@ class MovementTests(unittest.TestCase):
         self.assertAlmostEqual(diagonal[0], 1 / 2**0.5)
         self.assertAlmostEqual(diagonal[1], 1 / 2**0.5)
 
+    def test_zero_elapsed_frame_does_not_break_player_collision(self):
+        game = Game(THEMES[0], seed=9)
+        try:
+            game.delta_time = 0
+            game.player.apply_smoothed_motion(0.01, 0.0)
+        finally:
+            pg.quit()
+
 
 class TouchControllerTests(unittest.TestCase):
+    def test_pixel_touch_coordinates_are_normalized_and_clamped(self):
+        touch = TouchController(1600, 900)
+
+        self.assertEqual(touch._to_pixels(1600, 900), (1600.0, 900.0))
+        self.assertEqual(touch._to_pixels(-20, 1200), (0.0, 900.0))
+
     def test_left_and_right_joysticks_produce_isolated_axes(self):
         pg.init()
         try:

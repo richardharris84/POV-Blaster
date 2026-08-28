@@ -184,6 +184,11 @@ class TouchController:
         return position[0] >= self.width * 0.52 and position[1] >= self.height * 0.42
 
     def _to_pixels(self, x: float, y: float) -> tuple[float, float]:
+        if abs(x) > 1.0 or abs(y) > 1.0:
+            x /= self.width
+            y /= self.height
+        x = max(0.0, min(1.0, x))
+        y = max(0.0, min(1.0, y))
         return x * self.width, y * self.height
 
     @staticmethod
