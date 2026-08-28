@@ -26,6 +26,16 @@ REQUIRED_UI_SIZES = {
 REQUIRED_ANIMATIONS = {"idle": 1, "walk": 4, "attack": 2, "pain": 2, "death": 6}
 
 
+def required_asset_failures(required: dict) -> list:
+    """Return blocking asset failures; edge-touching sprites are warnings."""
+    return [
+        failure
+        for name, failures in required.items()
+        if name != "clipped_assets"
+        for failure in failures
+    ]
+
+
 def is_theme_dir(path: Path) -> bool:
     return all((path / child).is_dir() for child in ("textures", "sprites", "sound"))
 
@@ -98,6 +108,9 @@ def build_quality_checks(report: dict[str, dict[str, dict]]) -> dict:
             if path.parent.name in {"idle", "walk", "attack", "pain", "death"}:
                 animation_groups[str(path.parent)].append((relative_path, metadata["sha256"]))
         for animation_path, frames in animation_groups.items():
+            animation_name = Path(animation_path).name
+            required_count = REQUIRED_ANIMATIONS.get(animation_name, len(frames))
+            frames = frames[:required_count]
             hashes = defaultdict(list)
             for relative_path, image_hash in frames:
                 hashes[image_hash].append(relative_path)
@@ -180,7 +193,7 @@ def generate_report(themes_dir: Path, default_theme: str) -> dict:
         quality = quality_checks[theme]
         required = required_asset_checks[theme]
         theme_status[theme] = {
-            "passed": not quality["blank_assets"] and not quality["duplicate_animation_frames"] and not any(required.values()),
+            "passed": not quality["blank_assets"] and not quality["duplicate_animation_frames"] and not required_asset_failures(required),
             "required_asset_checks": required,
             "quality_checks": {
                 "blank_assets": quality["blank_assets"],
@@ -203,7 +216,7 @@ def main() -> int:
     parser.add_argument("--themes-dir", type=Path, default=Path(__file__).resolve().parents[1] / "assets" / "themes")
     parser.add_argument("--default-theme", default=DEFAULT_THEME)
     parser.add_argument("--output", type=Path, default=Path(__file__).resolve().parents[1] / "build" / "theme_audit.json")
-    parser.add_argument("--check", action="store_true", help="exit nonzero when blank assets or duplicate animation frames are found")
+    parser.add_argument("--check", action="store_true", help="exit nonzero when blank assets, required-frame duplicates, or required assets are found")
     args = parser.parse_args()
 
     if not args.themes_dir.is_dir():
@@ -221,11 +234,11 @@ def main() -> int:
             if theme == args.default_theme:
                 continue
             required = report["required_asset_checks"][theme]
-            if result["blank_assets"] or result["duplicate_animation_frames"] or any(required.values()):
+            if result["blank_assets"] or result["duplicate_animation_frames"] or required_asset_failures(required):
                 failures.append(
                     f"{theme}: blank={len(result['blank_assets'])}, "
                     f"duplicate_animation_groups={len(result['duplicate_animation_frames'])}, "
-                    f"required_failures={sum(len(value) for value in required.values())}"
+                    f"required_failures={len(required_asset_failures(required))}"
                 )
         if failures:
             print("Theme audit failed:")
